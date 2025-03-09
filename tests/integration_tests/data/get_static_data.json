@@ -908,5 +908,161 @@
         }
       }
     }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "url": "https://ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io/v1/trips?from={trip_date_from}&to={trip_date_to}&route=False&summary=True&limit=1&offset=0",
+      "headers": [
+        ["host", "ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io"],
+        ["accept", "*/*"],
+        ["accept-encoding", "gzip, deflate"],
+        ["connection", "keep-alive"],
+        ["x-api-key", "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF"],
+        ["x-guid", "d95b0b58-3b3f-40e3-99ca-a3aa2a22a204"],
+        ["guid", "d95b0b58-3b3f-40e3-99ca-a3aa2a22a204"],
+        [
+          "authorization",
+          "Bearer eyJ0eXAiOiJKV1QiLCJraWQiOiJZeVZ2SEU5d0xKNDBWVEpyc3pBNDJ6eTNyWjg9IiwiYWxnIjoiUlMyNTYifQ"
+        ],
+        ["x-channel", "ONEAPP"],
+        ["x-brand", "T"],
+        ["user-agent", "okhttp/4.10.0"],
+        ["vin", "12345678912345678"]
+      ],
+      "content": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": [
+        ["date", "Sat, 13 Jan 2024 16:30:27 GMT"],
+        ["content-type", "application/json"],
+        ["content-length", "260"],
+        ["connection", "keep-alive"],
+        ["x-amzn-requestid", "5e0e8953-cf98-4f1c-bbca-287bbc7d9583"],
+        ["access-control-allow-origin", "*"],
+        ["x-amz-apigw-id", "RfIZeGgNFiAEZhg="],
+        [
+          "x-amzn-trace-id",
+          "Root=1-65a2baa2-540951cb0b3ac2dd1f06c5a7;Sampled=0;lineage=aeb55e6e:0"
+        ]
+      ],
+      "content": {
+        "payload": {
+          "_metadata": {
+            "pagination": {
+              "currentPage": 1,
+              "limit": 5,
+              "nextOffset": 5,
+              "offset": 0,
+              "pageCount": 45,
+              "previousOffset": null,
+              "totalCount": 224
+            },
+            "sortedBy": [{ "field": "summary.start.ts", "order": "DESC" }]
+          },
+          "from": "2023-09-01",
+          "summary": [],
+          "to": "2023-11-21",
+          "trips": [
+            {
+              "behaviours": [
+                {
+                  "coachingMsg": 20,
+                  "context": { "slope": 0.0 },
+                  "diagnosticMsg": 20,
+                  "good": false,
+                  "lat": 0.0,
+                  "lon": 0.0,
+                  "priority": true,
+                  "severity": 1.0,
+                  "ts": "2023-11-21T20:01:41Z",
+                  "type": "A"
+                },
+                {
+                  "coachingMsg": 20,
+                  "context": { "slope": 0.0 },
+                  "diagnosticMsg": 20,
+                  "good": false,
+                  "lat": 0.0,
+                  "lon": 0.0,
+                  "priority": true,
+                  "severity": 1.0,
+                  "ts": "2023-11-21T20:04:17Z",
+                  "type": "A"
+                },
+                {
+                  "coachingMsg": 1,
+                  "context": { "slope": 0.0 },
+                  "diagnosticMsg": 41,
+                  "good": true,
+                  "lat": 0.0,
+                  "lon": 0.0,
+                  "priority": true,
+                  "severity": 10000.0,
+                  "ts": "2023-11-21T19:58:06Z",
+                  "type": "A"
+                },
+                {
+                  "coachingMsg": 1,
+                  "context": { "slope": 0.0 },
+                  "diagnosticMsg": 33,
+                  "good": true,
+                  "lat": 0.0,
+                  "lon": 0.0,
+                  "priority": true,
+                  "severity": 10000.0,
+                  "ts": "2023-11-21T20:04:00Z",
+                  "type": "B"
+                }
+              ],
+              "category": 0,
+              "hdc": {
+                "chargeDist": 2386,
+                "chargeTime": 193,
+                "ecoDist": 11937,
+                "ecoTime": 579,
+                "evDistance": 13170,
+                "evTime": 653,
+                "powerDist": 884,
+                "powerTime": 55
+              },
+              "id": "ffe77c0a-0b33-4496-971a-c767fbd7aba5",
+              "route": [],
+              "scores": { "acceleration": 60, "braking": 70, "global": 65 },
+              "summary": {
+                "averageSpeed": 65.36,
+                "countries": ["GB"],
+                "duration": 838,
+                "durationHighway": 0,
+                "durationIdle": 3,
+                "durationOverspeed": 57,
+                "endLat": 52.3447,
+                "endLon": 0.2163,
+                "endTs": "2023-11-21T20:09:11Z",
+                "fuelConsumption": 226.0,
+                "length": 15215,
+                "lengthHighway": 0,
+                "lengthOverspeed": 1334,
+                "maxSpeed": 0.0,
+                "nightTrip": false,
+                "startLat": 0.0,
+                "startLon": 0.0,
+                "startTs": "2023-11-21T19:55:13Z"
+              }
+            }
+          ]
+        },
+        "status": {
+          "messages": [
+            {
+              "description": "Request Processed successfully",
+              "detailedDescription": "Request Processed successfully",
+              "responseCode": "OSH-001"
+            }
+          ]
+        }
+      }
+    }
   }
 ]
