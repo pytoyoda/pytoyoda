@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Notification Models."""
+
 from datetime import datetime
 from typing import List, Optional, Union
 from uuid import UUID

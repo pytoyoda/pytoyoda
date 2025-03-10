@@ -1,4 +1,5 @@
 """Toyota Connected Services Controller."""
+
 import json
 import logging
 from datetime import datetime, timedelta
@@ -27,7 +28,9 @@ from pytoyoda.utils.log_utils import format_httpx_response
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
-CACHE_FILENAME: Path = Path.home() / ".cache" / "toyota_credentials_cache_contains_secrets"
+CACHE_FILENAME: Path = (
+    Path.home() / ".cache" / "toyota_credentials_cache_contains_secrets"
+)
 
 
 # TODO There is an issue if you login with the application on a phone as all the tokens change. # noqa: E501
@@ -59,7 +62,9 @@ class Controller:
                     self._token = cache_data["access_token"]
                     self._refresh_token = cache_data["refresh_token"]
                     self._uuid = cache_data["uuid"]
-                    self._token_expiration = datetime.fromisoformat(cache_data["expiration"])
+                    self._token_expiration = datetime.fromisoformat(
+                        cache_data["expiration"]
+                    )
 
     async def login(self) -> None:
         """Perform first login."""
@@ -125,7 +130,9 @@ class Controller:
             _LOGGER.debug(format_httpx_response(resp))
 
             if resp.status_code != HTTPStatus.FOUND:
-                raise ToyotaLoginError(f"Authorization failed. {resp.status_code}, {resp.text}.")
+                raise ToyotaLoginError(
+                    f"Authorization failed. {resp.status_code}, {resp.text}."
+                )
             authentication_code = parse.parse_qs(
                 httpx.URL(resp.headers.get("location")).query.decode()
             )["code"]
@@ -145,7 +152,9 @@ class Controller:
             _LOGGER.debug(format_httpx_response(resp))
 
             if resp.status_code != HTTPStatus.OK:
-                raise ToyotaLoginError(f"Token retrieval failed. {resp.status_code}, {resp.text}.")
+                raise ToyotaLoginError(
+                    f"Token retrieval failed. {resp.status_code}, {resp.text}."
+                )
 
             self._update_tokens(resp.json())
 
@@ -172,7 +181,9 @@ class Controller:
             _LOGGER.debug(format_httpx_response(resp))
 
             if resp.status_code != HTTPStatus.OK:
-                raise ToyotaLoginError(f"Token refresh failed. {resp.status_code}, {resp.text}.")
+                raise ToyotaLoginError(
+                    f"Token refresh failed. {resp.status_code}, {resp.text}."
+                )
 
             self._update_tokens(resp.json())
 
@@ -197,7 +208,9 @@ class Controller:
             options={"verify_signature": False},
             audience="oneappsdkclient",
         )["uuid"]
-        self._token_expiration = datetime.now() + timedelta(seconds=access_tokens["expires_in"])
+        self._token_expiration = datetime.now() + timedelta(
+            seconds=access_tokens["expires_in"]
+        )
 
         CACHE_FILENAME.parent.mkdir(parents=True, exist_ok=True)
         with open(str(CACHE_FILENAME), "w", encoding="utf-8") as f:
@@ -264,7 +277,9 @@ class Controller:
             ]:
                 return response
 
-        raise ToyotaApiError(f"Request Failed.  {response.status_code}, {response.text}.")
+        raise ToyotaApiError(
+            f"Request Failed.  {response.status_code}, {response.text}."
+        )
 
     async def request_json(  # noqa: PLR0913
         self,

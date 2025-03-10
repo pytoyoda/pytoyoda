@@ -1,4 +1,5 @@
 """Simple test of new API Changes."""
+
 import asyncio
 import json
 import pprint
@@ -7,13 +8,13 @@ from datetime import date, timedelta
 from pytoyoda.client import MyT
 from pytoyoda.models.summary import SummaryType
 
-# from pytoyoda.models.endpoints.climate import ACOperations, ACParameters, ClimateSettingsModel
+# from pytoyoda.models.endpoints.climate import ACOperations, ACParameters, ClimateSettingsModel  # noqa: E501
 # from pytoyoda.models.endpoints.command import CommandType
 
 pp = pprint.PrettyPrinter(indent=4)
 
 
-# Set your username and password in a file on top level called "credentials.json" in the format:
+# Set your username and password in a file on top level called "credentials.json" in the format: # noqa: E501
 #   {
 #       "username": "<username>",
 #       "password": "<password>"
@@ -32,7 +33,8 @@ def load_credentials():
 credentials = load_credentials()
 if not credentials:
     raise ValueError(
-        "Did you forget to set your username and password? Or supply the credentials file"
+        "Did you forget to set your username and password?"
+        "Or supply the credentials file?"
     )
 
 USERNAME = credentials["username"]
@@ -70,7 +72,7 @@ async def get_information():
         #       ACParameters(enabled=False, name="rearDefrost")])])
         # climate_settings = settings.payload
         # climate_settings.temperature = 20
-        # response = await car._api.put_climate_settings_endpoint(car.vin, climate_settings)
+        # response = await car._api.put_climate_settings_endpoint(car.vin, climate_settings)  # noqa: E501
         # print(response)
         # return
 

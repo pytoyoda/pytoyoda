@@ -1,4 +1,5 @@
 """Model for Trip Summaries."""
+
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
@@ -118,7 +119,8 @@ class Trip:
 
         Returns
         -------
-            timedelta: The distance driven using EV in selected metric or None if not supported
+            timedelta: The distance driven using EV in selected metric
+            or None if not supported.
 
         """
         return (

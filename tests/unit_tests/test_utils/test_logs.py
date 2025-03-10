@@ -1,4 +1,5 @@
 """Test Logs Utils."""
+
 import pytest
 from httpx import Request, Response
 

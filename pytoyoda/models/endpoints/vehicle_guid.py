@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Vehicle Models."""
+
 from datetime import date
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
@@ -18,7 +19,9 @@ class _TranslationModel(CustomBaseModel):
 class _CapabilitiesModel(CustomBaseModel):
     description: Optional[str]
     display: Optional[bool]
-    display_name: Optional[Any] = Field(alias="displayName")  # TODO unsure what this returns
+    display_name: Optional[Any] = Field(
+        alias="displayName"
+    )  # TODO unsure what this returns
     name: Optional[str]
     translation: Optional[_TranslationModel]
 
@@ -31,7 +34,9 @@ class _ExtendedCapabilitiesModel(CustomBaseModel):
     buzzer_capable: Optional[bool] = Field(alias="buzzerCapable")
     charge_management: Optional[bool] = Field(alias="chargeManagement")
     climate_capable: Optional[bool] = Field(alias="climateCapable")
-    climate_temperature_control_full: Optional[bool] = Field(alias="climateTemperatureControlFull")
+    climate_temperature_control_full: Optional[bool] = Field(
+        alias="climateTemperatureControlFull"
+    )
     climate_temperature_control_limited: Optional[bool] = Field(
         alias="climateTemperatureControlLimited"
     )
@@ -40,27 +45,47 @@ class _ExtendedCapabilitiesModel(CustomBaseModel):
     drive_pulse: Optional[bool] = Field(alias="drivePulse")
     ecare: Optional[bool] = Field(alias="ecare")
     econnect_climate_capable: Optional[bool] = Field(alias="econnectClimateCapable")
-    econnect_vehicle_status_capable: Optional[bool] = Field(alias="econnectVehicleStatusCapable")
+    econnect_vehicle_status_capable: Optional[bool] = Field(
+        alias="econnectVehicleStatusCapable"
+    )
     electric_pulse: Optional[bool] = Field(alias="electricPulse")
     emergency_assist: Optional[bool] = Field(alias="emergencyAssist")
-    enhanced_security_system_capable: Optional[bool] = Field(alias="enhancedSecuritySystemCapable")
+    enhanced_security_system_capable: Optional[bool] = Field(
+        alias="enhancedSecuritySystemCapable"
+    )
     equipped_with_alarm: Optional[bool] = Field(alias="equippedWithAlarm")
     ev_battery: Optional[bool] = Field(alias="evBattery")
     ev_charge_stations_capable: Optional[bool] = Field(alias="evChargeStationsCapable")
     fcv_stations_capable: Optional[bool] = Field(alias="fcvStationsCapable")
     front_defogger: Optional[bool] = Field(alias="frontDefogger")
-    front_driver_door_lock_status: Optional[bool] = Field(alias="frontDriverDoorLockStatus")
-    front_driver_door_open_status: Optional[bool] = Field(alias="frontDriverDoorOpenStatus")
-    front_driver_door_window_status: Optional[bool] = Field(alias="frontDriverDoorWindowStatus")
+    front_driver_door_lock_status: Optional[bool] = Field(
+        alias="frontDriverDoorLockStatus"
+    )
+    front_driver_door_open_status: Optional[bool] = Field(
+        alias="frontDriverDoorOpenStatus"
+    )
+    front_driver_door_window_status: Optional[bool] = Field(
+        alias="frontDriverDoorWindowStatus"
+    )
     front_driver_seat_heater: Optional[bool] = Field(alias="frontDriverSeatHeater")
-    front_driver_seat_ventilation: Optional[bool] = Field(alias="frontDriverSeatVentilation")
-    front_passenger_door_lock_status: Optional[bool] = Field(alias="frontPassengerDoorLockStatus")
-    front_passenger_door_open_status: Optional[bool] = Field(alias="frontPassengerDoorOpenStatus")
+    front_driver_seat_ventilation: Optional[bool] = Field(
+        alias="frontDriverSeatVentilation"
+    )
+    front_passenger_door_lock_status: Optional[bool] = Field(
+        alias="frontPassengerDoorLockStatus"
+    )
+    front_passenger_door_open_status: Optional[bool] = Field(
+        alias="frontPassengerDoorOpenStatus"
+    )
     front_passenger_door_window_status: Optional[bool] = Field(
         alias="frontPassengerDoorWindowStatus"
     )
-    front_passenger_seat_heater: Optional[bool] = Field(alias="frontPassengerSeatHeater")
-    front_passenger_seat_ventilation: Optional[bool] = Field(alias="frontPassengerSeatVentilation")
+    front_passenger_seat_heater: Optional[bool] = Field(
+        alias="frontPassengerSeatHeater"
+    )
+    front_passenger_seat_ventilation: Optional[bool] = Field(
+        alias="frontPassengerSeatVentilation"
+    )
     fuel_level_available: Optional[bool] = Field(alias="fuelLevelAvailable")
     fuel_range_available: Optional[bool] = Field(alias="fuelRangeAvailable")
     guest_driver: Optional[bool] = Field(alias="guestDriver")
@@ -78,19 +103,33 @@ class _ExtendedCapabilitiesModel(CustomBaseModel):
     power_tailgate_capable: Optional[bool] = Field(alias="powerTailgateCapable")
     power_windows_capable: Optional[bool] = Field(alias="powerWindowsCapable")
     rear_defogger: Optional[bool] = Field(alias="rearDefogger")
-    rear_driver_door_lock_status: Optional[bool] = Field(alias="rearDriverDoorLockStatus")
-    rear_driver_door_open_status: Optional[bool] = Field(alias="rearDriverDoorOpenStatus")
-    rear_driver_door_window_status: Optional[bool] = Field(alias="rearDriverDoorWindowStatus")
+    rear_driver_door_lock_status: Optional[bool] = Field(
+        alias="rearDriverDoorLockStatus"
+    )
+    rear_driver_door_open_status: Optional[bool] = Field(
+        alias="rearDriverDoorOpenStatus"
+    )
+    rear_driver_door_window_status: Optional[bool] = Field(
+        alias="rearDriverDoorWindowStatus"
+    )
     rear_driver_seat_heater: Optional[bool] = Field(alias="rearDriverSeatHeater")
-    rear_driver_seat_ventilation: Optional[bool] = Field(alias="rearDriverSeatVentilation")
+    rear_driver_seat_ventilation: Optional[bool] = Field(
+        alias="rearDriverSeatVentilation"
+    )
     rear_hatch_rear_window: Optional[bool] = Field(alias="rearHatchRearWindow")
-    rear_passenger_door_lock_status: Optional[bool] = Field(alias="rearPassengerDoorLockStatus")
-    rear_passenger_door_open_status: Optional[bool] = Field(alias="rearPassengerDoorOpenStatus")
+    rear_passenger_door_lock_status: Optional[bool] = Field(
+        alias="rearPassengerDoorLockStatus"
+    )
+    rear_passenger_door_open_status: Optional[bool] = Field(
+        alias="rearPassengerDoorOpenStatus"
+    )
     rear_passenger_door_window_status: Optional[bool] = Field(
         alias="rearPassengerDoorWindowStatus"
     )
     rear_passenger_seat_heater: Optional[bool] = Field(alias="rearPassengerSeatHeater")
-    rear_passenger_seat_ventilation: Optional[bool] = Field(alias="rearPassengerSeatVentilation")
+    rear_passenger_seat_ventilation: Optional[bool] = Field(
+        alias="rearPassengerSeatVentilation"
+    )
     remote_econnect_capable: Optional[bool] = Field(alias="remoteEConnectCapable")
     remote_engine_start_stop: Optional[bool] = Field(alias="remoteEngineStartStop")
     smart_key_status: Optional[bool] = Field(alias="smartKeyStatus")
@@ -127,17 +166,25 @@ class _DcmModel(CustomBaseModel):  # Data connection model
     supplier_name: Optional[str] = Field(alias="dcmSupplierName", default=None)
     euicc_id: Optional[str] = Field(alias="euiccid")
     hardware_type: Optional[str] = Field(alias="hardwareType")
-    vehicle_unit_terminal_number: Optional[str] = Field(alias="vehicleUnitTerminalNumber")
+    vehicle_unit_terminal_number: Optional[str] = Field(
+        alias="vehicleUnitTerminalNumber"
+    )
 
 
 class _HeadUnitModel(CustomBaseModel):
-    description: Optional[Any] = Field(alias="huDescription")  # TODO unsure what this returns
-    generation: Optional[Any] = Field(alias="huGeneration")  # TODO unsure what this returns
+    description: Optional[Any] = Field(
+        alias="huDescription"
+    )  # TODO unsure what this returns
+    generation: Optional[Any] = Field(
+        alias="huGeneration"
+    )  # TODO unsure what this returns
     version: Optional[Any] = Field(alias="huVersion")  # TODO unsure what this returns
     mobile_platform_code: Optional[Any] = Field(
         alias="mobilePlatformCode"
     )  # TODO unsure what this returns
-    multimedia_type: Optional[Any] = Field(alias="multimediaType")  # TODO unsure what this returns
+    multimedia_type: Optional[Any] = Field(
+        alias="multimediaType"
+    )  # TODO unsure what this returns
 
 
 class _SubscriptionsModel(CustomBaseModel):
@@ -168,7 +215,9 @@ class _SubscriptionsModel(CustomBaseModel):
     subscription_next_billing_date: Optional[Any] = Field(
         alias="subscriptionNextBillingDate",
     )  # TODO unsure what this returns
-    subscription_remaining_days: Optional[int] = Field(alias="subscriptionRemainingDays")
+    subscription_remaining_days: Optional[int] = Field(
+        alias="subscriptionRemainingDays"
+    )
     subscription_remaining_term: Optional[Any] = Field(
         alias="subscriptionRemainingTerm",
     )  # TODO unsure what this returns
@@ -181,7 +230,9 @@ class _SubscriptionsModel(CustomBaseModel):
 
 class _RemoteServiceCapabilitiesModel(CustomBaseModel):
     acsetting_enabled: Optional[bool] = Field(alias="acsettingEnabled")
-    allow_hvac_override_capable: Optional[bool] = Field(alias="allowHvacOverrideCapable")
+    allow_hvac_override_capable: Optional[bool] = Field(
+        alias="allowHvacOverrideCapable"
+    )
     dlock_unlock_capable: Optional[bool] = Field(alias="dlockUnlockCapable")
     estart_enabled: Optional[bool] = Field(alias="estartEnabled")
     estart_stop_capable: Optional[bool] = Field(alias="estartStopCapable")
@@ -191,7 +242,9 @@ class _RemoteServiceCapabilitiesModel(CustomBaseModel):
     head_light_capable: Optional[bool] = Field(alias="headLightCapable")
     moon_roof_capable: Optional[bool] = Field(alias="moonRoofCapable")
     power_window_capable: Optional[bool] = Field(alias="powerWindowCapable")
-    steering_wheel_heater_capable: Optional[bool] = Field(alias="steeringWheelHeaterCapable")
+    steering_wheel_heater_capable: Optional[bool] = Field(
+        alias="steeringWheelHeaterCapable"
+    )
     trunk_capable: Optional[bool] = Field(alias="trunkCapable")
     vehicle_finder_capable: Optional[bool] = Field(alias="vehicleFinderCapable")
     ventilator_capable: Optional[bool] = Field(alias="ventilatorCapable")
@@ -383,8 +436,12 @@ class VehicleGuidModel(CustomBaseModel):
     dcm_active: Optional[bool] = Field(alias="dcmActive")
     dcms: Optional[Any]  # TODO unsure what this returns
     display_model_description: Optional[str] = Field(alias="displayModelDescription")
-    display_subscriptions: Optional[List[Dict[str, str]]] = Field(alias="displaySubscriptions")
-    electrical_platform_code: Optional[str] = Field(alias="electricalPlatformCode", default=None)
+    display_subscriptions: Optional[List[Dict[str, str]]] = Field(
+        alias="displaySubscriptions"
+    )
+    electrical_platform_code: Optional[str] = Field(
+        alias="electricalPlatformCode", default=None
+    )
     emergency_contact: Optional[Any] = Field(
         alias="emergencyContact"
     )  # TODO unsure what this returns
@@ -421,7 +478,9 @@ class VehicleGuidModel(CustomBaseModel):
     primary_subscriber: Optional[bool] = Field(alias="primarySubscriber")
     region: Optional[str]
     registration_number: Optional[str] = Field(alias="registrationNumber")
-    remote_display: Optional[Any] = Field(alias="remoteDisplay")  # TODO unsure what this returns
+    remote_display: Optional[Any] = Field(
+        alias="remoteDisplay"
+    )  # TODO unsure what this returns
     remote_service_capabilities: Optional[_RemoteServiceCapabilitiesModel] = Field(
         alias="remoteServiceCapabilities"
     )
@@ -431,7 +490,9 @@ class VehicleGuidModel(CustomBaseModel):
     remote_subscription_exists: Optional[bool] = Field(alias="remoteSubscriptionExists")
     remote_subscription_status: Optional[str] = Field(alias="remoteSubscriptionStatus")
     remote_user: Optional[bool] = Field(alias="remoteUser")
-    remote_user_guid: Optional[Union[UUID, str]] = Field(alias="remoteUserGuid", default=None)
+    remote_user_guid: Optional[Union[UUID, str]] = Field(
+        alias="remoteUserGuid", default=None
+    )
     service_connect_status: Optional[Any] = Field(
         alias="serviceConnectStatus"
     )  # TODO unsure what this returns
@@ -440,7 +501,9 @@ class VehicleGuidModel(CustomBaseModel):
     status: Optional[str]
     stock_pic_reference: Optional[str] = Field(alias="stockPicReference")
     subscriber_guid: Optional[UUID] = Field(alias="subscriberGuid")
-    subscription_expiration_status: Optional[bool] = Field(alias="subscriptionExpirationStatus")
+    subscription_expiration_status: Optional[bool] = Field(
+        alias="subscriptionExpirationStatus"
+    )
     subscription_status: Optional[str] = Field(alias="subscriptionStatus")
     subscriptions: Optional[List[_SubscriptionsModel]]
     suffix_code: Optional[Any] = Field(alias="suffixCode")

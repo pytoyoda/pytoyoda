@@ -1,4 +1,5 @@
 """Test Locale Utils."""
+
 import pytest
 
 from pytoyoda.utils.locale import is_valid_locale

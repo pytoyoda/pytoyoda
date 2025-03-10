@@ -1,4 +1,5 @@
 """Models for vehicle sensors."""
+
 from datetime import timedelta
 from typing import Any, List, Optional
 
@@ -33,8 +34,12 @@ class Dashboard:
             metric: bool:   Report distances in metric(or imperial)
 
         """
-        self._electric: Optional[ElectricStatusModel] = electric.payload if electric else None
-        self._telemetry: Optional[TelemetryModel] = telemetry.payload if telemetry else None
+        self._electric: Optional[ElectricStatusModel] = (
+            electric.payload if electric else None
+        )
+        self._telemetry: Optional[TelemetryModel] = (
+            telemetry.payload if telemetry else None
+        )
         self._health: Optional[VehicleHealthModel] = health.payload if health else None
         self._distance_unit: str = "km" if metric else "mi"
 

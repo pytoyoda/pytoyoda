@@ -21,7 +21,7 @@ repos:
         language: system
         entry: poetry run check-added-large-files
       - id: check-json
-        name: "🐛 Check for forgotten debug statemens"
+        name: "🐛 Check for forgotten debug statements"
         language: system
         types: [python]
         entry: poetry run debug-statement-hook
@@ -46,27 +46,27 @@ repos:
         language: system
         types: [text]
         entry: poetry run end-of-file-fixer
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: end-of-file-fixer
         name: "⬜ Fix trailing whitespaces"
         language: system
         types: [text]
         entry: poetry run end-of-file-fixer
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: ruff-check
         name: "🐶 Ruff Linter"
         language: system
         types: [python]
         entry: poetry run ruff check --fix
         require_serial: true
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: ruff-format
         name: "🐶 Ruff Formatter"
         language: system
         types: [python]
         entry: poetry run ruff format
         require_serial: true
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: poetry pyproject check
         name: "📜 Check pyproject with Poetry"
         language: system

@@ -1,4 +1,5 @@
 """models for vehicle electric status."""
+
 from datetime import date
 from typing import Optional
 
@@ -106,7 +107,11 @@ class ElectricStatus:
             bool: Can set next charging event.
 
         """
-        return self._electric_status.can_set_next_charging_event if self._electric_status else None
+        return (
+            self._electric_status.can_set_next_charging_event
+            if self._electric_status
+            else None
+        )
 
     @property
     def last_update_timestamp(self) -> Optional[date]:
@@ -117,4 +122,8 @@ class ElectricStatus:
             date: Last update timestamp.
 
         """
-        return self._electric_status.last_update_timestamp if self._electric_status else None
+        return (
+            self._electric_status.last_update_timestamp
+            if self._electric_status
+            else None
+        )

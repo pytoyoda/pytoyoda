@@ -8,6 +8,7 @@ information, sensor data, fuel level, driving statistics and more.
   client = MyT()
   vehicles = await client.get_vehicles()
 """
+
 import logging
 from typing import List, Optional
 

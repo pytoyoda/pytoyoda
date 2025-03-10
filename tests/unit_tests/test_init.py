@@ -1,4 +1,5 @@
 """pytest tests for pytoyoda.__init__."""
+
 from pytoyoda import MyT
 
 

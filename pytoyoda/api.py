@@ -64,7 +64,9 @@ class Api:
 
     async def _request_and_parse(self, model, method: str, endpoint: str, **kwargs):
         """Parse requests and responses."""
-        response = await self.controller.request_json(method=method, endpoint=endpoint, **kwargs)
+        response = await self.controller.request_json(
+            method=method, endpoint=endpoint, **kwargs
+        )
         return model(**response)
 
     async def set_vehicle_alias_endpoint(self, alias: str, guid: str, vin: str):
@@ -117,7 +119,9 @@ class Api:
         _LOGGER.debug(msg=f"Parsed 'LocationResponseModel': {parsed_response}")
         return parsed_response
 
-    async def get_vehicle_health_status_endpoint(self, vin: str) -> VehicleHealthResponseModel:
+    async def get_vehicle_health_status_endpoint(
+        self, vin: str
+    ) -> VehicleHealthResponseModel:
         r"""Get the latest health status.
 
         Response includes the quantity of engine oil and any dashboard warning lights. \n
@@ -149,7 +153,9 @@ class Api:
         _LOGGER.debug(msg=f"Parsed 'RemoteStatusResponseModel': {parsed_response}")
         return parsed_response
 
-    async def get_vehicle_electric_status_endpoint(self, vin: str) -> ElectricResponseModel:
+    async def get_vehicle_electric_status_endpoint(
+        self, vin: str
+    ) -> ElectricResponseModel:
         r"""Get the latest electric status.
 
         Response includes current battery level, EV Range, EV Range with AC, \n
@@ -241,7 +247,9 @@ class Api:
         _LOGGER.debug(msg=f"Parsed 'ClimateStatusResponseModel': {parsed_response}")
         return parsed_response
 
-    async def get_climate_settings_endpoint(self, vin: str) -> ClimateSettingsResponseModel:
+    async def get_climate_settings_endpoint(
+        self, vin: str
+    ) -> ClimateSettingsResponseModel:
         """Get climate control settings.
 
         Args:
@@ -376,7 +384,9 @@ class Api:
         _LOGGER.debug(msg=f"Parsed 'TripsResponseModel': {parsed_response}")
         return parsed_response
 
-    async def get_service_history_endpoint(self, vin: str) -> ServiceHistoryResponseModel:
+    async def get_service_history_endpoint(
+        self, vin: str
+    ) -> ServiceHistoryResponseModel:
         """Get the current servic history.
 
         Response includes service category, date and dealer.

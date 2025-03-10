@@ -22,7 +22,9 @@ class ACOperations(BaseModel):
     """Model representing AC operations."""
 
     available: Optional[bool] = None
-    category_display_name: Optional[str] = Field(alias="categoryDisplayName", default=None)
+    category_display_name: Optional[str] = Field(
+        alias="categoryDisplayName", default=None
+    )
     category_name: str = Field(alias="categoryName")
     ac_parameters: List[ACParameters] = Field(alias="acParameters")
 
@@ -55,7 +57,9 @@ class ClimateOptions(BaseModel):
 class ClimateStatusModel(BaseModel):
     """Model representing climate status."""
 
-    current_temperature: Optional[CurrentTemperature] = Field(alias="currentTemperature")
+    current_temperature: Optional[CurrentTemperature] = Field(
+        alias="currentTemperature"
+    )
     duration: Optional[int]
     options: Optional[ClimateOptions]
     started_at: Optional[datetime] = Field(alias="startedAt", default=None)

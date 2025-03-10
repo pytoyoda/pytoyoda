@@ -1,4 +1,5 @@
 """Test Formatter Utils."""
+
 import pytest
 
 from pytoyoda.utils.formatters import format_odometer
@@ -52,7 +53,11 @@ def test_format_odometer_happy_path(test_input, expected):  # noqa: D103
     "test_input, expected",
     [
         (pytest.param([], {}, id="empty_list")),
-        (pytest.param([{"type": "mileage", "value": 0}], {"mileage": 0}, id="zero_value")),
+        (
+            pytest.param(
+                [{"type": "mileage", "value": 0}], {"mileage": 0}, id="zero_value"
+            )
+        ),
         (
             pytest.param(
                 [

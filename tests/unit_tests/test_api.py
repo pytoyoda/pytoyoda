@@ -1,4 +1,5 @@
 """pytest tests for pytoyoda.api."""
+
 import json
 from datetime import date, timedelta
 from unittest.mock import AsyncMock
@@ -165,5 +166,7 @@ async def test_api_request_and_parse_endpoints(  # NOQA: PLR0913
     response = await api._request_and_parse(model, method, endpoint, vin=VIN)
 
     # Assert
-    controller.request_json.assert_called_once_with(method=method, endpoint=endpoint, vin=VIN)
+    controller.request_json.assert_called_once_with(
+        method=method, endpoint=endpoint, vin=VIN
+    )
     assert response == model(**response_data), f"Test ID: {test_id}"

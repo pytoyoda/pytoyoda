@@ -1,4 +1,5 @@
 """Utilities for manipulating returns for log output tasks."""
+
 import json
 from typing import Any, Dict, Optional
 
@@ -84,7 +85,9 @@ def format_httpx_response_json(response: Response) -> str:
     )
 
 
-def censor_all(dictionary: Dict[str, Any], to_censor: Optional[set] = None) -> Dict[str, Any]:
+def censor_all(
+    dictionary: Dict[str, Any], to_censor: Optional[set] = None
+) -> Dict[str, Any]:
     r"""Censor sensitive values in a dictionary.
 
     Args:

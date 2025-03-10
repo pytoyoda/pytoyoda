@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Trips Models."""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -48,7 +49,9 @@ class _SummaryBaseModel(CustomBaseModel):
             self.duration_overspeed += other.duration_overspeed
             self.length_highway += other.length_highway
             self.duration_highway += other.duration_highway
-            self.fuel_consumption = add_with_none(self.fuel_consumption, other.fuel_consumption)
+            self.fuel_consumption = add_with_none(
+                self.fuel_consumption, other.fuel_consumption
+            )
 
         return self
 

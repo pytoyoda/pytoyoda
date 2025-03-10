@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Location Models."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -11,7 +12,9 @@ from pytoyoda.utils.models import CustomBaseModel
 class _VehicleLocationModel(CustomBaseModel):
     display_name: Optional[str] = Field(alias="displayName")
     latitude: Optional[float]
-    location_acquisition_datetime: Optional[datetime] = Field(alias="locationAcquisitionDatetime")
+    location_acquisition_datetime: Optional[datetime] = Field(
+        alias="locationAcquisitionDatetime"
+    )
     longitude: Optional[float]
 
 

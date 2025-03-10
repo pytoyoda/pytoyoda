@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Electric Models."""
+
 from datetime import datetime
 from typing import Optional
 

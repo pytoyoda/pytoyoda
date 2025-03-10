@@ -1,24 +1,9 @@
-[project]
+[tool.poetry]
 name = "pytoyoda"
 description = "Python client for Toyota Connected Services."
+authors = ["Simon Grud Hansen <simongrud@gmail.com>"]
 license = "MIT"
-keywords = [
-    "Toyota",
-    "Car",
-    "MYT",
-]
-dynamic = ["version", "classifiers", "dependencies"]
 readme = "README.md"
-authors = [{name = "Simon Grud Hansen", email = "simongrud@gmail.com"}]
-requires-python = '>=3.9,<4.0'
-
-[project.urls]
-homepage = "https://github.com/pytoyoda/pytoyoda"
-repository = "https://github.com/pytoyoda/pytoyoda"
-"Bug Tracker" = "https://github.com/pytoyoda/pytoyoda/issues"
-"Release Notes" = "https://github.com/pytoyoda/pytoyoda/releases"
-
-[tool.poetry]
 version = "0.0.0"
 packages = [
     { include = "pytoyoda" },
@@ -31,9 +16,25 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-requires-poetry = '>=2.0,<3.0'
+keywords = [
+    "Toyota",
+    "Car",
+    "MYT",
+]
+homepage = "https://github.com/pytoyoda/pytoyoda"
+repository = "https://github.com/pytoyoda/pytoyoda"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/pytoyoda/pytoyoda/issues"
+"Release Notes" = "https://github.com/pytoyoda/pytoyoda/releases"
+
+# Automatic installation of plugins fails due to https://github.com/python-poetry/poetry/issues/10028
+# so we still do a `self add`
+#[tool.poetry.requires-plugins]
+#poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
 
 [tool.poetry.dependencies]
+python = "^3.9"
 langcodes = "^3.1"
 httpx = ">=0.18.1"
 arrow = "^1.1"

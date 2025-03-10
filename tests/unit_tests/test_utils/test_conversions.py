@@ -1,4 +1,5 @@
 """Test Conversion Utils."""
+
 import pytest
 
 from pytoyoda.utils import conversions
@@ -60,7 +61,9 @@ def test_convert_distance(  # noqa: D103
     convert_to, convert_from, value, decimal_places, expected
 ):
     # Act
-    result = conversions.convert_distance(convert_to, convert_from, value, decimal_places)
+    result = conversions.convert_distance(
+        convert_to, convert_from, value, decimal_places
+    )
 
     # Assert
     assert result == expected

@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Account Models."""
+
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID

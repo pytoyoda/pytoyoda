@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Telemetry Models."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -25,7 +26,9 @@ class TelemetryModel(CustomBaseModel):
     fuel_type: Optional[str] = Field(alias="fuelType")
     odometer: Optional[UnitValueModel]
     fuel_level: Optional[int] = Field(alias="fuelLevel", default=None)
-    distance_to_empty: Optional[UnitValueModel] = Field(alias="distanceToEmpty", default=None)
+    distance_to_empty: Optional[UnitValueModel] = Field(
+        alias="distanceToEmpty", default=None
+    )
     timestamp: Optional[datetime]
 
 

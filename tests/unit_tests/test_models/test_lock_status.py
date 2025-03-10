@@ -1,4 +1,5 @@
 """Test lock_status Model."""
+
 from datetime import datetime
 
 import pytest

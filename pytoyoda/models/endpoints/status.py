@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Status Models."""
+
 from datetime import datetime
 from typing import List, Optional
 
@@ -71,7 +72,9 @@ class RemoteStatusModel(CustomBaseModel):
     caution_overall_count: Optional[int] = Field(alias="cautionOverallCount")
     latitude: Optional[float]
     longitude: Optional[float]
-    location_acquisition_datetime: Optional[datetime] = Field(alias="locationAcquisitionDatetime")
+    location_acquisition_datetime: Optional[datetime] = Field(
+        alias="locationAcquisitionDatetime"
+    )
 
 
 class RemoteStatusResponseModel(StatusModel):

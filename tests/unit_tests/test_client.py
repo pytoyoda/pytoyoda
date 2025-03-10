@@ -1,4 +1,5 @@
 """Test pytoyoda client."""
+
 import pytest
 
 from pytoyoda.client import MyT

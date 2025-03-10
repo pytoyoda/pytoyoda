@@ -1,4 +1,5 @@
 """Toyota Connected Services API - Endpoint Model."""
+
 from datetime import datetime
 from typing import Any, List, Optional
 

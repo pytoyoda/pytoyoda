@@ -1,4 +1,5 @@
 """Models for vehicle sensors."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -23,7 +24,9 @@ def _get_category(
     return None
 
 
-def _get_section(data: Optional[VehicleStatusModel], section: str) -> Optional[SectionModel]:
+def _get_section(
+    data: Optional[VehicleStatusModel], section: str
+) -> Optional[SectionModel]:
     if data is not None:
         return next(
             (item for item in data.sections if item.section == section),
