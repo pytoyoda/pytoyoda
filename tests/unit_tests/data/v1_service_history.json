@@ -3,6 +3,18 @@
     "serviceHistories": [
       {
         "customerCreatedRecord": false,
+        "mileage": "43087",
+        "notes": null,
+        "operationsPerformed": null,
+        "roNumber": null,
+        "serviceCategory": "ACC",
+        "serviceDate": "2023-11-17",
+        "serviceHistoryId": "123456789",
+        "serviceProvider": "Provider 5",
+        "unit": "km"
+      },
+      {
+        "customerCreatedRecord": false,
         "mileage": "30087",
         "notes": null,
         "operationsPerformed": null,
