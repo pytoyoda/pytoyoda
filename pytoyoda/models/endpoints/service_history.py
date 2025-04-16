@@ -37,7 +37,7 @@ class ServiceHistoryModel(CustomEndpointBaseModel):
     service_date: Optional[date] = Field(alias="serviceDate")
     service_history_id: Optional[str] = Field(alias="serviceHistoryId")
     service_provider: Optional[str] = Field(alias="serviceProvider")
-    servicing_dealer: Any = Field(alias="servicingDealer")
+    servicing_dealer: Any = Field(alias="servicingDealer", default=None)
     unit: Optional[str] = None
 
 
