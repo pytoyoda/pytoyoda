@@ -16,6 +16,9 @@ VEHICLE_LOCATION_ENDPOINT = "/v1/location"
 VEHICLE_HEALTH_STATUS_ENDPOINT = "/v1/vehiclehealth/status"
 VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT = "/v1/global/remote/status"
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT = "/v1/global/remote/electric/status"
+VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT = (
+    "/v1/global/remote/electric/realtime-status"
+)
 VEHICLE_TELEMETRY_ENDPOINT = "/v3/telemetry"
 VEHICLE_NOTIFICATION_HISTORY_ENDPOINT = "/v2/notification/history"
 VEHICLE_TRIPS_ENDPOINT = "/v1/trips?from={from_date}&to={to_date}&route={route}&summary={summary}&limit={limit}&offset={offset}"  # noqa: E501

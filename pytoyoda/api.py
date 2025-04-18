@@ -13,6 +13,7 @@ from pytoyoda.const import (
     VEHICLE_CLIMATE_STATUS_ENDPOINT,
     VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT,
     VEHICLE_COMMAND_ENDPOINT,
+    VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT,
     VEHICLE_GUID_ENDPOINT,
@@ -213,6 +214,25 @@ class Api:
             ElectricResponseModel,
             "GET",
             VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT,
+            vin=vin,
+        )
+
+    async def update_vehicle_electric_realtime_status(self, vin: str) -> StatusModel:
+        """Update realtime SOC.
+
+        Only requests a updated soc
+
+        Args:
+            vin: Vehicle Identification Number
+
+        Returns:
+            response model
+
+        """
+        return await self._request_and_parse(
+            StatusModel,
+            "POST",
+            VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
             vin=vin,
         )
 
