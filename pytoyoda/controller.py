@@ -384,6 +384,8 @@ class Controller:
             "x-guid": self._uuid,
             "guid": self._uuid,
             "authorization": f"Bearer {self._token}",
+            "x-appversion": "2.13.0",
+            "x-client-ref": "27ad3073009f94daf6b4550dcc886e82cf863393c43494950d37b71b95b1057d",
             "x-channel": "ONEAPP",
             "x-brand": "T",
             "user-agent": "okhttp/4.10.0",
