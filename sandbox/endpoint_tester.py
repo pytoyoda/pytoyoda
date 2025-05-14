@@ -16,6 +16,10 @@ logger.remove(0)
 logger.add(sys.stderr, level="INFO")
 logger.add(f"{Path(__file__).parent / 'endpoint_tester.log'}", level="INFO")
 
+# Set your brand here
+# Use "T" for Toyota or "L" for Lexus
+BRAND = "T"
+
 
 async def test_endpoint(myt: MyT, vehicle: Vehicle, method: str, endpoint: str) -> None:
     """Test a specific API endpoint for a given vehicle.
@@ -86,7 +90,7 @@ if not credentials:
 USERNAME = credentials["username"]
 PASSWORD = credentials["password"]
 
-client = MyT(username=USERNAME, password=PASSWORD, use_metric=True)
+client = MyT(username=USERNAME, password=PASSWORD, use_metric=True, brand=BRAND)
 
 
 async def main():
