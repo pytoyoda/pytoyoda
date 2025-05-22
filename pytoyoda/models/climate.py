@@ -77,7 +77,7 @@ class ClimateStatus(CustomAPIBaseModel[ClimateStatusModel]):
             str: The type
 
         """
-        return self._data.type
+        return self._data.type if self._data else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
