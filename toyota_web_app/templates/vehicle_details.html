@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Vehicle Stats - {{ vehicle_info.nickname or vehicle_info.vin }}
+    </title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+      }
+      h2,
+      h3 {
+        color: #333;
+      }
+      .stats-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+      .stats-section h3 {
+        margin-top: 0;
+      }
+      pre {
+        background-color: #eee;
+        padding: 10px;
+        border-radius: 3px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>
+      Vehicle Statistics: {{ vehicle_info.nickname or vehicle_info.vin }} ({{
+      vehicle_info.vin }})
+    </h2>
+
+    {% if error %}
+    <p style="color: red">Error: {{ error }}</p>
+    {% else %}
+    <div class="stats-section">
+      <h3>Dashboard Information</h3>
+      {% if stats.dashboard_info %}
+      <pre>{{ stats.dashboard_info | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Electric Status</h3>
+      {% if stats.electric_status %}
+      <pre>{{ stats.electric_status | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Location</h3>
+      {% if stats.location_info %}
+      <pre>{{ stats.location_info | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Lock Status</h3>
+      {% if stats.lock_status %}
+      <pre>{{ stats.lock_status | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Notifications</h3>
+      {% if stats.notifications %} {% for notification in stats.notifications %}
+      <pre>{{ notification | tojson(indent=4) }}</pre>
+      {% endfor %} {% else %}
+      <p>No notifications.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Latest Service History</h3>
+      {% if stats.latest_service %}
+      <pre>{{ stats.latest_service | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Last Trip</h3>
+      {% if stats.last_trip %}
+      <pre>{{ stats.last_trip | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h3>Today's Summary</h3>
+      {% if stats.daily_summary %}
+      <pre>{{ stats.daily_summary | tojson(indent=4) }}</pre>
+      {% else %}
+      <p>Not available.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <p><a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+    <p><a href="{{ url_for('logout') }}">Logout</a></p>
+  </body>
+</html>
