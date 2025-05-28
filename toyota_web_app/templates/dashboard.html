@@ -1,31 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard - Toyota Connected Stats</title>
-</head>
-<body>
+  </head>
+  <body>
     <h2>Welcome, {{ username }}!</h2>
-    
-    {% if error %}
-        <p style="color: red;">Error: {{ error }}</p>
-    {% endif %}
 
-    {% if vehicles %}
-        <h3>Your Vehicles:</h3>
-        <ul>
-            {% for vehicle in vehicles %}
-                <li>{{ vehicle.vin }} - {{ vehicle.nickname or 'No nickname' }} 
-                    <!-- Add a link/button for each vehicle to view details later -->
-                    (<a href="{{ url_for('vehicle_details', vin=vehicle.vin) }}">View Stats</a>)
-                </li>
-            {% endfor %}
-        </ul>
+    {% if error %}
+    <p style="color: red">Error: {{ error }}</p>
+    {% endif %} {% if vehicles %}
+    <h3>Your Vehicles:</h3>
+    <ul>
+      {% for vehicle in vehicles %}
+      <li>
+        {{ vehicle.vin }} - {{ vehicle.nickname or 'No nickname' }}
+        <!-- Add a link/button for each vehicle to view details later -->
+        (<a href="{{ url_for('vehicle_details', vin=vehicle.vin) }}"
+          >View Stats</a
+        >)
+      </li>
+      {% endfor %}
+    </ul>
     {% else %}
-        <p>No vehicles found or unable to retrieve vehicle information.</p>
+    <p>No vehicles found or unable to retrieve vehicle information.</p>
     {% endif %}
 
     <p><a href="{{ url_for('logout') }}">Logout</a></p>
-</body>
+  </body>
 </html>
