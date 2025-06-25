@@ -101,6 +101,13 @@ YESTERDAY = TODAY - timedelta(days=1)
         ),
         (
             "GET",
+            VEHICLE_SERVICE_HISTORY_ENDPONT,
+            ServiceHistoryResponseModel,
+            "v1_service_history_empty",
+            "service_history-happy",
+        ),
+        (
+            "GET",
             VEHICLE_TRIPS_ENDPOINT.format(
                 from_date=YESTERDAY,
                 to_date=TODAY,

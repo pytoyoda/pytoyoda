@@ -410,6 +410,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         if "service_history" in self._endpoint_data:
             ret: list[ServiceHistory] = []
             payload = self._endpoint_data["service_history"].payload
+            if not payload:
+                return None
             ret.extend(
                 ServiceHistory(service_history)
                 for service_history in payload.service_histories
