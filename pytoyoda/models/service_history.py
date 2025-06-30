@@ -1,6 +1,6 @@
 """Models for vehicle service history."""
 
-# ruff: noqa : FA100, UP007
+# ruff: noqa: FA100
 
 from datetime import date
 from typing import Any, Optional, TypeVar, Union
