@@ -32,7 +32,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Environment :: Console",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -49,7 +48,6 @@ langcodes = "^3.1"
 loguru = "^0.7.3"
 pydantic = "^2.10.4"
 pyjwt = "^2.8.0"
-eval_type_backport = "^0.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.0"
