@@ -1,7 +1,5 @@
 """Models for vehicle sensors."""
 
-# ruff: noqa : FA100, UP007
-
 from __future__ import annotations
 
 from datetime import datetime  # noqa : TC003

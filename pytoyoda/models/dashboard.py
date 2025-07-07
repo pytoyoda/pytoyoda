@@ -1,6 +1,6 @@
 """Models for vehicle sensors."""
 
-# ruff: noqa : FA100, UP007
+# ruff: noqa: FA100
 
 from datetime import timedelta
 from typing import Any, Optional, TypeVar, Union
