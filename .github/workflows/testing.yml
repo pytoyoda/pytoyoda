@@ -13,7 +13,7 @@ jobs:
     name: "Pytest"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: "ubuntu-latest"
     permissions:
       contents: read
@@ -57,7 +57,7 @@ jobs:
       - name: "⤵️ Download test coverage artifact"
         uses: actions/download-artifact@v4
         with:
-          name: test-coverage-python3.9
+          name: test-coverage-python3.10
       - name: "🚀 Run codacy-coverage-reporter"
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
