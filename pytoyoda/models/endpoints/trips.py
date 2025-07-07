@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime  # noqa : TC003
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID  # noqa : TC003
 
 from pydantic import Field
@@ -14,17 +14,17 @@ from pytoyoda.utils.models import CustomEndpointBaseModel
 
 
 class _SummaryBaseModel(CustomEndpointBaseModel):
-    length: Optional[int]
-    duration: Optional[int]
-    duration_idle: Optional[int] = Field(alias="durationIdle")
-    countries: Optional[list[str]]
-    max_speed: Optional[float] = Field(alias="maxSpeed")
-    average_speed: Optional[float] = Field(alias="averageSpeed")
-    length_overspeed: Optional[int] = Field(alias="lengthOverspeed")
-    duration_overspeed: Optional[int] = Field(alias="durationOverspeed")
-    length_highway: Optional[int] = Field(alias="lengthHighway")
-    duration_highway: Optional[int] = Field(alias="durationHighway")
-    fuel_consumption: Optional[float] = Field(
+    length: int | None
+    duration: int | None
+    duration_idle: int | None = Field(alias="durationIdle")
+    countries: list[str] | None
+    max_speed: float | None = Field(alias="maxSpeed")
+    average_speed: float | None = Field(alias="averageSpeed")
+    length_overspeed: int | None = Field(alias="lengthOverspeed")
+    duration_overspeed: int | None = Field(alias="durationOverspeed")
+    length_highway: int | None = Field(alias="lengthHighway")
+    duration_highway: int | None = Field(alias="durationHighway")
+    fuel_consumption: float | None = Field(
         alias="fuelConsumption", default=None
     )  # Electric cars might not use fuel. Milliliters.
 
@@ -56,46 +56,46 @@ class _SummaryBaseModel(CustomEndpointBaseModel):
 
 
 class _SummaryModel(_SummaryBaseModel):
-    start_lat: Optional[float] = Field(alias="startLat")
-    start_lon: Optional[float] = Field(alias="startLon")
-    start_ts: Optional[datetime] = Field(alias="startTs")
-    end_lat: Optional[float] = Field(alias="endLat")
-    end_lon: Optional[float] = Field(alias="endLon")
-    end_ts: Optional[datetime] = Field(alias="endTs")
-    night_trip: Optional[bool] = Field(alias="nightTrip")
+    start_lat: float | None = Field(alias="startLat")
+    start_lon: float | None = Field(alias="startLon")
+    start_ts: datetime | None = Field(alias="startTs")
+    end_lat: float | None = Field(alias="endLat")
+    end_lon: float | None = Field(alias="endLon")
+    end_ts: datetime | None = Field(alias="endTs")
+    night_trip: bool | None = Field(alias="nightTrip")
 
 
 class _CoachingMsgParamModel(CustomEndpointBaseModel):
-    name: Optional[str]
-    unit: Optional[str]
-    value: Optional[int]
+    name: str | None
+    unit: str | None
+    value: int | None
 
 
 class _BehaviourModel(CustomEndpointBaseModel):
-    ts: Optional[datetime]
-    type: Optional[str] = None
-    coaching_msg_params: Optional[list[_CoachingMsgParamModel]] = Field(
+    ts: datetime | None
+    type: str | None = None
+    coaching_msg_params: list[_CoachingMsgParamModel] | None = Field(
         alias="coachingMsgParams", default=None
     )
 
 
 class _ScoresModel(CustomEndpointBaseModel):
-    global_: Optional[int] = Field(..., alias="global")
-    acceleration: Optional[int] = None
-    braking: Optional[int] = None
-    advice: Optional[int] = None
-    constant_speed: Optional[int] = Field(alias="constantSpeed", default=None)
+    global_: int | None = Field(..., alias="global")
+    acceleration: int | None = None
+    braking: int | None = None
+    advice: int | None = None
+    constant_speed: int | None = Field(alias="constantSpeed", default=None)
 
 
 class _HDCModel(CustomEndpointBaseModel):
-    ev_time: Optional[int] = Field(alias="evTime", default=None)
-    ev_distance: Optional[int] = Field(alias="evDistance", default=None)
-    charge_time: Optional[int] = Field(alias="chargeTime", default=None)
-    charge_dist: Optional[int] = Field(alias="chargeDist", default=None)
-    eco_time: Optional[int] = Field(alias="ecoTime", default=None)
-    eco_dist: Optional[int] = Field(alias="ecoDist", default=None)
-    power_time: Optional[int] = Field(alias="powerTime", default=None)
-    power_dist: Optional[int] = Field(alias="powerDist", default=None)
+    ev_time: int | None = Field(alias="evTime", default=None)
+    ev_distance: int | None = Field(alias="evDistance", default=None)
+    charge_time: int | None = Field(alias="chargeTime", default=None)
+    charge_dist: int | None = Field(alias="chargeDist", default=None)
+    eco_time: int | None = Field(alias="ecoTime", default=None)
+    eco_dist: int | None = Field(alias="ecoDist", default=None)
+    power_time: int | None = Field(alias="powerTime", default=None)
+    power_dist: int | None = Field(alias="powerDist", default=None)
 
     def __add__(self, other: _HDCModel) -> _HDCModel:
         """Add together two HDCModel's.
@@ -120,61 +120,61 @@ class _HDCModel(CustomEndpointBaseModel):
 
 
 class _RouteModel(CustomEndpointBaseModel):
-    lat: Optional[float] = Field(repr=False)
-    lon: Optional[float]
-    overspeed: Optional[bool]
-    highway: Optional[bool]
-    index_in_points: Optional[int] = Field(alias="indexInPoints")
-    mode: Optional[int] = None
-    is_ev: Optional[bool] = Field(alias="isEv")
+    lat: float | None = Field(repr=False)
+    lon: float | None
+    overspeed: bool | None
+    highway: bool | None
+    index_in_points: int | None = Field(alias="indexInPoints")
+    mode: int | None = None
+    is_ev: bool | None = Field(alias="isEv")
 
 
 class _TripModel(CustomEndpointBaseModel):
-    id: Optional[UUID]
-    category: Optional[int]
-    summary: Optional[_SummaryModel]
-    scores: Optional[_ScoresModel] = None
-    behaviours: Optional[list[_BehaviourModel]] = None
-    hdc: Optional[_HDCModel] = None
-    route: Optional[list[_RouteModel]] = None
+    id: UUID | None
+    category: int | None
+    summary: _SummaryModel | None
+    scores: _ScoresModel | None = None
+    behaviours: list[_BehaviourModel] | None = None
+    hdc: _HDCModel | None = None
+    route: list[_RouteModel] | None = None
 
 
 class _HistogramModel(CustomEndpointBaseModel):
-    year: Optional[int]
-    month: Optional[int]
-    day: Optional[int]
-    summary: Optional[_SummaryBaseModel]
-    scores: Optional[_ScoresModel] = None
-    hdc: Optional[_HDCModel] = None
+    year: int | None
+    month: int | None
+    day: int | None
+    summary: _SummaryBaseModel | None
+    scores: _ScoresModel | None = None
+    hdc: _HDCModel | None = None
 
 
 class _SummaryItemModel(CustomEndpointBaseModel):
-    year: Optional[int]
-    month: Optional[int]
-    summary: Optional[_SummaryBaseModel]
-    scores: Optional[_ScoresModel] = None
-    hdc: Optional[_HDCModel] = None
+    year: int | None
+    month: int | None
+    summary: _SummaryBaseModel | None
+    scores: _ScoresModel | None = None
+    hdc: _HDCModel | None = None
     histograms: list[_HistogramModel]
 
 
 class _PaginationModel(CustomEndpointBaseModel):
-    limit: Optional[int]
-    offset: Optional[int]
-    previous_offset: Optional[Any] = Field(alias="previousOffset", default=None)
-    next_offset: Optional[int] = Field(alias="nextOffset", default=None)
-    current_page: Optional[int] = Field(alias="currentPage")
-    total_count: Optional[int] = Field(alias="totalCount")
-    page_count: Optional[int] = Field(alias="pageCount")
+    limit: int | None
+    offset: int | None
+    previous_offset: Any | None = Field(alias="previousOffset", default=None)
+    next_offset: int | None = Field(alias="nextOffset", default=None)
+    current_page: int | None = Field(alias="currentPage")
+    total_count: int | None = Field(alias="totalCount")
+    page_count: int | None = Field(alias="pageCount")
 
 
 class _SortedByItemModel(CustomEndpointBaseModel):
-    field: Optional[str]
-    order: Optional[str]
+    field: str | None
+    order: str | None
 
 
 class _MetadataModel(CustomEndpointBaseModel):
-    pagination: Optional[_PaginationModel]
-    sorted_by: Optional[list[_SortedByItemModel]] = Field(alias="sortedBy")
+    pagination: _PaginationModel | None
+    sorted_by: list[_SortedByItemModel] | None = Field(alias="sortedBy")
 
 
 class TripsModel(CustomEndpointBaseModel):
@@ -192,12 +192,12 @@ class TripsModel(CustomEndpointBaseModel):
 
     """
 
-    from_date: Optional[date] = Field(..., alias="from")
-    to_date: Optional[date] = Field(..., alias="to")
-    trips: Optional[list[_TripModel]]
-    summary: Optional[list[_SummaryItemModel]] = None
-    metadata: Optional[_MetadataModel] = Field(..., alias="_metadata")
-    route: Optional[_RouteModel] = None
+    from_date: date | None = Field(..., alias="from")
+    to_date: date | None = Field(..., alias="to")
+    trips: list[_TripModel] | None
+    summary: list[_SummaryItemModel] | None = None
+    metadata: _MetadataModel | None = Field(..., alias="_metadata")
+    route: _RouteModel | None = None
 
 
 class TripsResponseModel(StatusModel):
@@ -211,4 +211,4 @@ class TripsResponseModel(StatusModel):
 
     """
 
-    payload: Optional[TripsModel] = None
+    payload: TripsModel | None = None

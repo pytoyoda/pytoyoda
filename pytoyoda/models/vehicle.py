@@ -817,7 +817,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             )
         else:
             for month, next_month in zip(
-                summary[1:], summary[2:] + [None], strict=False
+                summary[1:], [*summary[2:], None], strict=False
             ):
                 summary_month = date(day=1, month=month.month, year=month.year)
                 add_with_none(build_hdc, month.hdc)
