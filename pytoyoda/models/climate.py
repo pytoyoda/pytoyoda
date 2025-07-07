@@ -70,11 +70,11 @@ class ClimateStatus(CustomAPIBaseModel[ClimateStatusModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def type(self) -> str:
+    def type(self) -> Optional[str]:
         """The type.
 
         Returns:
-            str: The type
+            Optional[str]: The type, or None if unavailable
 
         """
         return self._data.type if self._data else None
