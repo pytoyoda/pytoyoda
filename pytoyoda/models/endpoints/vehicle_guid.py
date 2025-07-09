@@ -457,7 +457,7 @@ class VehicleGuidModel(CustomEndpointBaseModel):
     head_unit: Optional[_HeadUnitModel] = Field(alias="headUnit")
     hw_type: Optional[Any] = Field(alias="hwType")
     image: Optional[str]
-    imei: Optional[str]
+    imei: Optional[str] = None
     katashiki_code: Optional[str] = Field(alias="katashikiCode")
     manufactured_date: Optional[date] = Field(alias="manufacturedDate")
     manufactured_code: Optional[str] = Field(alias="manufacturerCode")
@@ -467,7 +467,7 @@ class VehicleGuidModel(CustomEndpointBaseModel):
     car_model_year: Optional[str] = Field(alias="modelYear")
     nickname: Optional[str] = Field(alias="nickName", default=None)
     non_cvt_vehicle: Optional[bool] = Field(alias="nonCvtVehicle")
-    old_imei: Optional[Any] = Field(alias="oldImei")
+    old_imei: Optional[Any] = Field(alias="oldImei", default=None)
     owner: Optional[bool]
     personalized_settings: Optional[_LinksModel] = Field(alias="personalizedSettings")
     preferred: Optional[bool] = None
