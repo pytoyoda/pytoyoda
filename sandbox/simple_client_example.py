@@ -17,6 +17,9 @@ from pytoyoda.models.summary import SummaryType
 logger.remove(0)
 logger.add(sys.stderr, level="INFO")
 
+# Set your brand here
+# Use "T" for Toyota or "L" for Lexus
+BRAND = "L"
 
 # Set your username and password in a file inside the "sandbox" folder called "credentials.json" in the format: # noqa: E501
 #   {
@@ -44,7 +47,7 @@ if not credentials:
 USERNAME = credentials["username"]
 PASSWORD = credentials["password"]
 
-client = MyT(username=USERNAME, password=PASSWORD, use_metric=True)
+client = MyT(username=USERNAME, password=PASSWORD, use_metric=True, brand=BRAND)
 
 
 async def get_information():

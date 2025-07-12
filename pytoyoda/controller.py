@@ -51,17 +51,21 @@ class Controller:
     # Class variable for token cache
     _TOKEN_CACHE: ClassVar[dict[str, TokenInfo]] = {}
 
-    def __init__(self, username: str, password: str, timeout: int = 60) -> None:
+    def __init__(
+        self, username: str, password: str, brand: str = "T", timeout: int = 60
+    ) -> None:
         """Initialize Controller class.
 
         Args:
             username: Toyota account username
             password: Toyota account password
+            brand: Brand of the car (T for Toyota, L for Lexus)
             timeout: HTTP request timeout in seconds
 
         """
         self._username: str = username
         self._password: str = password
+        self._brand: str = brand
         self._timeout = timeout
 
         # URLs
@@ -329,6 +333,7 @@ class Controller:
         Args:
             method: The HTTP method to use ("GET", "POST", "PUT", "DELETE")
             endpoint: The API endpoint to request
+            brand: Brand of the car (T for Toyota, L for Lexus)
             vin: Vehicle Identification Number (optional)
             body: Request body as dictionary (optional)
             params: URL query parameters (optional)
@@ -387,6 +392,7 @@ class Controller:
             Complete headers dictionary
 
         """
+        brand = self._brand
         headers = {
             "x-api-key": "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF",
             "API_KEY": "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF",
@@ -396,11 +402,15 @@ class Controller:
             "x-correlationid": str(uuid4()),
             "x-appversion": CLIENT_VERSION,
             "x-channel": "ONEAPP",
-            "x-brand": "T",
+            "x-brand": brand,
             "x-region": "EU",
             "authorization": f"Bearer {self._token}",
             "user-agent": "okhttp/4.10.0",
         }
+
+        if brand == "L":
+            headers["x-appbrand"] = "L"
+            headers["brand"] = "L"
 
         # Add VIN if provided
         if vin is not None:
