@@ -1,6 +1,6 @@
 """Vehicle model."""
 
-# ruff: noqa : FA100, UP007
+# ruff: noqa: FA100
 
 import asyncio
 import copy
@@ -410,6 +410,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         if "service_history" in self._endpoint_data:
             ret: list[ServiceHistory] = []
             payload = self._endpoint_data["service_history"].payload
+            if not payload:
+                return None
             ret.extend(
                 ServiceHistory(service_history)
                 for service_history in payload.service_histories
@@ -817,7 +819,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             )
         else:
             for month, next_month in zip(
-                summary[1:], summary[2:] + [None], strict=False
+                summary[1:], [*summary[2:], None], strict=False
             ):
                 summary_month = date(day=1, month=month.month, year=month.year)
                 add_with_none(build_hdc, month.hdc)

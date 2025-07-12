@@ -1,6 +1,6 @@
 """Utilities for manipulating or extending pydantic models."""
 
-# ruff: noqa : FA100, UP007
+# ruff: noqa: FA100
 
 from collections.abc import Callable
 from typing import Annotated, Any, Generic, Optional, TypeVar, get_args, get_origin

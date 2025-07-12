@@ -32,7 +32,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Environment :: Console",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -53,7 +52,7 @@ pyjwt = "^2.8.0"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.0"
 pytest = "^8.0.0"
-pytest-asyncio = "^0.26.0"
+pytest-asyncio = "^1.0.0"
 pytest-cov = "^6.0.0"
 pytest-httpx = "^0.35.0"
 pytest-sugar = "^1.0.0"

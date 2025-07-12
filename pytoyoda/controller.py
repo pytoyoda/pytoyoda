@@ -449,4 +449,4 @@ class Controller:
 
         """
         response = await self.request_raw(method, endpoint, vin, body, params, headers)
-        return response.json()
+        return response.json() if response.content else {}
