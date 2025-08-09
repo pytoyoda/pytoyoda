@@ -14,7 +14,7 @@ repos:
         args: [--write-changes, --skip="./*, translations/*", -L hass]
         exclude: (pyproject.toml|poetry.lock|)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-json
         name: "✅ Check JSON files"
