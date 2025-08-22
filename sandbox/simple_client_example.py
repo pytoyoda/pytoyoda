@@ -41,8 +41,8 @@ if not credentials:
         "Or supply the credentials file inside the 'sandbox' folder?"
     )
 
-USERNAME = credentials["username"]
-PASSWORD = credentials["password"]
+USERNAME = credentials["vecapetr@seznam.cz"]
+PASSWORD = credentials["PetrVecera69"]
 
 client = MyT(username=USERNAME, password=PASSWORD, use_metric=True)
 
