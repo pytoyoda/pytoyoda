@@ -212,7 +212,6 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
         return 0.0
 
-    @computed_field  # type: ignore[prop-decorator]
     @property
     def score(self) -> float:
         """The (hybrid) score for the trip.
@@ -224,7 +223,59 @@ class Trip(CustomAPIBaseModel[type[T]]):
         if self._trip.scores and self._trip.scores.global_:
             return self._trip.scores.global_
 
-        return 0.0
+        return 0
+
+    @property
+    def score_acceleration(self) -> float:
+        """The (hybrid) acceleration score for the trip.
+
+        Returns:
+            float: The hybrid acceleration score for the trip
+
+        """
+        if self._trip.scores and self._trip.scores.acceleration:
+            return self._trip.scores.acceleration
+
+        return 0
+
+    @property
+    def score_braking(self) -> float:
+        """The (hybrid) braking score for the trip.
+
+        Returns:
+            float: The hybrid braking score for the trip
+
+        """
+        if self._trip.scores and self._trip.scores.braking:
+            return self._trip.scores.braking
+
+        return 0
+
+    @property
+    def score_advice(self) -> float:
+        """The (hybrid) advice score for the trip.
+
+        Returns:
+            float: The hybrid advice score for the trip
+
+        """
+        if self._trip.scores and self._trip.scores.advice:
+            return self._trip.scores.advice
+
+        return 0
+
+    @property
+    def score_constant_speed(self) -> float:
+        """The (hybrid) constant speed score for the trip.
+
+        Returns:
+            float: The hybrid constant speed score for the trip
+
+        """
+        if self._trip.scores and self._trip.scores.constant_speed:
+            return self._trip.scores.constant_speed
+
+        return 0
 
     @computed_field  # type: ignore[prop-decorator]
     @property
