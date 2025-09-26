@@ -43,6 +43,7 @@ class MyT:
         username: str,
         password: str,
         use_metric: bool = True,  # noqa : FBT001, FBT002
+        brand: str = "T",
         controller_class: type[Controller] = Controller,
     ) -> None:
         """Initialize the Toyota Connected Services client.
@@ -51,6 +52,7 @@ class MyT:
             username: Email address for Toyota account login
             password: Password for Toyota account
             use_metric: Whether to use metric units (True) or imperial units (False)
+            brand: Brand of the car (T for Toyota, L for Lexus)
             controller_class: Controller class to use for API communication
 
         Raises:
@@ -65,6 +67,7 @@ class MyT:
             controller_class(
                 username=username,
                 password=password,
+                brand=brand,
             ),
         )
         self._use_metric = use_metric
