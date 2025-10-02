@@ -40,13 +40,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pytest${{ matrix.python-version }}
-          path: ./pytest.xml
+          path: ./pytest${{ matrix.python-version }}.xml
           retention-days: 1
       - name: "⬆️ Archive pytest coverage results"
         uses: actions/upload-artifact@v4
         with:
           name: pytest-coverage${{ matrix.python-version }}
-          path: ./pytest-coverage.txt
+          path: ./pytest-coverage${{ matrix.python-version }}.txt
           retention-days: 1
   coverage_comment:
     name: "Pytest coverage comment"
@@ -70,5 +70,5 @@ jobs:
       - name: Add pytest coverage comment to PR
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          pytest-coverage-path: pytest-coverage.txt
-          junitxml-path: pytest.xml
+          pytest-coverage-path: pytest-coverage3.10.txt
+          junitxml-path: pytest3.10.xml
