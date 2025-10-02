@@ -22,7 +22,7 @@ repository = "https://github.com/pytoyoda/pytoyoda"
 "Release Notes" = "https://github.com/pytoyoda/pytoyoda/releases"
 
 [tool.poetry]
-version = "0.0.0"
+version = "4.0.2"
 packages = [
     { include = "pytoyoda" },
 ]
@@ -53,7 +53,7 @@ pyjwt = "^2.8.0"
 pre-commit = "^4.0.0"
 pytest = "^8.0.0"
 pytest-asyncio = "^1.0.0"
-pytest-cov = "^6.0.0"
+pytest-cov = "^7.0.0"
 pytest-httpx = "^0.35.0"
 pytest-sugar = "^1.0.0"
 

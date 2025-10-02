@@ -22,11 +22,11 @@ jobs:
       PYTHON: "${{ matrix.python-version }}"
     steps:
       - name: "⤵️ Check out code from GitHub"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: "🐍 Set up Python ${{ matrix.python-version }}"
-        uses: "actions/setup-python@v5"
+        uses: "actions/setup-python@v6"
         with:
           python-version: "${{ matrix.python-version }}"
       - name: "⚙️ Install Poetry"
@@ -51,11 +51,11 @@ jobs:
       contents: read
     steps:
       - name: "⤵️ Check out code from GitHub"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: "⤵️ Download test coverage artifact"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: test-coverage-python3.10
       - name: "🚀 Run codacy-coverage-reporter"
