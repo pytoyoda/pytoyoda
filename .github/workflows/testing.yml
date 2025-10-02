@@ -68,6 +68,7 @@ jobs:
         with:
           name: pytest-coverage3.10
       - name: Add pytest coverage comment to PR
+        if: github.event_name == 'pull_request'
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: pytest-coverage3.10.txt
