@@ -24,7 +24,7 @@ jobs:
       - name: "🐍 Set up Python 3.121"
         uses: "actions/setup-python@v6"
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: "⚙️ Install Poetry"
         uses: "abatilo/actions-poetry@v4.0.0"
