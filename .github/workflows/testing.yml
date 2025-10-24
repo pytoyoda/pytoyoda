@@ -37,13 +37,13 @@ jobs:
         run: |
           poetry run pytest --junitxml=pytest${{ matrix.python-version }}.xml --cov-report=term-missing:skip-covered --cov=pytoyoda | tee pytest-coverage${{ matrix.python-version }}.txt
       - name: "⬆️ Archive pytest junitxml results"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pytest${{ matrix.python-version }}
           path: ./pytest${{ matrix.python-version }}.xml
           retention-days: 1
       - name: "⬆️ Archive pytest coverage results"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pytest-coverage${{ matrix.python-version }}
           path: ./pytest-coverage${{ matrix.python-version }}.txt
@@ -60,11 +60,11 @@ jobs:
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: "⤵️ Download pytest junitxml artifact"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: pytest3.10
       - name: "⤵️ Download pytest coverage artifact"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: pytest-coverage3.10
       - name: Add pytest coverage comment to PR
