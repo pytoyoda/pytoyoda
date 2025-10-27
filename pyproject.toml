@@ -58,7 +58,7 @@ pytest-httpx = "^0.35.0"
 pytest-sugar = "^1.0.0"
 
 [tool.poetry.group.docs.dependencies]
-pdoc = "^15.0.1"
+pdoc = "^16.0.0"
 
 [tool.poetry-dynamic-versioning]
 enable = true
