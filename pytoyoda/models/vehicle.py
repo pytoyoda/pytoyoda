@@ -35,6 +35,7 @@ from pytoyoda.models.trips import Trip
 from pytoyoda.utils.helpers import add_with_none
 from pytoyoda.utils.log_utils import censor_all
 from pytoyoda.utils.models import CustomAPIBaseModel
+from __future__ import annotations
 
 T = TypeVar(
     "T",
@@ -503,6 +504,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date to report summaries.
             summary_type (SummaryType, optional): Daily, Monthly or Yearly summary.
                 Monthly by default.
+            limit (int): Maximum number of trips to return.
+            offset (int): Number of trips to skip before returning results.
 
         Returns:
             list[Summary]: A list of summaries or empty list if not supported.
@@ -614,6 +617,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date
             full_route (bool, optional): Provide the full route
                                          information for each trip.
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             Optional[list[Trip]]: A list of all trips or None if not supported.
@@ -646,7 +652,10 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     async def get_last_trip(self, **kwargs) -> Optional[Trip]:
         """Return information on the last trip.
-
+        Args:
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
         Returns:
             Optional[Trip]: A trip model or None if not supported.
 
