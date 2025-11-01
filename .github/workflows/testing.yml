@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: "🐍 Set up Python ${{ matrix.python-version }}"
-        uses: "actions/setup-python@v5"
+        uses: "actions/setup-python@v6"
         with:
           python-version: "${{ matrix.python-version }}"
       - name: "⚙️ Install Poetry"
@@ -35,16 +35,21 @@ jobs:
         run: "poetry install"
       - name: "🚀 Run pytest with coverage"
         run: |
-          poetry run pytest --cov=pytoyoda --cov-report term --cov-report xml:coverage.xml
-      - name: "⬆️ Archive code coverage results"
-        uses: actions/upload-artifact@v4
+          poetry run pytest --junitxml=pytest${{ matrix.python-version }}.xml --cov-report=term-missing:skip-covered --cov=pytoyoda | tee pytest-coverage${{ matrix.python-version }}.txt
+      - name: "⬆️ Archive pytest junitxml results"
+        uses: actions/upload-artifact@v5
         with:
-          name: test-coverage-python${{ matrix.python-version }}
-          path: coverage.xml
+          name: pytest${{ matrix.python-version }}
+          path: ./pytest${{ matrix.python-version }}.xml
           retention-days: 1
-  codacy:
-    if: github.repository_owner == 'pytoyoda'
-    name: "Codacy coverage reporter"
+      - name: "⬆️ Archive pytest coverage results"
+        uses: actions/upload-artifact@v5
+        with:
+          name: pytest-coverage${{ matrix.python-version }}
+          path: ./pytest-coverage${{ matrix.python-version }}.txt
+          retention-days: 1
+  coverage_comment:
+    name: "Pytest coverage comment"
     needs: pytest
     runs-on: ubuntu-latest
     permissions:
@@ -54,12 +59,17 @@ jobs:
         uses: "actions/checkout@v5"
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-      - name: "⤵️ Download test coverage artifact"
-        uses: actions/download-artifact@v5
+      - name: "⤵️ Download pytest junitxml artifact"
+        uses: actions/download-artifact@v6
         with:
-          name: test-coverage-python3.10
-      - name: "🚀 Run codacy-coverage-reporter"
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+          name: pytest3.10
+      - name: "⤵️ Download pytest coverage artifact"
+        uses: actions/download-artifact@v6
         with:
-          api-token: ${{ secrets.CODACY_API_TOKEN }}
-          coverage-reports: coverage.xml
+          name: pytest-coverage3.10
+      - name: Add pytest coverage comment to PR
+        if: github.event_name == 'pull_request'
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: pytest-coverage3.10.txt
+          junitxml-path: pytest3.10.xml
