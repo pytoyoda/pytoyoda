@@ -391,7 +391,7 @@ class Api:
 
     # Trip Data
 
-    async def get_trips(  # noqa: PLR0913
+    async def get_trips(
         self,
         vin: str,
         from_date: date,
@@ -408,8 +408,9 @@ class Api:
             to_date: End date for trip data (inclusive, cannot be in future)
             route: If True, returns route coordinates for each trip
             summary: If True, returns monthly and daily trip summaries
-            limit: Maximum number of trips to return (max 50)
-            offset: Starting offset for pagination
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             Model containing trip information
