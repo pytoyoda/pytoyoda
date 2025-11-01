@@ -398,7 +398,7 @@ class Api:
         to_date: date,
         route: bool = False,  # noqa : FBT001, FBT002
         summary: bool = True,  # noqa : FBT001, FBT002
-        **kwargs,
+        **kwargs: dict,
     ) -> TripsResponseModel:
         """Get a list of trips for a vehicle within a date range.
 
