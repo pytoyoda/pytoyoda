@@ -483,9 +483,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         summary_type: SummaryType = SummaryType.MONTHLY,
-        *,
-        limit: int = 1,
-        offset: int = 0,
+        **kwargs: dict
     ) -> list[Summary]:
         """Return different summarys between the provided dates.
 
@@ -503,8 +501,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date to report summaries.
             summary_type (SummaryType, optional): Daily, Monthly or Yearly summary.
                 Monthly by default.
-            limit (int): Maximum number of trips to return.
-            offset (int): Number of trips to skip before returning results.
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             list[Summary]: A list of summaries or empty list if not supported.
@@ -515,7 +514,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         # Summary information is always returned in the first response.
         # No need to check all the following pages
         resp = await self._api.get_trips(
-            self.vin, from_date, to_date, summary=True, limit=limit, offset=offset
+            self.vin, from_date, to_date, summary=True, limit=kwargs.get('limit', 1), offset=kwargs.get('offset', 0)
         )
         if resp.payload is None or len(resp.payload.summary) == 0:
             return []
