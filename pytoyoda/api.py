@@ -398,8 +398,7 @@ class Api:
         to_date: date,
         route: bool = False,  # noqa : FBT001, FBT002
         summary: bool = True,  # noqa : FBT001, FBT002
-        limit: int = 5,
-        offset: int = 0,
+        **kwargs,
     ) -> TripsResponseModel:
         """Get a list of trips for a vehicle within a date range.
 
@@ -421,8 +420,8 @@ class Api:
             to_date=to_date,
             route=route,
             summary=summary,
-            limit=limit,
-            offset=offset,
+            limit=kwargs.get("limit", 5),
+            offset=kwargs.get("offset", 0),
         )
         return await self._request_and_parse(
             TripsResponseModel, "GET", endpoint, vin=vin
