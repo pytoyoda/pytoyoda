@@ -14,6 +14,7 @@ from pytoyoda.models.endpoints.electric import (
 )
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
+from pytoyoda.models.endpoints.electric import NextChargingEvent
 
 T = TypeVar(
     "T",
@@ -184,11 +185,23 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         """Last update timestamp.
 
         Returns:
-            date: Last update timestamp.
-
+            datetime: Last update timestamp.
         """
         return (
             self._electric_status.last_update_timestamp
             if self._electric_status
             else None
+        )
+
+    @computed_field
+    @property
+    def next_charging_event(self) -> Optional[NextChargingEvent]:
+        """Next scheduled charging event.
+
+        Returns:
+            NextChargingEvent: The current active next charging event
+
+        """
+        return (
+            self._electric_status.next_charging_event if self._electric_status else None
         )

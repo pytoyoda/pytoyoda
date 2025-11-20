@@ -35,6 +35,8 @@ from pytoyoda.models.trips import Trip
 from pytoyoda.utils.helpers import add_with_none
 from pytoyoda.utils.log_utils import censor_all
 from pytoyoda.utils.models import CustomAPIBaseModel
+from pytoyoda.models.endpoints.electric import ElectricResponseModel
+from pytoyoda.models.endpoints.electric import NextChargeSettings
 
 T = TypeVar(
     "T",
@@ -684,6 +686,21 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         """
         return await self._api.send_command(self.vin, command=command, beeps=beeps)
+
+    async def send_next_charging_command(
+        self, command: NextChargeSettings
+    ) -> ElectricResponseModel:
+        """Send the next command to the vehicle.
+
+        Args:
+            vin: Vehicle Identification Number
+            command: NextChargeSettings command to send
+
+        Returns:
+            Model containing status of the command request
+
+        """
+        return await self._api.send_next_charging_command(self.vin, command=command)
 
     #
     # More get functionality depending on what we find
