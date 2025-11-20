@@ -96,13 +96,13 @@ class ElectricStatusModel(CustomEndpointBaseModel):
         event_dt_today = datetime.combine(
             ref.date(),
             time(event_time["hour"], event_time["minute"]),
-            tzinfo=ref.tzinfo,
-        )
-
-        # Berechne Tage bis zum Wochentag
+        # Calculate days until the weekday
         days_ahead = ((week_day - 1) - ref.weekday() + 7) % 7
         event_dt = event_dt_today + timedelta(days=days_ahead)
 
+        # If the event is today and the time has already passed, use next week
+        if event_dt <= ref:
+            event_dt += timedelta(days=7)
         # Wenn das Event heute ist und die Zeit schon vorbei, nimm nächste Woche
         if event_dt <= ref:
             event_dt += timedelta(days=7)
