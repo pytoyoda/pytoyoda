@@ -692,7 +692,6 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         """Send the next command to the vehicle.
 
         Args:
-            vin: Vehicle Identification Number
             command: NextChargeSettings command to send
 
         Returns:
