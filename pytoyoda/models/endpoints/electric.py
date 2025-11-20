@@ -2,14 +2,24 @@
 
 # ruff: noqa: FA100
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time, timezone
 from typing import Optional
+from pydantic import BaseModel
 
-from pydantic import Field, field_serializer
+from pydantic import Field, field_serializer, field_validator
 
 from pytoyoda.models.endpoints.common import StatusModel, UnitValueModel
 from pytoyoda.utils.models import CustomEndpointBaseModel
 
+
+class NextChargingEvent(BaseModel):
+    """Model representing the next charging event.
+    Attributes:    
+        event_type: The Event Type of the charging event.
+        timestamp: The calculated timestamp of the charging event.
+    """
+    event_type: str
+    timestamp: datetime 
 
 class ElectricStatusModel(CustomEndpointBaseModel):
     """Model representing the status of an electric vehicle.
@@ -62,6 +72,40 @@ class ElectricStatusModel(CustomEndpointBaseModel):
         """Convert minutes to timedelta for better usability."""
         return None if remaining_time is None else timedelta(minutes=remaining_time)
 
+    next_charging_event: Optional[NextChargingEvent] = Field(
+        alias="nextChargingEvent", default=None
+    )
+    @field_validator("next_charging_event", mode="before")
+    def deserialize_next_charging_event(cls, v):
+        if v is None:
+            return None
+
+        week_day = v.get("weekDay")
+        start = v.get("startTime")
+        end = v.get("endTime")
+
+        if week_day is None or (start is None and end is None):
+            return None
+
+        ref = datetime.now(timezone.utc).astimezone()
+        # toyotas api only send back start or end time
+        event_time = end or start
+        event_dt_today = datetime.combine(
+            ref.date(),
+            time(event_time["hour"], event_time["minute"]),
+            tzinfo=ref.tzinfo,
+        )
+
+        # Berechne Tage bis zum Wochentag
+        days_ahead = ((week_day - 1) - ref.weekday() + 7) % 7
+        event_dt = event_dt_today + timedelta(days=days_ahead)
+
+        # Wenn das Event heute ist und die Zeit schon vorbei, nimm nächste Woche
+        if event_dt <= ref:
+            event_dt += timedelta(days=7)
+
+        return NextChargingEvent(event_type=v.get("type"), timestamp=event_dt)
+
 
 class ElectricResponseModel(StatusModel):
     """Model representing an electric vehicle response.
@@ -74,3 +118,48 @@ class ElectricResponseModel(StatusModel):
     """
 
     payload: Optional[ElectricStatusModel] = None
+
+
+class ChargeTime(CustomEndpointBaseModel):
+    """Model representing a charging time configuration.
+
+    Attributes:
+        hour: Hour when charging starts/ends (0-23), e.g., 14
+        minute: Minute when charging starts/ends (0-59), e.g., 30
+
+    """
+
+    hour: int = Field(alias="hour")
+    minute: int = Field(alias="minute")
+
+
+class ReservationCharge(CustomEndpointBaseModel):
+    """Model representing a charging reservation configuration.
+
+    Attributes:
+        chargeType: Type of charging schedule.
+        day: Day of the week when charging starts/ends, e.g., THURSDAY
+        startTime: Optional start time for the charging window
+        endTime: Optional end time for the charging window
+
+    """
+
+    chargeType: str = Field(alias="chargeType")
+    day: str = Field(alias="day")
+    startTime: Optional[ChargeTime] = Field(alias="startTime", default=None)
+    endTime: Optional[ChargeTime] = Field(alias="endTime", default=None)
+
+
+class NextChargeSettings(CustomEndpointBaseModel):
+    """Model representing the next charge settings configuration.
+
+    Attributes:
+        command: The command to control the next charge cycle.
+        reservationCharge: Optional details for scheduled charging (e.g., charge type, time). Must be a ReservationCharge model.
+
+    """
+
+    command: str = Field(alias="command")
+    reservationCharge: Optional[ReservationCharge] = Field(
+        alias="reservationCharge", default=None
+    )
