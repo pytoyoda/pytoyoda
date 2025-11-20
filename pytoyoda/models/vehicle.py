@@ -24,6 +24,7 @@ from pytoyoda.models.dashboard import Dashboard
 from pytoyoda.models.electric_status import ElectricStatus
 from pytoyoda.models.endpoints.command import CommandType
 from pytoyoda.models.endpoints.common import StatusModel
+from pytoyoda.models.endpoints.electric import ElectricResponseModel, NextChargeSettings
 from pytoyoda.models.endpoints.trips import _SummaryItemModel
 from pytoyoda.models.endpoints.vehicle_guid import VehicleGuidModel
 from pytoyoda.models.location import Location
@@ -35,8 +36,6 @@ from pytoyoda.models.trips import Trip
 from pytoyoda.utils.helpers import add_with_none
 from pytoyoda.utils.log_utils import censor_all
 from pytoyoda.utils.models import CustomAPIBaseModel
-from pytoyoda.models.endpoints.electric import ElectricResponseModel
-from pytoyoda.models.endpoints.electric import NextChargeSettings
 
 T = TypeVar(
     "T",

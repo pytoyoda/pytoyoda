@@ -13,6 +13,7 @@ from pytoyoda.const import (
     VEHICLE_CLIMATE_STATUS_ENDPOINT,
     VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT,
     VEHICLE_COMMAND_ENDPOINT,
+    VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT,
@@ -23,7 +24,6 @@ from pytoyoda.const import (
     VEHICLE_SERVICE_HISTORY_ENDPONT,
     VEHICLE_TELEMETRY_ENDPOINT,
     VEHICLE_TRIPS_ENDPOINT,
-    VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT,
 )
 from pytoyoda.controller import Controller
 from pytoyoda.models.endpoints.climate import (
@@ -34,8 +34,7 @@ from pytoyoda.models.endpoints.climate import (
 )
 from pytoyoda.models.endpoints.command import CommandType, RemoteCommandModel
 from pytoyoda.models.endpoints.common import StatusModel
-from pytoyoda.models.endpoints.electric import ElectricResponseModel
-from pytoyoda.models.endpoints.electric import NextChargeSettings
+from pytoyoda.models.endpoints.electric import ElectricResponseModel, NextChargeSettings
 from pytoyoda.models.endpoints.location import LocationResponseModel
 from pytoyoda.models.endpoints.notifications import NotificationResponseModel
 from pytoyoda.models.endpoints.service_history import ServiceHistoryResponseModel
@@ -454,7 +453,7 @@ class Api:
             vin=vin,
             body=remote_command.model_dump(exclude_unset=True, by_alias=True),
         )
-    
+
     async def send_next_charging_command(
         self, vin: str, command: NextChargeSettings
     ) -> ElectricResponseModel:

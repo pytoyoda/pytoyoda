@@ -11,10 +11,10 @@ from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
     ElectricResponseModel,
     ElectricStatusModel,
+    NextChargingEvent,
 )
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
-from pytoyoda.models.endpoints.electric import NextChargingEvent
 
 T = TypeVar(
     "T",

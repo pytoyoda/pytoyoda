@@ -2,11 +2,10 @@
 
 # ruff: noqa: FA100
 
-from datetime import datetime, timedelta, time, timezone
+from datetime import datetime, time, timedelta, timezone
 from typing import Optional
-from pydantic import BaseModel
 
-from pydantic import Field, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from pytoyoda.models.endpoints.common import StatusModel, UnitValueModel
 from pytoyoda.utils.models import CustomEndpointBaseModel
@@ -14,12 +13,15 @@ from pytoyoda.utils.models import CustomEndpointBaseModel
 
 class NextChargingEvent(BaseModel):
     """Model representing the next charging event.
-    Attributes:    
+
+    Attributes:
         event_type: The Event Type of the charging event.
         timestamp: The calculated timestamp of the charging event.
     """
+
     event_type: str
-    timestamp: datetime 
+    timestamp: datetime
+
 
 class ElectricStatusModel(CustomEndpointBaseModel):
     """Model representing the status of an electric vehicle.
@@ -75,6 +77,7 @@ class ElectricStatusModel(CustomEndpointBaseModel):
     next_charging_event: Optional[NextChargingEvent] = Field(
         alias="nextChargingEvent", default=None
     )
+
     @field_validator("next_charging_event", mode="before")
     def deserialize_next_charging_event(cls, v):
         if v is None:
