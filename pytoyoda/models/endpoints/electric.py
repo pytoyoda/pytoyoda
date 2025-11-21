@@ -79,7 +79,19 @@ class ElectricStatusModel(CustomEndpointBaseModel):
     )
 
     @field_validator("next_charging_event", mode="before")
-    def deserialize_next_charging_event(cls, v):
+    @classmethod
+    def deserialize_next_charging_event(
+        cls,
+        v: dict[str, any],
+    ) -> Optional[NextChargingEvent]:
+        """Function that deserializes the next charging event.
+
+        Attributes:
+            cls: The Current Class
+            v: The API Response from the Toyota API
+                event can be scheduled.
+        Returns: The NextChargingEvent Object or None
+        """
         if v is None:
             return None
 
@@ -146,10 +158,10 @@ class ReservationCharge(CustomEndpointBaseModel):
 
     """
 
-    chargeType: str = Field(alias="chargeType")
+    chargetype: str = Field(alias="chargeType")
     day: str = Field(alias="day")
-    startTime: Optional[ChargeTime] = Field(alias="startTime", default=None)
-    endTime: Optional[ChargeTime] = Field(alias="endTime", default=None)
+    starttime: Optional[ChargeTime] = Field(alias="startTime", default=None)
+    endtime: Optional[ChargeTime] = Field(alias="endTime", default=None)
 
 
 class NextChargeSettings(CustomEndpointBaseModel):
@@ -157,11 +169,12 @@ class NextChargeSettings(CustomEndpointBaseModel):
 
     Attributes:
         command: The command to control the next charge cycle.
-        reservationCharge: Optional details for scheduled charging (e.g., charge type, time). Must be a ReservationCharge model.
+        reservationCharge: Optional details for scheduled charging
+        (e.g., charge type, time). Must be a ReservationCharge model.
 
     """
 
     command: str = Field(alias="command")
-    reservationCharge: Optional[ReservationCharge] = Field(
+    reservationcharge: Optional[ReservationCharge] = Field(
         alias="reservationCharge", default=None
     )
