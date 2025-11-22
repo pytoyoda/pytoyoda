@@ -2,7 +2,7 @@
 
 # ruff: noqa: FA100
 
-from datetime import date
+from datetime import datetime
 from typing import Optional, TypeVar, Union
 
 from pydantic import computed_field
@@ -185,12 +185,11 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def last_update_timestamp(self) -> Optional[date]:
+    def last_update_timestamp(self) -> Optional[datetime]:
         """Last update timestamp.
 
         Returns:
-            date: Last update timestamp.
-
+            datetime: Last update timestamp.
         """
         return (
             self._electric_status.last_update_timestamp
