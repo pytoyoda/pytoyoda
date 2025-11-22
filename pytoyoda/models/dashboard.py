@@ -74,19 +74,19 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             float: The latest odometer reading in the current selected units
-
         """
-        if (
-            self._telemetry
-            and self._telemetry.odometer
-            and (self._telemetry.odometer.unit and self._telemetry.odometer.value)
-        ):
-            return convert_distance(
-                self._distance_unit,
-                self._telemetry.odometer.unit,
-                self._telemetry.odometer.value,
-            )
-        return None
+        if self._telemetry is None:
+            return None
+
+        odo = self._telemetry.odometer
+        if odo is None or odo.unit is None or odo.value is None:
+            return None
+
+        return convert_distance(
+            self._distance_unit,
+            odo.unit,
+            odo.value,
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -95,9 +95,9 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             Distance: The latest odometer reading with unit
-
         """
-        if value := self.odometer:
+        value = self.odometer
+        if value is not None:
             return Distance(value=value, unit=self._distance_unit)
         return None
 
@@ -119,12 +119,13 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             float: A value as percentage
-
         """
-        if self._electric and self._electric.battery_level:
+        if self._electric is not None and self._electric.battery_level is not None:
             return self._electric.battery_level
-        if self._telemetry and self._telemetry.battery_level:
+
+        if self._telemetry is not None and self._telemetry.battery_level is not None:
             return self._telemetry.battery_level
+
         return None
 
     @computed_field  # type: ignore[prop-decorator]
@@ -136,31 +137,29 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
             float: The range in the currently selected unit.
                 If vehicle is electric returns 0
                 If vehicle doesn't support fuel range returns None
-
         """
+        if self._electric is not None and self._electric.fuel_range is not None:
+            fr = self._electric.fuel_range
+            if fr.unit is not None and fr.value is not None:
+                return convert_distance(
+                    self._distance_unit,
+                    fr.unit,
+                    fr.value,
+                )
+
         if (
-            self._electric
-            and self._electric.fuel_range
-            and (self._electric.fuel_range.unit and self._electric.fuel_range.value)
-        ):
-            return convert_distance(
-                self._distance_unit,
-                self._electric.fuel_range.unit,
-                self._electric.fuel_range.value,
-            )
-        if (
-            self._telemetry
-            and self._telemetry.distance_to_empty
-            and (
-                self._telemetry.distance_to_empty.unit
-                and self._telemetry.distance_to_empty.value
-            )
+            self._telemetry is not None
+            and self._telemetry.distance_to_empty is not None
+            and self._telemetry.distance_to_empty.unit is not None
+            and self._telemetry.distance_to_empty.value is not None
+            # this semantic is probably intentional
             and not self._telemetry.battery_level
         ):
+            dte = self._telemetry.distance_to_empty
             return convert_distance(
                 self._distance_unit,
-                self._telemetry.distance_to_empty.unit,
-                self._telemetry.distance_to_empty.value,
+                dte.unit,
+                dte.value,
             )
 
         return None
@@ -172,9 +171,9 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             Distance: The range with current unit
-
         """
-        if value := self.fuel_range:
+        value = self.fuel_range
+        if value is not None:
             return Distance(value=value, unit=self._distance_unit)
         return None
 
@@ -187,31 +186,30 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
             float: The range in the currently selected unit.
                 If vehicle is fuel only returns None
                 If vehicle doesn't support battery range returns None
-
         """
+        # Prefer explicit EV range from the electric endpoint
+        if self._electric is not None and self._electric.ev_range is not None:
+            ev = self._electric.ev_range
+            if ev.unit is not None and ev.value is not None:
+                return convert_distance(
+                    self._distance_unit,
+                    ev.unit,
+                    ev.value,
+                )
+
+        # Fallback to telemetry when EV info is missing
         if (
-            self._electric
-            and self._electric.ev_range
-            and (self._electric.ev_range.unit and self._electric.ev_range.value)
+            self._telemetry is not None
+            and self._telemetry.battery_level is not None
+            and self._telemetry.distance_to_empty is not None
+            and self._telemetry.distance_to_empty.unit is not None
+            and self._telemetry.distance_to_empty.value is not None
         ):
+            dte = self._telemetry.distance_to_empty
             return convert_distance(
                 self._distance_unit,
-                self._electric.ev_range.unit,
-                self._electric.ev_range.value,
-            )
-        if (
-            self._telemetry
-            and self._telemetry.battery_level
-            and self._telemetry.distance_to_empty
-            and (
-                self._telemetry.distance_to_empty.unit
-                and self._telemetry.distance_to_empty.value
-            )
-        ):
-            return convert_distance(
-                self._distance_unit,
-                self._telemetry.distance_to_empty.unit,
-                self._telemetry.distance_to_empty.value,
+                dte.unit,
+                dte.value,
             )
 
         return None
@@ -223,9 +221,9 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             Distance: The range with current unit
-
         """
-        if value := self.battery_range:
+        value = self.battery_range
+        if value is not None:
             return Distance(value=value, unit=self._distance_unit)
         return None
 
@@ -238,23 +236,19 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
             float: The range in the currently selected unit.
                 If vehicle is fuel only returns 0
                 If vehicle doesn't support battery range returns 0
-
         """
-        if (
-            self._electric
-            and self._electric.ev_range_with_ac
-            and (
-                self._electric.ev_range_with_ac.unit
-                and self._electric.ev_range_with_ac.value
-            )
-        ):
-            return convert_distance(
-                self._distance_unit,
-                self._electric.ev_range_with_ac.unit,
-                self._electric.ev_range_with_ac.value,
-            )
+        if self._electric is None or self._electric.ev_range_with_ac is None:
+            return None
 
-        return None
+        ev_ac = self._electric.ev_range_with_ac
+        if ev_ac.unit is None or ev_ac.value is None:
+            return None
+
+        return convert_distance(
+            self._distance_unit,
+            ev_ac.unit,
+            ev_ac.value,
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -263,9 +257,9 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             Distance: The range with current unit
-
         """
-        if value := self.battery_range_with_ac:
+        value = self.battery_range_with_ac
+        if value is not None:
             return Distance(value=value, unit=self._distance_unit)
         return None
 
@@ -280,20 +274,18 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
                 ev only == battery_range_with_ac
                 hybrid == fuel_range + battery_range_with_ac
                 None if not supported
-
         """
         if (
-            self._telemetry
-            and self._telemetry.distance_to_empty
-            and (
-                self._telemetry.distance_to_empty.unit
-                and self._telemetry.distance_to_empty.value
-            )
+            self._telemetry is not None
+            and self._telemetry.distance_to_empty is not None
+            and self._telemetry.distance_to_empty.unit is not None
+            and self._telemetry.distance_to_empty.value is not None
         ):
+            dte = self._telemetry.distance_to_empty
             return convert_distance(
                 self._distance_unit,
-                self._telemetry.distance_to_empty.unit,
-                self._telemetry.distance_to_empty.value,
+                dte.unit,
+                dte.value,
             )
 
         return None
@@ -305,9 +297,9 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         Returns:
             Distance: The range with current unit
-
         """
-        if value := self.range:
+        value = self.range
+        if value is not None:
             return Distance(value=value, unit=self._distance_unit)
         return None
 
@@ -332,13 +324,16 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
             timedelta: The amount of time left
                 None if vehicle is not currently charging.
                 None if vehicle doesn't support charging
-
         """
-        return (
-            timedelta(minutes=self._electric.remaining_charge_time)
-            if self._electric and self._electric.remaining_charge_time
-            else None
-        )
+        if self._electric is None:
+            return None
+
+        rct = self._electric.remaining_charge_time
+        if rct is None:
+            return None
+
+        # 0 minutes is a valid value (e.g. "finishing up now")
+        return timedelta(minutes=rct)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

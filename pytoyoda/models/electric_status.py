@@ -95,22 +95,23 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
         Returns:
             float: Electric vehicle range in the current selected units.
-
         """
-        if (
-            self._electric_status
-            and self._electric_status.ev_range
-            and (
-                self._electric_status.ev_range.unit
-                and self._electric_status.ev_range.value
-            )
-        ):
-            return convert_distance(
-                self._distance_unit,
-                self._electric_status.ev_range.unit,
-                self._electric_status.ev_range.value,
-            )
-        return None
+        if not self._electric_status:
+            return None
+
+        ev = self._electric_status.ev_range
+        if ev is None:
+            return None
+
+        # Treat 0 as a valid value — only None means "missing"
+        if ev.value is None or ev.unit is None:
+            return None
+
+        return convert_distance(
+            self._distance_unit,
+            ev.unit,
+            ev.value,
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -119,9 +120,10 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
         Returns:
             Distance: The range with current unit
-
         """
-        if value := self.ev_range:
+        value = self.ev_range
+        if value is not None:
+            # 0 is a perfectly valid value and must NOT be treated as "no EV range"
             return Distance(value=value, unit=self._distance_unit)
         return None
 
@@ -133,35 +135,38 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         Returns:
             float: Electric vehicle range with AC in the
                 current selected units.
-
         """
-        if (
-            self._electric_status
-            and self._electric_status.ev_range_with_ac
-            and (
-                self._electric_status.ev_range_with_ac.unit
-                and self._electric_status.ev_range_with_ac.value
-            )
-        ):
-            return convert_distance(
-                self._distance_unit,
-                self._electric_status.ev_range_with_ac.unit,
-                self._electric_status.ev_range_with_ac.value,
-            )
-        return None
+        if self._electric_status is None:
+            return None
+
+        ev_ac = self._electric_status.ev_range_with_ac
+        if ev_ac is None:
+            return None
+
+        # Only None means "missing"; 0.0 is valid
+        if ev_ac.unit is None or ev_ac.value is None:
+            return None
+
+        return convert_distance(
+            self._distance_unit,
+            ev_ac.unit,
+            ev_ac.value,
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def ev_range_with_ac_with_unit(self) -> Optional[Distance]:
-        """Electric vehicle range with ac with unit.
+        """Electric vehicle range with AC with unit.
 
         Returns:
-            Distance: The range with current unit
-
+            Distance: The range with current unit.
         """
-        if value := self.ev_range_with_ac:
-            return Distance(value=value, unit=self._distance_unit)
-        return None
+        value = self.ev_range_with_ac
+        if value is None:
+            return None
+
+        # 0 is a valid value; only None means "no data"
+        return Distance(value=value, unit=self._distance_unit)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
