@@ -153,8 +153,7 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
             and self._telemetry.distance_to_empty is not None
             and self._telemetry.distance_to_empty.unit is not None
             and self._telemetry.distance_to_empty.value is not None
-            # this semantic is probably intentional
-            and not self._telemetry.battery_level
+            and self._telemetry.battery_level is None  # fuel-only vehicles only
         ):
             dte = self._telemetry.distance_to_empty
             return convert_distance(
