@@ -162,11 +162,10 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
             Distance: The range with current unit.
         """
         value = self.ev_range_with_ac
-        if value is None:
-            return None
-
-        # 0 is a valid value; only None means "no data"
-        return Distance(value=value, unit=self._distance_unit)
+        if value is not None:
+            # 0 is a valid value; only None means "no data"
+            return Distance(value=value, unit=self._distance_unit)
+        return None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
