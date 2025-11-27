@@ -78,14 +78,14 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
         if self._telemetry is None:
             return None
 
-        odo = self._telemetry.odometer
-        if odo is None or odo.unit is None or odo.value is None:
+        odometer = self._telemetry.odometer
+        if odometer is None or odometer.unit is None or odometer.value is None:
             return None
 
         return convert_distance(
             self._distance_unit,
-            odo.unit,
-            odo.value,
+            odometer.unit,
+            odometer.value,
         )
 
     @computed_field  # type: ignore[prop-decorator]
@@ -139,12 +139,13 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
                 If vehicle doesn't support fuel range returns None
         """
         if self._electric is not None and self._electric.fuel_range is not None:
-            fr = self._electric.fuel_range
-            if fr.unit is not None and fr.value is not None:
+            fuel_range = self._electric.fuel_range
+
+            if fuel_range.unit is not None and fuel_range.value is not None:
                 return convert_distance(
                     self._distance_unit,
-                    fr.unit,
-                    fr.value,
+                    fuel_range.unit,
+                    fuel_range.value,
                 )
 
         if (
@@ -189,12 +190,13 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
         """
         # Prefer explicit EV range from the electric endpoint
         if self._electric is not None and self._electric.ev_range is not None:
-            ev = self._electric.ev_range
-            if ev.unit is not None and ev.value is not None:
+            ev_range = self._electric.ev_range
+
+            if ev_range.unit is not None and ev_range.value is not None:
                 return convert_distance(
                     self._distance_unit,
-                    ev.unit,
-                    ev.value,
+                    ev_range.unit,
+                    ev_range.value,
                 )
 
         # Fallback to telemetry when EV info is missing
