@@ -2,7 +2,7 @@
 
 # ruff: noqa: FA100
 
-from datetime import date
+from datetime import datetime
 from typing import Optional, TypeVar, Union
 
 from pydantic import computed_field
@@ -11,6 +11,7 @@ from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
     ElectricResponseModel,
     ElectricStatusModel,
+    NextChargingEvent,
 )
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
@@ -180,15 +181,27 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def last_update_timestamp(self) -> Optional[date]:
+    def last_update_timestamp(self) -> Optional[datetime]:
         """Last update timestamp.
 
         Returns:
-            date: Last update timestamp.
-
+            datetime: Last update timestamp.
         """
         return (
             self._electric_status.last_update_timestamp
             if self._electric_status
             else None
+        )
+
+    @computed_field
+    @property
+    def next_charging_event(self) -> Optional[NextChargingEvent]:
+        """Next scheduled charging event.
+
+        Returns:
+            NextChargingEvent: The current active next charging event
+
+        """
+        return (
+            self._electric_status.next_charging_event if self._electric_status else None
         )
