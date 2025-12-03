@@ -41,7 +41,7 @@ requires-poetry = '>=2.0,<3.0'
 
 [tool.poetry.dependencies]
 arrow = "^1.1"
-hishel = "^0.1.0"
+hishel = "^1.0.0"
 httpx = "^0.28.1"
 importlib-metadata = "^8.0.0"
 langcodes = "^3.1"
