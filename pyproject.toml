@@ -1,5 +1,6 @@
 [project]
 name = "pytoyoda"
+version = "4.0.2"  # ← NICHT mehr dynamic!
 description = "Python client for Toyota Connected Services Europe."
 license = "MIT"
 keywords = [
@@ -7,13 +8,35 @@ keywords = [
     "Car",
     "MYT",
 ]
-dynamic = ["version", "classifiers", "dependencies"]
 readme = "README.md"
 authors = [
-            {name = "CM000n", email = "simon.hoerrle@gmail.com"},
-            {name = "deejay1", email = "deejay1@srem.org"}
-            ]
-requires-python = '>=3.9,<4.0'
+    {name = "CM000n", email = "simon.hoerrle@gmail.com"},
+    {name = "deejay1", email = "deejay1@srem.org"}
+]
+requires-python = ">=3.9,<4.0"
+
+# Dependencies für pip/Home Assistant (WICHTIG!)
+dependencies = [
+    "arrow>=1.1,<2.0",
+    "hishel>=0.1.0,<0.2.0",
+    "httpx>=0.28.1,<1.0",
+    "importlib-metadata>=8.0.0,<9.0",
+    "langcodes>=3.1,<4.0",
+    "loguru>=0.7.3,<1.0",
+    "pydantic>=2.10.4,<3.0",
+    "pyjwt>=2.8.0,<3.0",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 
 [project.urls]
 homepage = "https://pytoyoda.github.io/pytoyoda/pytoyoda.html"
@@ -21,6 +44,7 @@ repository = "https://github.com/pytoyoda/pytoyoda"
 "Bug Tracker" = "https://github.com/pytoyoda/pytoyoda/issues"
 "Release Notes" = "https://github.com/pytoyoda/pytoyoda/releases"
 
+# Poetry config (für Entwickler die Poetry nutzen)
 [tool.poetry]
 version = "4.0.2"
 packages = [
@@ -37,9 +61,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-requires-poetry = '>=2.0,<3.0'
+requires-poetry = ">=2.0,<3.0"
 
 [tool.poetry.dependencies]
+python = ">=3.9,<4.0"
 arrow = "^1.1"
 hishel = "^0.1.0"
 httpx = "^0.28.1"
@@ -60,12 +85,15 @@ pytest-sugar = "^1.0.0"
 [tool.poetry.group.docs.dependencies]
 pdoc = "^15.0.1"
 
-[tool.poetry-dynamic-versioning]
-enable = true
-
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# Setuptools config (für package discovery)
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pytoyoda*"]
+exclude = ["sandbox*", "tests*", "docs*"]
 
 [tool.ruff]
 fix = true
