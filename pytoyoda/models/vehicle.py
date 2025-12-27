@@ -219,8 +219,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                         from_date=(date.today() - timedelta(days=90)),  # noqa: DTZ011
                         to_date=date.today(),  # noqa: DTZ011
                         summary=True,
-                        limit=1,
-                        offset=0,
+                        limit=kwargs.get("limit", 1),
+                        offset=kwargs.get("offset", 0),
                         route=False,
                     ),
                 ),
@@ -484,6 +484,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         summary_type: SummaryType = SummaryType.MONTHLY,
+        **kwargs: dict,
     ) -> list[Summary]:
         """Return different summarys between the provided dates.
 
@@ -501,6 +502,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date to report summaries.
             summary_type (SummaryType, optional): Daily, Monthly or Yearly summary.
                 Monthly by default.
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             list[Summary]: A list of summaries or empty list if not supported.
@@ -511,7 +515,12 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         # Summary information is always returned in the first response.
         # No need to check all the following pages
         resp = await self._api.get_trips(
-            self.vin, from_date, to_date, summary=True, limit=1, offset=0
+            self.vin,
+            from_date,
+            to_date,
+            summary=True,
+            limit=kwargs.get("limit", 1),
+            offset=kwargs.get("offset", 0),
         )
         if resp.payload is None or len(resp.payload.summary) == 0:
             return []
@@ -603,6 +612,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         full_route: bool = False,  # noqa : FBT001, FBT002
+        **kwargs: dict,
     ) -> Optional[list[Trip]]:
         """Return information on all trips made between the provided dates.
 
@@ -611,20 +621,23 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date
             full_route (bool, optional): Provide the full route
                                          information for each trip.
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             Optional[list[Trip]]: A list of all trips or None if not supported.
 
         """
         ret: list[Trip] = []
-        offset = 0
+        offset = kwargs.get("offset", 0)
         while True:
             resp = await self._api.get_trips(
                 self.vin,
                 from_date,
                 to_date,
                 summary=False,
-                limit=5,
+                limit=kwargs.get("limit", 5),
                 offset=offset,
                 route=full_route,
             )
@@ -641,8 +654,13 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         return ret
 
-    async def get_last_trip(self) -> Optional[Trip]:
+    async def get_last_trip(self, **kwargs: dict) -> Optional[Trip]:
         """Return information on the last trip.
+
+        Args:
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             Optional[Trip]: A trip model or None if not supported.
@@ -653,9 +671,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             date.today() - timedelta(days=90),  # noqa : DTZ011
             date.today(),  # noqa : DTZ011
             summary=False,
-            limit=1,
-            offset=0,
             route=False,
+            limit=kwargs.get("limit", 1),
+            offset=kwargs.get("offset", 0),
         )
 
         if resp.payload is None:
