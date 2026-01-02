@@ -140,8 +140,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         if self._electric_status is None:
             return None
 
-        ev_ac = self._electric_status.ev_range_with_ac
-        if ev_ac is None:
+        if (ev_ac := self._electric_status.ev_range_with_ac) is None:
             return None
 
         # Only None means "missing"; 0.0 is valid

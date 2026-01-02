@@ -329,8 +329,7 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
         if self._electric is None:
             return None
 
-        rct = self._electric.remaining_charge_time
-        if rct is None:
+        if (rct := self._electric.remaining_charge_time) is None:
             return None
 
         # 0 minutes is a valid value (e.g. "finishing up now")
