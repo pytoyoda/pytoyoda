@@ -392,15 +392,14 @@ class Api:
 
     # Trip Data
 
-    async def get_trips(  # noqa: PLR0913
+    async def get_trips(
         self,
         vin: str,
         from_date: date,
         to_date: date,
         route: bool = False,  # noqa : FBT001, FBT002
         summary: bool = True,  # noqa : FBT001, FBT002
-        limit: int = 5,
-        offset: int = 0,
+        **kwargs: dict,
     ) -> TripsResponseModel:
         """Get a list of trips for a vehicle within a date range.
 
@@ -410,8 +409,9 @@ class Api:
             to_date: End date for trip data (inclusive, cannot be in future)
             route: If True, returns route coordinates for each trip
             summary: If True, returns monthly and daily trip summaries
-            limit: Maximum number of trips to return (max 50)
-            offset: Starting offset for pagination
+            **kwargs: Additional query parameters.
+                - limit (int): Maximum number of trips to return.
+                - offset (int): Number of trips to skip before returning results.
 
         Returns:
             Model containing trip information
@@ -422,8 +422,8 @@ class Api:
             to_date=to_date,
             route=route,
             summary=summary,
-            limit=limit,
-            offset=offset,
+            limit=kwargs.get("limit", 5),
+            offset=kwargs.get("offset", 0),
         )
         return await self._request_and_parse(
             TripsResponseModel, "GET", endpoint, vin=vin
