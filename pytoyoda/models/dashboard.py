@@ -11,6 +11,7 @@ from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
     ElectricResponseModel,
     ElectricStatusModel,
+    ChargingSchedule,
 )
 from pytoyoda.models.endpoints.telemetry import TelemetryModel, TelemetryResponseModel
 from pytoyoda.models.endpoints.vehicle_health import (
@@ -346,3 +347,14 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         """
         return self._health.warning if self._health else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def charging_schedules(self) -> Optional[list[ChargingSchedule]]:
+        """Return charging schedules as parsed from the electric endpoint."""
+        if self._electric is None:
+            return None
+
+        # The ElectricStatusModel will have `charging_schedules` populated
+        schedules = getattr(self._electric, "charging_schedules", None)
+        return schedules

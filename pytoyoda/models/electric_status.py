@@ -11,7 +11,9 @@ from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
     ElectricResponseModel,
     ElectricStatusModel,
+    ScheduledChargeWindow,
     NextChargingEvent,
+    ChargingSchedule,
 )
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
@@ -20,7 +22,6 @@ T = TypeVar(
     "T",
     bound=Union[ElectricResponseModel, bool],
 )
-
 
 class ElectricStatus(CustomAPIBaseModel[type[T]]):
     """ElectricStatus."""
@@ -208,3 +209,60 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         return (
             self._electric_status.next_charging_event if self._electric_status else None
         )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def charging_schedules(self) -> Optional[list[ChargingSchedule]]:
+        """Charging schedules returned by the API.
+
+        Returns:
+            list[ChargingSchedule]: List of charging schedules or None
+        """
+        return (
+            self._electric_status.charging_schedules
+            if self._electric_status
+            else None
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def has_active_charging_schedule(self) -> Optional[bool]:
+        """Whether there is at least one active charging schedule.
+
+        Returns:
+            bool: True if there is at least one active charging schedule, False otherwise.
+        """
+        if self.charging_schedules is None:
+            return False
+        return any(schedule.enabled for schedule in self.charging_schedules)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def active_scheduled_charging(self) -> Optional[ScheduledChargeWindow]:
+        """Get the active scheduled charging event, if any.
+
+        Returns:
+            NextChargingEvent: The active scheduled charging event, or None if there is none.
+        """
+        if not self.has_active_charging_schedule:
+            return None
+
+        now = datetime.now().astimezone()
+        next_window: Optional[ScheduledChargeWindow] = None
+
+        for schedule in self.charging_schedules or []:
+            if not schedule.enabled:
+                continue
+
+            try:
+                window = schedule.next_occurrence(ref=now)
+            except Exception:
+                window = None
+
+            if window is None:
+                continue
+
+            if next_window is None or window.start < next_window.start:
+                next_window = window
+
+        return next_window

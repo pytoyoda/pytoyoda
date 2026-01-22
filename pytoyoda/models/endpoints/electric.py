@@ -3,7 +3,9 @@
 # ruff: noqa: FA100
 
 from datetime import datetime, time, timedelta, timezone
+from dataclasses import dataclass
 from typing import Optional
+from typing import List
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
@@ -38,6 +40,7 @@ class ElectricStatusModel(CustomEndpointBaseModel):
         fuel_range: The estimated driving range on current fuel (for hybrid vehicles).
         last_update_timestamp: When the data was last updated from the vehicle.
         remaining_charge_time: Minutes remaining until battery is fully charged.
+        charging_schedules: List of charging schedules configured in the vehicle.
 
     """
 
@@ -65,6 +68,9 @@ class ElectricStatusModel(CustomEndpointBaseModel):
         alias="remainingChargeTime",
         default=None,
         description="Time remaining in minutes until fully charged",
+    )
+    charging_schedules: Optional[List["ChargingSchedule"]] = Field(
+        alias="chargingSchedules", default=None
     )
 
     @field_serializer("remaining_charge_time")
@@ -121,6 +127,126 @@ class ElectricStatusModel(CustomEndpointBaseModel):
         return NextChargingEvent(event_type=v.get("type"), timestamp=event_dt)
 
 
+class Days(BaseModel):
+    """Model representing enabled days for a schedule.
+
+    Attributes:
+        mon..sun: 1 when enabled, 0 otherwise.
+    """
+
+    mon: Optional[int] = Field(alias="mon", default=0)
+    tue: Optional[int] = Field(alias="tue", default=0)
+    wed: Optional[int] = Field(alias="wed", default=0)
+    thu: Optional[int] = Field(alias="thu", default=0)
+    fri: Optional[int] = Field(alias="fri", default=0)
+    sat: Optional[int] = Field(alias="sat", default=0)
+    sun: Optional[int] = Field(alias="sun", default=0)
+
+
+class ChargingSchedule(CustomEndpointBaseModel):
+    """Model representing a charging schedule returned by the API.
+
+    Attributes:
+        id: Schedule identifier
+        enabled: Whether the schedule is enabled
+        type: Type of schedule (startEnd, startOnly)
+        start_time: Mandatory start time object
+        end_time: Optional end time object
+        days: Days object with enabled weekdays
+    """
+
+    id: int = Field(alias="id")
+    enabled: bool = Field(alias="enabled")
+    type: str = Field(alias="type")
+    start_time: "ChargeTime" = Field(alias="startTime")
+    end_time: Optional["ChargeTime"] = Field(alias="endTime", default=None)
+    days: Days = Field(alias="days")
+
+    @field_validator("days", mode="after")
+    @classmethod
+    def _validate_days(cls, v: Days) -> Days:
+        if v is None:
+            raise ValueError("`days` must be present and contain at least one enabled day")
+
+        if not any(
+            bool(getattr(v, d, None)) for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+        ):
+            raise ValueError("At least one day must be enabled in `days`")
+
+        return v
+
+    def next_occurrence(self, ref: Optional[datetime] = None) -> Optional["ScheduledChargeWindow"]:
+        """Return the next scheduled charge window for this schedule after `ref`.
+
+        Returns a `ScheduledChargeWindow` containing start, optional end and duration.
+        """
+        if not self.enabled:
+            return None
+
+        ref = ref or datetime.now(timezone.utc).astimezone()
+        tz = ref.tzinfo
+
+        names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+        enabled = [i for i, n in enumerate(names) if bool(getattr(self.days, n, 0))]
+        if not enabled:
+            return None
+
+        candidates: list[datetime] = []
+        for wd in enabled:
+            days_ahead = (wd - ref.weekday() + 7) % 7
+            candidate_date = ref.date() + timedelta(days=days_ahead)
+            candidate_dt = datetime.combine(
+                candidate_date,
+                time(self.start_time.hour, self.start_time.minute),
+                tzinfo=tz,
+            )
+            if candidate_dt <= ref:
+                candidate_dt += timedelta(days=7)
+            candidates.append(candidate_dt)
+
+        if not candidates:
+            return None
+
+        start_dt = min(candidates)
+
+        end_dt: Optional[datetime] = None
+        duration: Optional[timedelta] = None
+        if self.end_time is not None:
+            end_dt = datetime.combine(
+                start_dt.date(),
+                time(self.end_time.hour, self.end_time.minute),
+                tzinfo=start_dt.tzinfo,
+            )
+            if end_dt <= start_dt:
+                end_dt += timedelta(days=1)
+            duration = end_dt - start_dt
+
+        return ScheduledChargeWindow(start=start_dt, end=end_dt, duration=duration)
+
+
+@dataclass
+class ScheduledChargeWindow:
+    """Represents the next scheduled charge window.
+
+    Attributes:
+        start: Start timestamp of the scheduled charge (aware datetime).
+        end: Optional end timestamp of the scheduled charge (aware datetime).
+        duration: Optional duration (timedelta) if end is provided.
+    """
+
+    start: datetime
+    end: Optional[datetime] = None
+    duration: Optional[timedelta] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "start": self.start.isoformat() if self.start is not None else None,
+            "end": self.end.isoformat() if self.end is not None else None,
+            "duration_minutes": int(self.duration.total_seconds()) // 60 if self.duration is not None else None,
+        }
+
+
+
 class ElectricResponseModel(StatusModel):
     """Model representing an electric vehicle response.
 
@@ -151,7 +277,7 @@ class ReservationCharge(CustomEndpointBaseModel):
     """Model representing a charging reservation configuration.
 
     Attributes:
-        chargeType: Type of charging schedule.
+        chargeType: Type of charging schedule (startOnly, startEnd).
         day: Day of the week when charging starts/ends, e.g., THURSDAY
         startTime: Optional start time for the charging window
         endTime: Optional end time for the charging window
@@ -178,3 +304,9 @@ class NextChargeSettings(CustomEndpointBaseModel):
     reservationcharge: Optional[ReservationCharge] = Field(
         alias="reservationCharge", default=None
     )
+
+
+# Resolve forward references for Pydantic models that reference each other
+ChargingSchedule.update_forward_refs()
+ReservationCharge.update_forward_refs()
+ElectricStatusModel.update_forward_refs()
