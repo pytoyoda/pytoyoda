@@ -9,11 +9,11 @@ from pydantic import computed_field
 
 from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
+    ChargingSchedule,
     ElectricResponseModel,
     ElectricStatusModel,
-    ScheduledChargeWindow,
     NextChargingEvent,
-    ChargingSchedule,
+    ScheduledChargeWindow,
 )
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
@@ -22,6 +22,7 @@ T = TypeVar(
     "T",
     bound=Union[ElectricResponseModel, bool],
 )
+
 
 class ElectricStatus(CustomAPIBaseModel[type[T]]):
     """ElectricStatus."""
@@ -219,9 +220,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
             list[ChargingSchedule]: List of charging schedules or None
         """
         return (
-            self._electric_status.charging_schedules
-            if self._electric_status
-            else None
+            self._electric_status.charging_schedules if self._electric_status else None
         )
 
     @computed_field  # type: ignore[prop-decorator]

@@ -2,10 +2,9 @@
 
 # ruff: noqa: FA100
 
-from datetime import datetime, time, timedelta, timezone
 from dataclasses import dataclass
-from typing import Optional
-from typing import List
+from datetime import datetime, time, timedelta, timezone
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
@@ -166,16 +165,21 @@ class ChargingSchedule(CustomEndpointBaseModel):
     @classmethod
     def _validate_days(cls, v: Days) -> Days:
         if v is None:
-            raise ValueError("`days` must be present and contain at least one enabled day")
+            raise ValueError(
+                "`days` must be present and contain at least one enabled day"
+            )
 
         if not any(
-            bool(getattr(v, d, None)) for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+            bool(getattr(v, d, None))
+            for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
         ):
             raise ValueError("At least one day must be enabled in `days`")
 
         return v
 
-    def next_occurrence(self, ref: Optional[datetime] = None) -> Optional["ScheduledChargeWindow"]:
+    def next_occurrence(
+        self, ref: Optional[datetime] = None
+    ) -> Optional["ScheduledChargeWindow"]:
         """Return the next scheduled charge window for this schedule after `ref`.
 
         Returns a `ScheduledChargeWindow` containing start, optional end and duration.
@@ -242,9 +246,10 @@ class ScheduledChargeWindow:
         return {
             "start": self.start.isoformat() if self.start is not None else None,
             "end": self.end.isoformat() if self.end is not None else None,
-            "duration_minutes": int(self.duration.total_seconds()) // 60 if self.duration is not None else None,
+            "duration_minutes": int(self.duration.total_seconds()) // 60
+            if self.duration is not None
+            else None,
         }
-
 
 
 class ElectricResponseModel(StatusModel):

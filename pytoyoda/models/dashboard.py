@@ -9,9 +9,9 @@ from pydantic import computed_field
 
 from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
+    ChargingSchedule,
     ElectricResponseModel,
     ElectricStatusModel,
-    ChargingSchedule,
 )
 from pytoyoda.models.endpoints.telemetry import TelemetryModel, TelemetryResponseModel
 from pytoyoda.models.endpoints.vehicle_health import (
