@@ -179,23 +179,17 @@ class ChargingSchedule(CustomEndpointBaseModel):
 
         return v
 
-    def next_occurrence(
-        self, ref: Optional[datetime] = None
-    ) -> Optional["ScheduledChargeWindow"]:
-        """Return the next scheduled charge window for this schedule after `ref`.
+    def _next_start(self, ref: datetime) -> Optional[datetime]:
+        """Compute the next start datetime for this schedule after `ref`.
 
-        Returns a `ScheduledChargeWindow` containing start, optional end and duration.
+        Returns the earliest candidate datetime or None if no weekdays enabled.
         """
-        if not self.enabled:
-            return None
-
-        ref = ref or datetime.now(timezone.utc).astimezone()
-        tz = ref.tzinfo
-
         names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
         enabled_wd = [i for i, n in enumerate(names) if bool(getattr(self.days, n, 0))]
         if not enabled_wd:
             return None
+
+        tz = ref.tzinfo
 
         def _candidate_for_weekday(wd: int) -> datetime:
             days_ahead = (wd - ref.weekday() + 7) % 7
@@ -210,19 +204,42 @@ class ChargingSchedule(CustomEndpointBaseModel):
             return candidate_dt
 
         candidates = [_candidate_for_weekday(wd) for wd in enabled_wd]
-        start_dt = min(candidates)
+        return min(candidates) if candidates else None
 
-        end_dt: Optional[datetime] = None
-        duration: Optional[timedelta] = None
-        if self.end_time is not None:
-            end_dt = datetime.combine(
-                start_dt.date(),
-                time(self.end_time.hour, self.end_time.minute),
-                tzinfo=start_dt.tzinfo,
-            )
-            if end_dt <= start_dt:
-                end_dt += timedelta(days=1)
-            duration = end_dt - start_dt
+    def _end_and_duration(self, start_dt: datetime) -> tuple[Optional[datetime], Optional[timedelta]]:
+        """Compute end datetime and duration given a start datetime.
+
+        Returns (end_dt, duration) where either may be None.
+        """
+        if self.end_time is None:
+            return None, None
+
+        end_dt = datetime.combine(
+            start_dt.date(),
+            time(self.end_time.hour, self.end_time.minute),
+            tzinfo=start_dt.tzinfo,
+        )
+        if end_dt <= start_dt:
+            end_dt += timedelta(days=1)
+        return end_dt, end_dt - start_dt
+
+    def next_occurrence(
+        self, ref: Optional[datetime] = None
+    ) -> Optional["ScheduledChargeWindow"]:
+        """Return the next scheduled charge window for this schedule after `ref`.
+
+        Returns a `ScheduledChargeWindow` containing start, optional end and duration.
+        """
+        if not self.enabled:
+            return None
+
+        ref = ref or datetime.now(timezone.utc).astimezone()
+
+        start_dt = self._next_start(ref)
+        if start_dt is None:
+            return None
+
+        end_dt, duration = self._end_and_duration(start_dt)
 
         return ScheduledChargeWindow(start=start_dt, end=end_dt, duration=duration)
 
