@@ -191,12 +191,11 @@ class ChargingSchedule(CustomEndpointBaseModel):
         tz = ref.tzinfo
 
         names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
-        enabled = [i for i, n in enumerate(names) if bool(getattr(self.days, n, 0))]
-        if not enabled:
+        enabled_wd = [i for i, n in enumerate(names) if bool(getattr(self.days, n, 0))]
+        if not enabled_wd:
             return None
 
-        candidates: list[datetime] = []
-        for wd in enabled:
+        def _candidate_for_weekday(wd: int) -> datetime:
             days_ahead = (wd - ref.weekday() + 7) % 7
             candidate_date = ref.date() + timedelta(days=days_ahead)
             candidate_dt = datetime.combine(
@@ -206,11 +205,9 @@ class ChargingSchedule(CustomEndpointBaseModel):
             )
             if candidate_dt <= ref:
                 candidate_dt += timedelta(days=7)
-            candidates.append(candidate_dt)
+            return candidate_dt
 
-        if not candidates:
-            return None
-
+        candidates = [_candidate_for_weekday(wd) for wd in enabled_wd]
         start_dt = min(candidates)
 
         end_dt: Optional[datetime] = None
