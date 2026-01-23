@@ -225,7 +225,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def has_active_charging_schedule(self) -> Optional[bool]:
+    def has_active_charging_schedule(self) -> bool:
         """Whether there is at least one active charging schedule.
 
         Returns:
@@ -241,27 +241,23 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         """Get the active scheduled charging event, if any.
 
         Returns:
-            NextChargingEvent: The active scheduled charging event, or None if there is none.
+            ScheduledChargeWindow: The active scheduled charging event, or None if there is none.
         """
         if not self.has_active_charging_schedule:
             return None
 
         now = datetime.now().astimezone()
-        next_window: Optional[ScheduledChargeWindow] = None
 
-        for schedule in self.charging_schedules or []:
-            if not schedule.enabled:
-                continue
-
+        def _next_window_for_schedule(sched: ChargingSchedule) -> Optional[ScheduledChargeWindow]:
+            if not sched.enabled:
+                return None
             try:
-                window = schedule.next_occurrence(ref=now)
-            except Exception:
-                window = None
+                return sched.next_occurrence(ref=now)
+            except (ValueError, TypeError, AttributeError):
+                return None
 
-            if window is None:
-                continue
+        windows = [w for s in (self.charging_schedules or []) for w in (_next_window_for_schedule(s),) if w]
+        if not windows:
+            return None
 
-            if next_window is None or window.start < next_window.start:
-                next_window = window
-
-        return next_window
+        return min(windows, key=lambda w: w.start)

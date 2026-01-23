@@ -352,9 +352,4 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
     @property
     def charging_schedules(self) -> Optional[list[ChargingSchedule]]:
         """Return charging schedules as parsed from the electric endpoint."""
-        if self._electric is None:
-            return None
-
-        # The ElectricStatusModel will have `charging_schedules` populated
-        schedules = getattr(self._electric, "charging_schedules", None)
-        return schedules
+        return self._electric.charging_schedules if self._electric else None

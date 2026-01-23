@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
@@ -68,7 +68,7 @@ class ElectricStatusModel(CustomEndpointBaseModel):
         default=None,
         description="Time remaining in minutes until fully charged",
     )
-    charging_schedules: Optional[List["ChargingSchedule"]] = Field(
+    charging_schedules: Optional[list["ChargingSchedule"]] = Field(
         alias="chargingSchedules", default=None
     )
 
@@ -250,7 +250,6 @@ class ScheduledChargeWindow:
             if self.duration is not None
             else None,
         }
-
 
 class ElectricResponseModel(StatusModel):
     """Model representing an electric vehicle response.
