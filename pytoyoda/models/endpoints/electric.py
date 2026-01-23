@@ -165,15 +165,17 @@ class ChargingSchedule(CustomEndpointBaseModel):
     @classmethod
     def _validate_days(cls, v: Days) -> Days:
         if v is None:
-            raise ValueError(
+            error_message = (
                 "`days` must be present and contain at least one enabled day"
             )
+            raise ValueError(error_message)
 
         if not any(
             bool(getattr(v, d, None))
             for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
         ):
-            raise ValueError("At least one day must be enabled in `days`")
+            error_message = "At least one day must be enabled in `days`"
+            raise ValueError(error_message)
 
         return v
 
@@ -238,15 +240,6 @@ class ScheduledChargeWindow:
     start: datetime
     end: Optional[datetime] = None
     duration: Optional[timedelta] = None
-
-    def to_dict(self) -> dict:
-        return {
-            "start": self.start.isoformat() if self.start is not None else None,
-            "end": self.end.isoformat() if self.end is not None else None,
-            "duration_minutes": int(self.duration.total_seconds()) // 60
-            if self.duration is not None
-            else None,
-        }
 
 
 class ElectricResponseModel(StatusModel):

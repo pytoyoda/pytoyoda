@@ -229,7 +229,8 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         """Whether there is at least one active charging schedule.
 
         Returns:
-            bool: True if there is at least one active charging schedule, False otherwise.
+            bool: True if there is at least one active charging schedule, False
+              otherwise.
         """
         if self.charging_schedules is None:
             return False
@@ -241,7 +242,8 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         """Get the active scheduled charging event, if any.
 
         Returns:
-            ScheduledChargeWindow: The active scheduled charging event, or None if there is none.
+            ScheduledChargeWindow: The active scheduled charging event, or None
+              if there is none.
         """
         if not self.has_active_charging_schedule:
             return None
