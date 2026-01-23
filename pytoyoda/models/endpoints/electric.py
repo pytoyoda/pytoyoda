@@ -251,6 +251,7 @@ class ScheduledChargeWindow:
             else None,
         }
 
+
 class ElectricResponseModel(StatusModel):
     """Model representing an electric vehicle response.
 

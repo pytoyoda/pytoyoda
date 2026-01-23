@@ -248,7 +248,9 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
         now = datetime.now().astimezone()
 
-        def _next_window_for_schedule(sched: ChargingSchedule) -> Optional[ScheduledChargeWindow]:
+        def _next_window_for_schedule(
+            sched: ChargingSchedule,
+        ) -> Optional[ScheduledChargeWindow]:
             if not sched.enabled:
                 return None
             try:
@@ -256,7 +258,12 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
             except (ValueError, TypeError, AttributeError):
                 return None
 
-        windows = [w for s in (self.charging_schedules or []) for w in (_next_window_for_schedule(s),) if w]
+        windows = [
+            w
+            for s in (self.charging_schedules or [])
+            for w in (_next_window_for_schedule(s),)
+            if w
+        ]
         if not windows:
             return None
 
