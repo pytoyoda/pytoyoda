@@ -4,6 +4,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
@@ -206,7 +207,9 @@ class ChargingSchedule(CustomEndpointBaseModel):
         candidates = [_candidate_for_weekday(wd) for wd in enabled_wd]
         return min(candidates) if candidates else None
 
-    def _end_and_duration(self, start_dt: datetime) -> tuple[Optional[datetime], Optional[timedelta]]:
+    def _end_and_duration(
+        self, start_dt: datetime
+    ) -> tuple[Optional[datetime], Optional[timedelta]]:
         """Compute end datetime and duration given a start datetime.
 
         Returns (end_dt, duration) where either may be None.
@@ -272,6 +275,24 @@ class ElectricResponseModel(StatusModel):
     payload: Optional[ElectricStatusModel] = None
 
 
+class _ElectricCommandResponsePayload(CustomEndpointBaseModel):
+    app_request_no: Optional[str] = Field(alias="appRequestNo", default=None)
+    return_code: Optional[str] = Field(alias="returnCode", default=None)
+
+
+class ElectricCommandResponseModel(StatusModel):
+    """Model for responses returned by electric command endpoint.
+
+    Inherits from StatusModel.
+
+    Attributes:
+        payload: The request acknowledgment data if request was successful.
+
+    """
+
+    payload: Optional[_ElectricCommandResponsePayload] = None
+
+
 class ChargeTime(CustomEndpointBaseModel):
     """Model representing a charging time configuration.
 
@@ -302,6 +323,17 @@ class ReservationCharge(CustomEndpointBaseModel):
     endtime: Optional[ChargeTime] = Field(alias="endTime", default=None)
 
 
+class ChargeCommandType(str, Enum):
+    """List of possible next charge commands.
+
+    Each value represents a specific command that can be sent to the vehicle.
+    """
+
+    CHARGE_NOW = "CHARGE_NOW"
+    RESERVE_CHARGE = "RESERVE_CHARGE"
+    SET_CHARGING_TIME = "SET_CHARGING_TIME"
+
+
 class NextChargeSettings(CustomEndpointBaseModel):
     """Model representing the next charge settings configuration.
 
@@ -312,7 +344,7 @@ class NextChargeSettings(CustomEndpointBaseModel):
 
     """
 
-    command: str = Field(alias="command")
+    command: ChargeCommandType = Field(alias="command")
     reservationcharge: Optional[ReservationCharge] = Field(
         alias="reservationCharge", default=None
     )

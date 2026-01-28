@@ -24,7 +24,10 @@ from pytoyoda.models.dashboard import Dashboard
 from pytoyoda.models.electric_status import ElectricStatus
 from pytoyoda.models.endpoints.command import CommandType
 from pytoyoda.models.endpoints.common import StatusModel
-from pytoyoda.models.endpoints.electric import ElectricResponseModel, NextChargeSettings
+from pytoyoda.models.endpoints.electric import (
+    ElectricCommandResponseModel,
+    NextChargeSettings,
+)
 from pytoyoda.models.endpoints.trips import _SummaryItemModel
 from pytoyoda.models.endpoints.vehicle_guid import VehicleGuidModel
 from pytoyoda.models.location import Location
@@ -688,7 +691,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     async def send_next_charging_command(
         self, command: NextChargeSettings
-    ) -> ElectricResponseModel:
+    ) -> ElectricCommandResponseModel:
         """Send the next command to the vehicle.
 
         Args:
