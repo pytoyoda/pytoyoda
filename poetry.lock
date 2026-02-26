@@ -34,21 +34,6 @@ typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 trio = ["trio (>=0.31.0)"]
 
 [[package]]
-name = "anysqlite"
-version = "0.0.5"
-description = ""
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "anysqlite-0.0.5-py3-none-any.whl", hash = "sha256:cb345dc4f76f6b37f768d7a0b3e9cf5c700dfcb7a6356af8ab46a11f666edbe7"},
-    {file = "anysqlite-0.0.5.tar.gz", hash = "sha256:9dfcf87baf6b93426ad1d9118088c41dbf24ef01b445eea4a5d486bac2755cce"},
-]
-
-[package.dependencies]
-anyio = ">3.4.0"
-
-[[package]]
 name = "arrow"
 version = "1.4.0"
 description = "Better dates & times for Python"
@@ -309,30 +294,25 @@ files = [
 
 [[package]]
 name = "hishel"
-version = "0.1.5"
-description = "Persistent cache implementation for httpx and httpcore"
+version = "1.1.8"
+description = "Elegant HTTP Caching for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "hishel-0.1.5-py3-none-any.whl", hash = "sha256:0bfbe9a2b9342090eba82ba6de88258092e1c4c7b730cd4cb4b570e4b40e44a7"},
-    {file = "hishel-0.1.5.tar.gz", hash = "sha256:9d40c682cd94fd6e1394fb05713ae20a75ed8aeba6f5272380444039ce6257f2"},
+    {file = "hishel-1.1.8-py3-none-any.whl", hash = "sha256:29e45e090c647920b666e9d2b21e494c97dc12f49e7d88fd31d9e4e7e4b75d4d"},
+    {file = "hishel-1.1.8.tar.gz", hash = "sha256:bcd15ad282bd530e97a676b2d16a58e5034750e8a6955e77babfea69fc5b4ad8"},
 ]
 
 [package.dependencies]
-anyio = ">=4.9.0"
-anysqlite = ">=0.0.5"
-httpx = ">=0.28.0"
 msgpack = ">=1.1.2"
 typing-extensions = ">=4.14.1"
 
 [package.extras]
-httpx = ["httpx (>=0.28.1)"]
-redis = ["redis (==6.2.0)"]
+async = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)"]
+fastapi = ["fastapi (>=0.119.1)"]
+httpx = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)", "httpx (>=0.28.1)"]
 requests = ["requests (>=2.32.5)"]
-s3 = ["boto3 (>=1.15.0,<=1.15.3) ; python_version < \"3.12\"", "boto3 (>=1.15.3) ; python_version >= \"3.12\""]
-sqlite = ["anysqlite (>=0.0.5)"]
-yaml = ["pyyaml (==6.0.2)"]
 
 [[package]]
 name = "httpcore"
@@ -1341,4 +1321,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "ff21a98c3cf9065a346a13f31e2b12b7a4620f424e8cf97c09fd4cf4ec97fa03"
+content-hash = "edf100de5f926bc0d5bcd28b2b40b445893b0ccc66264d3ebc2d403113d622ac"
