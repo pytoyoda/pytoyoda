@@ -9,6 +9,7 @@ from pydantic import computed_field
 
 from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
+    ChargingSchedule,
     ElectricResponseModel,
     ElectricStatusModel,
 )
@@ -346,3 +347,9 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
 
         """
         return self._health.warning if self._health else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def charging_schedules(self) -> Optional[list[ChargingSchedule]]:
+        """Return charging schedules as parsed from the electric endpoint."""
+        return self._electric.charging_schedules if self._electric else None

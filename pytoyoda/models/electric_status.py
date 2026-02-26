@@ -9,9 +9,11 @@ from pydantic import computed_field
 
 from pytoyoda.const import KILOMETERS_UNIT, MILES_UNIT
 from pytoyoda.models.endpoints.electric import (
+    ChargingSchedule,
     ElectricResponseModel,
     ElectricStatusModel,
     NextChargingEvent,
+    ScheduledChargeWindow,
 )
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
@@ -208,3 +210,63 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         return (
             self._electric_status.next_charging_event if self._electric_status else None
         )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def charging_schedules(self) -> Optional[list[ChargingSchedule]]:
+        """Charging schedules returned by the API.
+
+        Returns:
+            list[ChargingSchedule]: List of charging schedules or None
+        """
+        return (
+            self._electric_status.charging_schedules if self._electric_status else None
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def has_active_charging_schedule(self) -> bool:
+        """Whether there is at least one active charging schedule.
+
+        Returns:
+            bool: True if there is at least one active charging schedule, False
+              otherwise.
+        """
+        if self.charging_schedules is None:
+            return False
+        return any(schedule.enabled for schedule in self.charging_schedules)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def active_scheduled_charging(self) -> Optional[ScheduledChargeWindow]:
+        """Get the active scheduled charging event, if any.
+
+        Returns:
+            ScheduledChargeWindow: The active scheduled charging event, or None
+              if there is none.
+        """
+        if not self.has_active_charging_schedule:
+            return None
+
+        now = datetime.now().astimezone()
+
+        def _next_window_for_schedule(
+            sched: ChargingSchedule,
+        ) -> Optional[ScheduledChargeWindow]:
+            if not sched.enabled:
+                return None
+            try:
+                return sched.next_occurrence(ref=now)
+            except (ValueError, TypeError, AttributeError):
+                return None
+
+        windows = [
+            w
+            for s in (self.charging_schedules or [])
+            for w in (_next_window_for_schedule(s),)
+            if w
+        ]
+        if not windows:
+            return None
+
+        return min(windows, key=lambda w: w.start)

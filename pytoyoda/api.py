@@ -34,7 +34,11 @@ from pytoyoda.models.endpoints.climate import (
 )
 from pytoyoda.models.endpoints.command import CommandType, RemoteCommandModel
 from pytoyoda.models.endpoints.common import StatusModel
-from pytoyoda.models.endpoints.electric import ElectricResponseModel, NextChargeSettings
+from pytoyoda.models.endpoints.electric import (
+    ElectricCommandResponseModel,
+    ElectricResponseModel,
+    NextChargeSettings,
+)
 from pytoyoda.models.endpoints.location import LocationResponseModel
 from pytoyoda.models.endpoints.notifications import NotificationResponseModel
 from pytoyoda.models.endpoints.service_history import ServiceHistoryResponseModel
@@ -49,6 +53,7 @@ T = TypeVar(
     "T",
     bound=Union[
         StatusModel,
+        ElectricCommandResponseModel,
         ElectricResponseModel,
         LocationResponseModel,
         NotificationResponseModel,
@@ -456,7 +461,7 @@ class Api:
 
     async def send_next_charging_command(
         self, vin: str, command: NextChargeSettings
-    ) -> ElectricResponseModel:
+    ) -> ElectricCommandResponseModel:
         """Send the next charging start/end time to the vehicle.
 
         Args:
@@ -468,7 +473,7 @@ class Api:
 
         """
         return await self._request_and_parse(
-            ElectricResponseModel,
+            ElectricCommandResponseModel,
             "POST",
             VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT,
             vin=vin,
