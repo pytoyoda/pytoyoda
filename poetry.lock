@@ -436,9 +436,33 @@ description = "Elegant HTTP Caching for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
+markers = "python_version == \"3.9\""
 files = [
     {file = "hishel-1.1.8-py3-none-any.whl", hash = "sha256:29e45e090c647920b666e9d2b21e494c97dc12f49e7d88fd31d9e4e7e4b75d4d"},
     {file = "hishel-1.1.8.tar.gz", hash = "sha256:bcd15ad282bd530e97a676b2d16a58e5034750e8a6955e77babfea69fc5b4ad8"},
+]
+
+[package.dependencies]
+msgpack = ">=1.1.2"
+typing-extensions = ">=4.14.1"
+
+[package.extras]
+async = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)"]
+fastapi = ["fastapi (>=0.119.1)"]
+httpx = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)", "httpx (>=0.28.1)"]
+requests = ["requests (>=2.32.5)"]
+
+[[package]]
+name = "hishel"
+version = "1.1.9"
+description = "Elegant HTTP Caching for Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.10\""
+files = [
+    {file = "hishel-1.1.9-py3-none-any.whl", hash = "sha256:6b6f294cb7593f170a9bf874849cc85330ff81f5e35d2ca189548498fed10806"},
+    {file = "hishel-1.1.9.tar.gz", hash = "sha256:47248a50e4cff4fbaa141832782d8c07b2169914916f4bd792f37449176dfa23"},
 ]
 
 [package.dependencies]
