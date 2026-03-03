@@ -1,9 +1,7 @@
 """Toyota Connected Services API - Service History Models."""
 
-# ruff: noqa: FA100
-
 from datetime import date
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field
 
@@ -30,17 +28,17 @@ class ServiceHistoryModel(CustomEndpointBaseModel):
 
     """
 
-    customer_created_record: Optional[bool] = Field(alias="customerCreatedRecord")
-    mileage: Optional[int] = None
+    customer_created_record: bool | None = Field(alias="customerCreatedRecord")
+    mileage: int | None = None
     notes: Any
     operations_performed: Any = Field(alias="operationsPerformed")
     ro_number: Any = Field(alias="roNumber")
-    service_category: Optional[str] = Field(alias="serviceCategory")
-    service_date: Optional[date] = Field(alias="serviceDate")
-    service_history_id: Optional[str] = Field(alias="serviceHistoryId")
-    service_provider: Optional[str] = Field(alias="serviceProvider")
+    service_category: str | None = Field(alias="serviceCategory")
+    service_date: date | None = Field(alias="serviceDate")
+    service_history_id: str | None = Field(alias="serviceHistoryId")
+    service_provider: str | None = Field(alias="serviceProvider")
     servicing_dealer: Any = Field(alias="servicingDealer", default=None)
-    unit: Optional[str] = None
+    unit: str | None = None
 
 
 class ServiceHistoriesModel(CustomEndpointBaseModel):
@@ -52,7 +50,7 @@ class ServiceHistoriesModel(CustomEndpointBaseModel):
 
     """
 
-    service_histories: Optional[list[Optional[ServiceHistoryModel]]] = Field(
+    service_histories: list[ServiceHistoryModel | None] | None = Field(
         alias="serviceHistories", default=[]
     )
 
@@ -68,4 +66,4 @@ class ServiceHistoryResponseModel(StatusModel):
 
     """
 
-    payload: Optional[ServiceHistoriesModel] = None
+    payload: ServiceHistoriesModel | None = None

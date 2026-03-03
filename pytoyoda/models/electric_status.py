@@ -1,9 +1,7 @@
 """Models for vehicle electric status."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional, TypeVar, Union
+from typing import TypeVar
 
 from pydantic import computed_field
 
@@ -20,7 +18,7 @@ from pytoyoda.utils.models import CustomAPIBaseModel, Distance
 
 T = TypeVar(
     "T",
-    bound=Union[ElectricResponseModel, bool],
+    bound=ElectricResponseModel | bool,
 )
 
 
@@ -29,7 +27,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     def __init__(
         self,
-        electric_status: Optional[ElectricResponseModel] = None,
+        electric_status: ElectricResponseModel | None = None,
         metric: bool = True,  # noqa : FBT001, FBT002
         **kwargs: dict,
     ) -> None:
@@ -49,14 +47,14 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
         super().__init__(data=data, **kwargs)  # type: ignore[reportArgumentType, arg-type]
 
         # Get payload data from models
-        self._electric_status: Optional[ElectricStatusModel] = (
+        self._electric_status: ElectricStatusModel | None = (
             electric_status.payload if electric_status else None
         )
         self._distance_unit: str = KILOMETERS_UNIT if metric else MILES_UNIT
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def battery_level(self) -> Optional[float]:
+    def battery_level(self) -> float | None:
         """Battery level of the vehicle.
 
         Returns:
@@ -67,7 +65,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def charging_status(self) -> Optional[str]:
+    def charging_status(self) -> str | None:
         """Charging status of the vehicle.
 
         Returns:
@@ -78,7 +76,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def remaining_charge_time(self) -> Optional[int]:
+    def remaining_charge_time(self) -> int | None:
         """Remaining time to full charge in minutes.
 
         Returns:
@@ -93,7 +91,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_range(self) -> Optional[float]:
+    def ev_range(self) -> float | None:
         """Electric vehicle range.
 
         Returns:
@@ -118,7 +116,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_range_with_unit(self) -> Optional[Distance]:
+    def ev_range_with_unit(self) -> Distance | None:
         """Electric vehicle range with unit.
 
         Returns:
@@ -132,7 +130,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_range_with_ac(self) -> Optional[float]:
+    def ev_range_with_ac(self) -> float | None:
         """Electric vehicle range with AC.
 
         Returns:
@@ -157,7 +155,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_range_with_ac_with_unit(self) -> Optional[Distance]:
+    def ev_range_with_ac_with_unit(self) -> Distance | None:
         """Electric vehicle range with AC with unit.
 
         Returns:
@@ -171,7 +169,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def can_set_next_charging_event(self) -> Optional[bool]:
+    def can_set_next_charging_event(self) -> bool | None:
         """Can set next charging event.
 
         Returns:
@@ -186,7 +184,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def last_update_timestamp(self) -> Optional[datetime]:
+    def last_update_timestamp(self) -> datetime | None:
         """Last update timestamp.
 
         Returns:
@@ -200,7 +198,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field
     @property
-    def next_charging_event(self) -> Optional[NextChargingEvent]:
+    def next_charging_event(self) -> NextChargingEvent | None:
         """Next scheduled charging event.
 
         Returns:
@@ -213,7 +211,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def charging_schedules(self) -> Optional[list[ChargingSchedule]]:
+    def charging_schedules(self) -> list[ChargingSchedule] | None:
         """Charging schedules returned by the API.
 
         Returns:
@@ -238,7 +236,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def active_scheduled_charging(self) -> Optional[ScheduledChargeWindow]:
+    def active_scheduled_charging(self) -> ScheduledChargeWindow | None:
         """Get the active scheduled charging event, if any.
 
         Returns:
@@ -252,7 +250,7 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
         def _next_window_for_schedule(
             sched: ChargingSchedule,
-        ) -> Optional[ScheduledChargeWindow]:
+        ) -> ScheduledChargeWindow | None:
             if not sched.enabled:
                 return None
             try:

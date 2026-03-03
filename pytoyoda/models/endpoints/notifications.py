@@ -1,9 +1,6 @@
 """Toyota Connected Services API - Notification Models."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional, Union
 from uuid import UUID
 
 from pydantic import Field
@@ -19,7 +16,7 @@ class _HeadersModel(CustomEndpointBaseModel):
 
     """
 
-    content_type: Optional[str] = Field(None, alias="Content-Type")
+    content_type: str | None = Field(None, alias="Content-Type")
 
 
 class NotificationModel(CustomEndpointBaseModel):
@@ -41,19 +38,17 @@ class NotificationModel(CustomEndpointBaseModel):
 
     """
 
-    message_id: Optional[str] = Field(alias="messageId", default=None)
-    vin: Optional[str] = None
-    notification_date: Optional[datetime] = Field(
-        alias="notificationDate", default=None
-    )
-    is_read: Optional[bool] = Field(alias="isRead", default=None)
-    read_timestamp: Optional[datetime] = Field(alias="readTimestamp", default=None)
-    icon_url: Optional[str] = Field(alias="iconUrl", default=None)
-    message: Optional[str] = None
-    status: Optional[Union[int, str]] = None
-    type: Optional[str] = None
-    category: Optional[str] = None
-    display_category: Optional[str] = Field(alias="displayCategory", default=None)
+    message_id: str | None = Field(alias="messageId", default=None)
+    vin: str | None = None
+    notification_date: datetime | None = Field(alias="notificationDate", default=None)
+    is_read: bool | None = Field(alias="isRead", default=None)
+    read_timestamp: datetime | None = Field(alias="readTimestamp", default=None)
+    icon_url: str | None = Field(alias="iconUrl", default=None)
+    message: str | None = None
+    status: int | str | None = None
+    type: str | None = None
+    category: str | None = None
+    display_category: str | None = Field(alias="displayCategory", default=None)
 
 
 class _PayloadItemModel(CustomEndpointBaseModel):
@@ -66,8 +61,8 @@ class _PayloadItemModel(CustomEndpointBaseModel):
 
     """
 
-    vin: Optional[str] = None
-    notifications: Optional[list[NotificationModel]] = None
+    vin: str | None = None
+    notifications: list[NotificationModel] | None = None
 
 
 class NotificationResponseModel(CustomEndpointBaseModel):
@@ -82,8 +77,8 @@ class NotificationResponseModel(CustomEndpointBaseModel):
 
     """
 
-    guid: Optional[UUID] = None
-    status_code: Optional[int] = Field(alias="statusCode", default=None)
-    headers: Optional[_HeadersModel] = None
-    body: Optional[str] = None
-    payload: Optional[list[_PayloadItemModel]] = None
+    guid: UUID | None = None
+    status_code: int | None = Field(alias="statusCode", default=None)
+    headers: _HeadersModel | None = None
+    body: str | None = None
+    payload: list[_PayloadItemModel] | None = None

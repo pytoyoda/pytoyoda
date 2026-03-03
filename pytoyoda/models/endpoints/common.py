@@ -1,8 +1,6 @@
 """Toyota Connected Services API - Common Endpoint Models."""
 
-# ruff: noqa: FA100
-
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import Field
 
@@ -20,8 +18,8 @@ class UnitValueModel(CustomEndpointBaseModel):
 
     """
 
-    unit: Optional[str] = None
-    value: Optional[float] = None
+    unit: str | None = None
+    value: float | None = None
 
 
 class _MessageModel(CustomEndpointBaseModel):
@@ -34,11 +32,9 @@ class _MessageModel(CustomEndpointBaseModel):
 
     """
 
-    description: Optional[str] = None
-    detailed_description: Optional[str] = Field(
-        alias="detailedDescription", default=None
-    )
-    response_code: Optional[str] = Field(alias="responseCode", default=None)
+    description: str | None = None
+    detailed_description: str | None = Field(alias="detailedDescription", default=None)
+    response_code: str | None = Field(alias="responseCode", default=None)
 
 
 class _MessagesModel(CustomEndpointBaseModel):
@@ -49,7 +45,7 @@ class _MessagesModel(CustomEndpointBaseModel):
 
     """
 
-    messages: Optional[list[_MessageModel]] = None
+    messages: list[_MessageModel] | None = None
 
 
 class StatusModel(CustomEndpointBaseModel):
@@ -64,7 +60,7 @@ class StatusModel(CustomEndpointBaseModel):
 
     """
 
-    status: Optional[Union[str, _MessagesModel]] = None
-    code: Optional[int] = None
-    errors: Optional[list[Any]] = None
-    message: Optional[str] = None
+    status: str | _MessagesModel | None = None
+    code: int | None = None
+    errors: list[Any] | None = None
+    message: str | None = None

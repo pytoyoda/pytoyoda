@@ -1,9 +1,6 @@
 """Models for vehicle location."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional
 
 from pydantic import computed_field
 
@@ -30,7 +27,7 @@ class Location(CustomAPIBaseModel[LocationResponseModel]):
             data=location,
             **kwargs,
         )
-        self._location: Optional[_VehicleLocationModel] = (
+        self._location: _VehicleLocationModel | None = (
             self._data.payload.vehicle_location
             if self._data and self._data.payload
             else None
@@ -38,7 +35,7 @@ class Location(CustomAPIBaseModel[LocationResponseModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def latitude(self) -> Optional[float]:
+    def latitude(self) -> float | None:
         """Latitude.
 
         Returns:
@@ -49,7 +46,7 @@ class Location(CustomAPIBaseModel[LocationResponseModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def longitude(self) -> Optional[float]:
+    def longitude(self) -> float | None:
         """Longitude.
 
         Returns:
@@ -60,7 +57,7 @@ class Location(CustomAPIBaseModel[LocationResponseModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def timestamp(self) -> Optional[datetime]:
+    def timestamp(self) -> datetime | None:
         """Timestamp.
 
         Returns:
@@ -72,7 +69,7 @@ class Location(CustomAPIBaseModel[LocationResponseModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def state(self) -> Optional[str]:
+    def state(self) -> str | None:
         """State.
 
         Returns:

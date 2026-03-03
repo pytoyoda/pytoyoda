@@ -1,9 +1,6 @@
 """Toyota Connected Services API - Telemetry Models."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional
 
 from pydantic import Field
 
@@ -26,15 +23,15 @@ class TelemetryModel(CustomEndpointBaseModel):
 
     """
 
-    fuel_type: Optional[str] = Field(alias="fuelType")
-    odometer: Optional[UnitValueModel]
-    fuel_level: Optional[int] = Field(alias="fuelLevel", default=None)
-    battery_level: Optional[int] = Field(alias="batteryLevel", default=None)
-    charging_status: Optional[str] = Field(alias="chargingStatus", default=None)
-    distance_to_empty: Optional[UnitValueModel] = Field(
+    fuel_type: str | None = Field(alias="fuelType")
+    odometer: UnitValueModel | None
+    fuel_level: int | None = Field(alias="fuelLevel", default=None)
+    battery_level: int | None = Field(alias="batteryLevel", default=None)
+    charging_status: str | None = Field(alias="chargingStatus", default=None)
+    distance_to_empty: UnitValueModel | None = Field(
         alias="distanceToEmpty", default=None
     )
-    timestamp: Optional[datetime]
+    timestamp: datetime | None
 
 
 class TelemetryResponseModel(StatusModel):
@@ -48,4 +45,4 @@ class TelemetryResponseModel(StatusModel):
 
     """
 
-    payload: Optional[TelemetryModel] = None
+    payload: TelemetryModel | None = None
