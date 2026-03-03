@@ -1,9 +1,6 @@
 """Models for vehicle notifications."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional
 
 from pydantic import computed_field
 
@@ -30,7 +27,7 @@ class Notification(CustomAPIBaseModel[NotificationModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def category(self) -> Optional[str]:
+    def category(self) -> str | None:
         """Category of notification.
 
         For example, ChargingAlert, RemoteCommand
@@ -43,7 +40,7 @@ class Notification(CustomAPIBaseModel[NotificationModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def read(self) -> Optional[datetime]:
+    def read(self) -> datetime | None:
         """Notification has been read.
 
         Returns:
@@ -54,7 +51,7 @@ class Notification(CustomAPIBaseModel[NotificationModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def message(self) -> Optional[str]:
+    def message(self) -> str | None:
         """Notification message.
 
         Returns:
@@ -65,7 +62,7 @@ class Notification(CustomAPIBaseModel[NotificationModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def type(self) -> Optional[str]:
+    def type(self) -> str | None:
         """Type.
 
         For example, Alert
@@ -78,7 +75,7 @@ class Notification(CustomAPIBaseModel[NotificationModel]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def date(self) -> Optional[datetime]:
+    def date(self) -> datetime | None:
         """Notification Date.
 
         Returns:

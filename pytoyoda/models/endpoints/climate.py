@@ -1,9 +1,6 @@
 """Toyota Connected Services API - Climate Models."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional
 
 from pydantic import Field
 
@@ -23,10 +20,10 @@ class ACParameters(CustomEndpointBaseModel):
 
     """
 
-    available: Optional[bool] = None
-    display_name: Optional[str] = Field(alias="displayName", default=None)
+    available: bool | None = None
+    display_name: str | None = Field(alias="displayName", default=None)
     enabled: bool = False
-    icon_url: Optional[str] = Field(alias="iconUrl", default=None)
+    icon_url: str | None = Field(alias="iconUrl", default=None)
     name: str
 
 
@@ -41,10 +38,8 @@ class ACOperations(CustomEndpointBaseModel):
 
     """
 
-    available: Optional[bool] = None
-    category_display_name: Optional[str] = Field(
-        alias="categoryDisplayName", default=None
-    )
+    available: bool | None = None
+    category_display_name: str | None = Field(alias="categoryDisplayName", default=None)
     category_name: str = Field(alias="categoryName")
     ac_parameters: list[ACParameters] = Field(
         alias="acParameters", default_factory=list
@@ -65,13 +60,11 @@ class ClimateSettingsModel(CustomEndpointBaseModel):
 
     """
 
-    ac_operations: Optional[list[ACOperations]] = Field(
-        alias="acOperations", default=None
-    )
-    max_temp: Optional[float] = Field(alias="maxTemp", default=None)
-    min_temp: Optional[float] = Field(alias="minTemp", default=None)
+    ac_operations: list[ACOperations] | None = Field(alias="acOperations", default=None)
+    max_temp: float | None = Field(alias="maxTemp", default=None)
+    min_temp: float | None = Field(alias="minTemp", default=None)
     settings_on: bool = Field(alias="settingsOn")
-    temp_interval: Optional[float] = Field(alias="tempInterval", default=None)
+    temp_interval: float | None = Field(alias="tempInterval", default=None)
     temperature: float
     temperature_unit: str = Field(alias="temperatureUnit")
 
@@ -114,14 +107,14 @@ class ClimateStatusModel(CustomEndpointBaseModel):
 
     """
 
-    current_temperature: Optional[CurrentTemperature] = Field(
+    current_temperature: CurrentTemperature | None = Field(
         alias="currentTemperature", default=None
     )
-    duration: Optional[int] = None
-    options: Optional[ClimateOptions] = None
-    started_at: Optional[datetime] = Field(alias="startedAt", default=None)
+    duration: int | None = None
+    options: ClimateOptions | None = None
+    started_at: datetime | None = Field(alias="startedAt", default=None)
     status: bool
-    target_temperature: Optional[UnitValueModel] = Field(
+    target_temperature: UnitValueModel | None = Field(
         alias="targetTemperature", default=None
     )
     type: str
@@ -148,7 +141,7 @@ class ClimateControlModel(CustomEndpointBaseModel):
     """
 
     command: str
-    remote_hvac: Optional[RemoteHVACModel] = Field(alias="remoteHvac", default=None)
+    remote_hvac: RemoteHVACModel | None = Field(alias="remoteHvac", default=None)
 
 
 class ClimateSettingsResponseModel(StatusModel):
@@ -159,7 +152,7 @@ class ClimateSettingsResponseModel(StatusModel):
 
     """
 
-    payload: Optional[ClimateSettingsModel] = None
+    payload: ClimateSettingsModel | None = None
 
 
 class ClimateStatusResponseModel(StatusModel):
@@ -170,4 +163,4 @@ class ClimateStatusResponseModel(StatusModel):
 
     """
 
-    payload: Optional[ClimateStatusModel] = None
+    payload: ClimateStatusModel | None = None

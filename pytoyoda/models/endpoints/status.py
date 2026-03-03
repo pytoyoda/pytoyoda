@@ -1,9 +1,6 @@
 """Toyota Connected Services API - Status Models."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional
 
 from pydantic import Field
 
@@ -12,8 +9,8 @@ from pytoyoda.utils.models import CustomEndpointBaseModel
 
 
 class _ValueStatusModel(CustomEndpointBaseModel):
-    value: Optional[str]
-    status: Optional[int]
+    value: str | None
+    status: int | None
 
 
 class SectionModel(CustomEndpointBaseModel):
@@ -26,8 +23,8 @@ class SectionModel(CustomEndpointBaseModel):
 
     """
 
-    section: Optional[str]
-    values: Optional[list[_ValueStatusModel]]
+    section: str | None
+    values: list[_ValueStatusModel] | None
 
 
 class VehicleStatusModel(CustomEndpointBaseModel):
@@ -41,15 +38,15 @@ class VehicleStatusModel(CustomEndpointBaseModel):
 
     """
 
-    category: Optional[str]
-    display_order: Optional[int] = Field(alias="displayOrder")
-    sections: Optional[list[SectionModel]]
+    category: str | None
+    display_order: int | None = Field(alias="displayOrder")
+    sections: list[SectionModel] | None
 
 
 class _TelemetryModel(CustomEndpointBaseModel):
-    fugage: Optional[UnitValueModel] = None
-    rage: Optional[UnitValueModel] = None
-    odo: Optional[UnitValueModel]
+    fugage: UnitValueModel | None = None
+    rage: UnitValueModel | None = None
+    odo: UnitValueModel | None
 
 
 class RemoteStatusModel(CustomEndpointBaseModel):
@@ -66,13 +63,13 @@ class RemoteStatusModel(CustomEndpointBaseModel):
 
     """
 
-    vehicle_status: Optional[list[VehicleStatusModel]] = Field(alias="vehicleStatus")
-    telemetry: Optional[_TelemetryModel]
-    occurrence_date: Optional[datetime] = Field(alias="occurrenceDate")
-    caution_overall_count: Optional[int] = Field(alias="cautionOverallCount")
-    latitude: Optional[float]
-    longitude: Optional[float]
-    location_acquisition_datetime: Optional[datetime] = Field(
+    vehicle_status: list[VehicleStatusModel] | None = Field(alias="vehicleStatus")
+    telemetry: _TelemetryModel | None
+    occurrence_date: datetime | None = Field(alias="occurrenceDate")
+    caution_overall_count: int | None = Field(alias="cautionOverallCount")
+    latitude: float | None
+    longitude: float | None
+    location_acquisition_datetime: datetime | None = Field(
         alias="locationAcquisitionDatetime"
     )
 
@@ -88,4 +85,4 @@ class RemoteStatusResponseModel(StatusModel):
 
     """
 
-    payload: Optional[RemoteStatusModel] = None
+    payload: RemoteStatusModel | None = None

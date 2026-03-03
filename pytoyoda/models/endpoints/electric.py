@@ -1,7 +1,5 @@
 """Toyota Connected Services API - Electric Models."""
 
-# ruff: noqa: FA100
-
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
 from enum import Enum
@@ -44,43 +42,39 @@ class ElectricStatusModel(CustomEndpointBaseModel):
 
     """
 
-    battery_level: Optional[int] = Field(
+    battery_level: int | None = Field(
         alias="batteryLevel",
         default=None,
     )
-    can_set_next_charging_event: Optional[bool] = Field(
+    can_set_next_charging_event: bool | None = Field(
         alias="canSetNextChargingEvent", default=None
     )
-    charging_status: Optional[str] = Field(alias="chargingStatus", default=None)
-    ev_range: Optional[UnitValueModel] = Field(alias="evRange", default=None)
-    ev_range_with_ac: Optional[UnitValueModel] = Field(
-        alias="evRangeWithAc", default=None
-    )
-    fuel_level: Optional[int] = Field(
+    charging_status: str | None = Field(alias="chargingStatus", default=None)
+    ev_range: UnitValueModel | None = Field(alias="evRange", default=None)
+    ev_range_with_ac: UnitValueModel | None = Field(alias="evRangeWithAc", default=None)
+    fuel_level: int | None = Field(
         alias="fuelLevel",
         default=None,
     )
-    fuel_range: Optional[UnitValueModel] = Field(alias="fuelRange", default=None)
-    last_update_timestamp: Optional[datetime] = Field(
+    fuel_range: UnitValueModel | None = Field(alias="fuelRange", default=None)
+    last_update_timestamp: datetime | None = Field(
         alias="lastUpdateTimestamp", default=None
     )
-    remaining_charge_time: Optional[int] = Field(
+    remaining_charge_time: int | None = Field(
         alias="remainingChargeTime",
         default=None,
         description="Time remaining in minutes until fully charged",
     )
-    charging_schedules: Optional[list["ChargingSchedule"]] = Field(
+    charging_schedules: list["ChargingSchedule"] | None = Field(
         alias="chargingSchedules", default=None
     )
 
     @field_serializer("remaining_charge_time")
-    def serialize_remaining_time(
-        self, remaining_time: Optional[int]
-    ) -> Optional[timedelta]:
+    def serialize_remaining_time(self, remaining_time: int | None) -> timedelta | None:
         """Convert minutes to timedelta for better usability."""
         return None if remaining_time is None else timedelta(minutes=remaining_time)
 
-    next_charging_event: Optional[NextChargingEvent] = Field(
+    next_charging_event: NextChargingEvent | None = Field(
         alias="nextChargingEvent", default=None
     )
 
@@ -89,7 +83,7 @@ class ElectricStatusModel(CustomEndpointBaseModel):
     def deserialize_next_charging_event(
         cls,
         v: dict[str, any],
-    ) -> Optional[NextChargingEvent]:
+    ) -> NextChargingEvent | None:
         """Function that deserializes the next charging event.
 
         Attributes:
@@ -134,13 +128,13 @@ class Days(BaseModel):
         mon..sun: 1 when enabled, 0 otherwise.
     """
 
-    mon: Optional[int] = Field(alias="mon", default=0)
-    tue: Optional[int] = Field(alias="tue", default=0)
-    wed: Optional[int] = Field(alias="wed", default=0)
-    thu: Optional[int] = Field(alias="thu", default=0)
-    fri: Optional[int] = Field(alias="fri", default=0)
-    sat: Optional[int] = Field(alias="sat", default=0)
-    sun: Optional[int] = Field(alias="sun", default=0)
+    mon: int | None = Field(alias="mon", default=0)
+    tue: int | None = Field(alias="tue", default=0)
+    wed: int | None = Field(alias="wed", default=0)
+    thu: int | None = Field(alias="thu", default=0)
+    fri: int | None = Field(alias="fri", default=0)
+    sat: int | None = Field(alias="sat", default=0)
+    sun: int | None = Field(alias="sun", default=0)
 
 
 class ChargingSchedule(CustomEndpointBaseModel):
@@ -180,7 +174,7 @@ class ChargingSchedule(CustomEndpointBaseModel):
 
         return v
 
-    def _next_start(self, ref: datetime) -> Optional[datetime]:
+    def _next_start(self, ref: datetime) -> datetime | None:
         """Compute the next start datetime for this schedule after `ref`.
 
         Returns the earliest candidate datetime or None if no weekdays enabled.
@@ -209,7 +203,7 @@ class ChargingSchedule(CustomEndpointBaseModel):
 
     def _end_and_duration(
         self, start_dt: datetime
-    ) -> tuple[Optional[datetime], Optional[timedelta]]:
+    ) -> tuple[datetime | None, timedelta | None]:
         """Compute end datetime and duration given a start datetime.
 
         Returns (end_dt, duration) where either may be None.
@@ -227,7 +221,7 @@ class ChargingSchedule(CustomEndpointBaseModel):
         return end_dt, end_dt - start_dt
 
     def next_occurrence(
-        self, ref: Optional[datetime] = None
+        self, ref: datetime | None = None
     ) -> Optional["ScheduledChargeWindow"]:
         """Return the next scheduled charge window for this schedule after `ref`.
 
@@ -258,8 +252,8 @@ class ScheduledChargeWindow:
     """
 
     start: datetime
-    end: Optional[datetime] = None
-    duration: Optional[timedelta] = None
+    end: datetime | None = None
+    duration: timedelta | None = None
 
 
 class ElectricResponseModel(StatusModel):
@@ -272,12 +266,12 @@ class ElectricResponseModel(StatusModel):
 
     """
 
-    payload: Optional[ElectricStatusModel] = None
+    payload: ElectricStatusModel | None = None
 
 
 class _ElectricCommandResponsePayload(CustomEndpointBaseModel):
-    app_request_no: Optional[str] = Field(alias="appRequestNo", default=None)
-    return_code: Optional[str] = Field(alias="returnCode", default=None)
+    app_request_no: str | None = Field(alias="appRequestNo", default=None)
+    return_code: str | None = Field(alias="returnCode", default=None)
 
 
 class ElectricCommandResponseModel(StatusModel):
@@ -290,7 +284,7 @@ class ElectricCommandResponseModel(StatusModel):
 
     """
 
-    payload: Optional[_ElectricCommandResponsePayload] = None
+    payload: _ElectricCommandResponsePayload | None = None
 
 
 class ChargeTime(CustomEndpointBaseModel):
@@ -319,8 +313,8 @@ class ReservationCharge(CustomEndpointBaseModel):
 
     chargetype: str = Field(alias="chargeType")
     day: str = Field(alias="day")
-    starttime: Optional[ChargeTime] = Field(alias="startTime", default=None)
-    endtime: Optional[ChargeTime] = Field(alias="endTime", default=None)
+    starttime: ChargeTime | None = Field(alias="startTime", default=None)
+    endtime: ChargeTime | None = Field(alias="endTime", default=None)
 
 
 class ChargeCommandType(str, Enum):
@@ -345,7 +339,7 @@ class NextChargeSettings(CustomEndpointBaseModel):
     """
 
     command: ChargeCommandType = Field(alias="command")
-    reservationcharge: Optional[ReservationCharge] = Field(
+    reservationcharge: ReservationCharge | None = Field(
         alias="reservationCharge", default=None
     )
 

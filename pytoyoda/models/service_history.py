@@ -1,9 +1,7 @@
 """Models for vehicle service history."""
 
-# ruff: noqa: FA100
-
 from datetime import date
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
 from pydantic import computed_field
 
@@ -14,7 +12,7 @@ from pytoyoda.utils.models import CustomAPIBaseModel
 
 T = TypeVar(
     "T",
-    bound=Union[ServiceHistoryModel, bool],
+    bound=ServiceHistoryModel | bool,
 )
 
 
@@ -23,7 +21,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     def __init__(
         self,
-        service_history: Optional[ServiceHistoryModel] = None,
+        service_history: ServiceHistoryModel | None = None,
         metric: bool = True,  # noqa : FBT001, FBT002
         **kwargs: dict,
     ) -> None:
@@ -34,12 +32,12 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
         }
         super().__init__(data=data, **kwargs)  # type: ignore[reportArgumentType, arg-type]
 
-        self._service_history: Optional[ServiceHistoryModel] = service_history or None
+        self._service_history: ServiceHistoryModel | None = service_history or None
         self._distance_unit: str = KILOMETERS_UNIT if metric else MILES_UNIT
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def service_date(self) -> Optional[date]:
+    def service_date(self) -> date | None:
         """The date of the service.
 
         Returns:
@@ -50,7 +48,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def customer_created_record(self) -> Optional[bool]:
+    def customer_created_record(self) -> bool | None:
         """Indication whether it is an entry created by the user.
 
         Returns:
@@ -65,7 +63,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def odometer(self) -> Optional[float]:
+    def odometer(self) -> float | None:
         """Odometer distance at the time of servicing.
 
         Returns:
@@ -87,7 +85,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def notes(self) -> Optional[Any]:  # noqa : ANN401
+    def notes(self) -> Any | None:  # noqa : ANN401
         """Additional notes about the service.
 
         Returns:
@@ -98,7 +96,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def operations_performed(self) -> Optional[Any]:  # noqa : ANN401
+    def operations_performed(self) -> Any | None:  # noqa : ANN401
         """The operations performed during the service.
 
         Returns:
@@ -113,7 +111,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ro_number(self) -> Optional[Any]:  # noqa : ANN401
+    def ro_number(self) -> Any | None:  # noqa : ANN401
         """The RO (Repair Order) number associated with the service.
 
         Returns:
@@ -124,7 +122,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def service_category(self) -> Optional[str]:
+    def service_category(self) -> str | None:
         """The category of the service.
 
         Returns:
@@ -135,7 +133,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def service_provider(self) -> Optional[str]:
+    def service_provider(self) -> str | None:
         """The service provider.
 
         Returns:
@@ -146,7 +144,7 @@ class ServiceHistory(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def servicing_dealer(self) -> Optional[Any]:  # noqa : ANN401
+    def servicing_dealer(self) -> Any | None:  # noqa : ANN401
         """Dealer that performed the service.
 
         Returns:

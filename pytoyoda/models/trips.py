@@ -1,9 +1,7 @@
 """Model for Trip Summaries."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime, timedelta
-from typing import Optional, TypeVar, Union
+from typing import TypeVar
 
 from pydantic import BaseModel, computed_field
 
@@ -19,22 +17,22 @@ from pytoyoda.utils.models import CustomAPIBaseModel
 
 T = TypeVar(
     "T",
-    bound=Union[_TripModel, bool],
+    bound=_TripModel | bool,
 )
 
 
 class TripPositions(BaseModel):
     """Latitude and longitude."""
 
-    lat: Optional[float]
-    lon: Optional[float]
+    lat: float | None
+    lon: float | None
 
 
 class TripLocations(BaseModel):
     """Trip locations."""
 
-    start: Optional[TripPositions]
-    end: Optional[TripPositions]
+    start: TripPositions | None
+    end: TripPositions | None
 
 
 class Trip(CustomAPIBaseModel[type[T]]):
@@ -64,7 +62,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def locations(self) -> Optional[TripLocations]:
+    def locations(self) -> TripLocations | None:
         """Trip locations.
 
         Returns:
@@ -84,7 +82,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def start_time(self) -> Optional[datetime]:
+    def start_time(self) -> datetime | None:
         """Start time.
 
         Returns:
@@ -95,7 +93,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def end_time(self) -> Optional[datetime]:
+    def end_time(self) -> datetime | None:
         """End time.
 
         Returns:
@@ -106,7 +104,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def duration(self) -> Optional[timedelta]:
+    def duration(self) -> timedelta | None:
         """The total time driving.
 
         Returns:
@@ -121,7 +119,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def distance(self) -> Optional[float]:
+    def distance(self) -> float | None:
         """The total distance covered.
 
         Returns:
@@ -136,7 +134,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_duration(self) -> Optional[timedelta]:
+    def ev_duration(self) -> timedelta | None:
         """The total time driving using EV.
 
         Returns:
@@ -151,7 +149,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_distance(self) -> Optional[float]:
+    def ev_distance(self) -> float | None:
         """The total time distance driven using EV.
 
         Returns:
@@ -279,7 +277,7 @@ class Trip(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def route(self) -> Optional[list[TripPositions]]:
+    def route(self) -> list[TripPositions] | None:
         """The route taken.
 
         Returns:

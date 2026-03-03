@@ -1,17 +1,16 @@
 """Vehicle model."""
 
-# ruff: noqa: FA100
-
 import asyncio
 import copy
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, timedelta
 from enum import Enum, auto
 from functools import partial
 from itertools import groupby
 from operator import attrgetter
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
 from arrow import Arrow
 from loguru import logger
@@ -42,7 +41,7 @@ from pytoyoda.utils.models import CustomAPIBaseModel
 
 T = TypeVar(
     "T",
-    bound=Union[Api, VehicleGuidModel, bool],
+    bound=Api | VehicleGuidModel | bool,
 )
 
 
@@ -269,7 +268,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def vin(self) -> Optional[str]:
+    def vin(self) -> str | None:
         """Return the vehicles VIN number.
 
         Returns:
@@ -280,7 +279,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def alias(self) -> Optional[str]:
+    def alias(self) -> str | None:
         """Vehicle's alias.
 
         Returns:
@@ -291,7 +290,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def type(self) -> Optional[str]:
+    def type(self) -> str | None:
         """Returns the "type" of vehicle.
 
         Returns:
@@ -306,7 +305,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def dashboard(self) -> Optional[Dashboard]:
+    def dashboard(self) -> Dashboard | None:
         """Returns the Vehicle dashboard.
 
         The dashboard consists of items of information you would expect to
@@ -326,7 +325,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def climate_settings(self) -> Optional[ClimateSettings]:
+    def climate_settings(self) -> ClimateSettings | None:
         """Return the vehicle climate settings.
 
         Returns:
@@ -337,7 +336,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def climate_status(self) -> Optional[ClimateStatus]:
+    def climate_status(self) -> ClimateStatus | None:
         """Return the vehicle climate status.
 
         Returns:
@@ -348,7 +347,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def electric_status(self) -> Optional[ElectricStatus]:
+    def electric_status(self) -> ElectricStatus | None:
         """Returns the Electric Status of the vehicle.
 
         Returns:
@@ -371,7 +370,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def location(self) -> Optional[Location]:
+    def location(self) -> Location | None:
         """Return the vehicles latest reported Location.
 
         Returns:
@@ -385,7 +384,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def notifications(self) -> Optional[list[Notification]]:
+    def notifications(self) -> list[Notification] | None:
         r"""Returns a list of notifications for the vehicle.
 
         Returns:
@@ -403,7 +402,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def service_history(self) -> Optional[list[ServiceHistory]]:
+    def service_history(self) -> list[ServiceHistory] | None:
         r"""Returns a list of service history entries for the vehicle.
 
         Returns:
@@ -424,7 +423,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         return None
 
-    def get_latest_service_history(self) -> Optional[ServiceHistory]:
+    def get_latest_service_history(self) -> ServiceHistory | None:
         r"""Return the latest service history entry for the vehicle.
 
         Returns:
@@ -440,7 +439,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def lock_status(self) -> Optional[LockStatus]:
+    def lock_status(self) -> LockStatus | None:
         """Returns the latest lock status of Doors & Windows.
 
         Returns:
@@ -452,7 +451,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def last_trip(self) -> Optional[Trip]:
+    def last_trip(self) -> Trip | None:
         """Returns the Vehicle last trip.
 
         Returns:
@@ -467,7 +466,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def trip_history(self) -> Optional[list[Trip]]:
+    def trip_history(self) -> list[Trip] | None:
         """Returns the Vehicle trips.
 
         Returns:
@@ -533,7 +532,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         msg = "No such SummaryType"
         raise AssertionError(msg)
 
-    async def get_current_day_summary(self) -> Optional[Summary]:
+    async def get_current_day_summary(self) -> Summary | None:
         """Return a summary for the current day.
 
         Returns:
@@ -550,7 +549,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             logger.info("Not enough summaries for calculation.")
         return summary[0] if len(summary) > 0 else None
 
-    async def get_current_week_summary(self) -> Optional[Summary]:
+    async def get_current_week_summary(self) -> Summary | None:
         """Return a summary for the current week.
 
         Returns:
@@ -567,7 +566,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             logger.info("Not enough summaries for calculation.")
         return summary[0] if len(summary) > 0 else None
 
-    async def get_current_month_summary(self) -> Optional[Summary]:
+    async def get_current_month_summary(self) -> Summary | None:
         """Return a summary for the current month.
 
         Returns:
@@ -584,7 +583,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             logger.info("Not enough summaries for calculation.")
         return summary[0] if len(summary) > 0 else None
 
-    async def get_current_year_summary(self) -> Optional[Summary]:
+    async def get_current_year_summary(self) -> Summary | None:
         """Return a summary for the current year.
 
         Returns:
@@ -606,7 +605,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         full_route: bool = False,  # noqa : FBT001, FBT002
-    ) -> Optional[list[Trip]]:
+    ) -> list[Trip] | None:
         """Return information on all trips made between the provided dates.
 
         Args:
@@ -644,7 +643,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         return ret
 
-    async def get_last_trip(self) -> Optional[Trip]:
+    async def get_last_trip(self) -> Trip | None:
         """Return information on the last trip.
 
         Returns:

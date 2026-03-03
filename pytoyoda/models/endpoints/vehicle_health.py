@@ -1,9 +1,7 @@
 """Toyota Connected Services API - Endpoint Model."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field
 
@@ -23,10 +21,10 @@ class VehicleHealthModel(CustomEndpointBaseModel):
 
     """
 
-    quantity_of_eng_oil_icon: Optional[list[Any]] = Field(alias="quantityOfEngOilIcon")
-    vin: Optional[str]
-    warning: Optional[list[Any]]
-    wng_last_upd_time: Optional[datetime] = Field(alias="wnglastUpdTime")
+    quantity_of_eng_oil_icon: list[Any] | None = Field(alias="quantityOfEngOilIcon")
+    vin: str | None
+    warning: list[Any] | None
+    wng_last_upd_time: datetime | None = Field(alias="wnglastUpdTime")
 
 
 class VehicleHealthResponseModel(StatusModel):
@@ -40,4 +38,4 @@ class VehicleHealthResponseModel(StatusModel):
 
     """
 
-    payload: Optional[VehicleHealthModel] = None
+    payload: VehicleHealthModel | None = None

@@ -1,9 +1,6 @@
 """Toyota Connected Services API - Remote Commands Models."""
 
-# ruff: noqa: FA100
-
 from enum import Enum
-from typing import Optional
 
 from pydantic import ConfigDict, Field
 
@@ -45,6 +42,6 @@ class RemoteCommandModel(CustomEndpointBaseModel):
     """
 
     command: CommandType
-    beep_count: Optional[int] = Field(alias="beepCount", default=None)
+    beep_count: int | None = Field(alias="beepCount", default=None)
 
     model_config = ConfigDict(use_enum_values=True)

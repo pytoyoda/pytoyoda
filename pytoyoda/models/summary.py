@@ -1,10 +1,8 @@
 """Model for Trip Summaries."""
 
-# ruff: noqa: FA100
-
 from datetime import date, timedelta
 from enum import IntEnum
-from typing import Optional, TypeVar, Union
+from typing import TypeVar
 
 from pydantic import computed_field
 
@@ -20,7 +18,7 @@ from pytoyoda.utils.models import CustomAPIBaseModel
 
 T = TypeVar(
     "T",
-    bound=Union[_SummaryBaseModel, bool, date, _HDCModel],
+    bound=_SummaryBaseModel | bool | date | _HDCModel,
 )
 
 
@@ -42,7 +40,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
         metric: bool,  # noqa : FBT001
         from_date: date,
         to_date: date,
-        hdc: Optional[_HDCModel] = None,
+        hdc: _HDCModel | None = None,
         **kwargs: dict,
     ) -> None:
         """Initialise Class.
@@ -69,12 +67,12 @@ class Summary(CustomAPIBaseModel[type[T]]):
         self._metric: bool = metric
         self._from_date: date = from_date
         self._to_date: date = to_date
-        self._hdc: Optional[_HDCModel] = hdc
+        self._hdc: _HDCModel | None = hdc
         self._distance_unit: str = KILOMETERS_UNIT if metric else MILES_UNIT
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def average_speed(self) -> Optional[float]:
+    def average_speed(self) -> float | None:
         """Average speed.
 
         Returns:
@@ -90,7 +88,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def countries(self) -> Optional[list[str]]:
+    def countries(self) -> list[str] | None:
         """Countries visited.
 
         Returns:
@@ -102,7 +100,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def duration(self) -> Optional[timedelta]:
+    def duration(self) -> timedelta | None:
         """The total time driving.
 
         Returns:
@@ -115,7 +113,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def distance(self) -> Optional[float]:
+    def distance(self) -> float | None:
         """The total distance covered.
 
         Returns:
@@ -130,7 +128,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_duration(self) -> Optional[timedelta]:
+    def ev_duration(self) -> timedelta | None:
         """The total time driving using EV.
 
         Returns:
@@ -144,7 +142,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def ev_distance(self) -> Optional[float]:
+    def ev_distance(self) -> float | None:
         """The total time distance driven using EV.
 
         Returns:

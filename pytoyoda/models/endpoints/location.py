@@ -1,9 +1,6 @@
 """Toyota Connected Services API - Location Models."""
 
-# ruff: noqa: FA100
-
 from datetime import datetime
-from typing import Optional
 
 from pydantic import Field
 
@@ -23,10 +20,10 @@ class _VehicleLocationModel(CustomEndpointBaseModel):
 
     """
 
-    display_name: Optional[str] = Field(alias="displayName", default=None)
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    location_acquisition_datetime: Optional[datetime] = Field(
+    display_name: str | None = Field(alias="displayName", default=None)
+    latitude: float | None = None
+    longitude: float | None = None
+    location_acquisition_datetime: datetime | None = Field(
         alias="locationAcquisitionDatetime", default=None
     )
 
@@ -41,11 +38,11 @@ class LocationModel(CustomEndpointBaseModel):
 
     """
 
-    last_timestamp: Optional[datetime] = Field(alias="lastTimestamp", default=None)
-    vehicle_location: Optional[_VehicleLocationModel] = Field(
+    last_timestamp: datetime | None = Field(alias="lastTimestamp", default=None)
+    vehicle_location: _VehicleLocationModel | None = Field(
         alias="vehicleLocation", default=None
     )
-    vin: Optional[str] = None
+    vin: str | None = None
 
 
 class LocationResponseModel(StatusModel):
@@ -58,4 +55,4 @@ class LocationResponseModel(StatusModel):
 
     """
 
-    payload: Optional[LocationModel] = None
+    payload: LocationModel | None = None

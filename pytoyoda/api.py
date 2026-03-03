@@ -1,7 +1,7 @@
 """Toyota Connected Services API."""
 
 from datetime import date, datetime, timezone
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 from uuid import uuid4
 
 from loguru import logger
@@ -51,19 +51,17 @@ from pytoyoda.models.endpoints.vehicle_health import VehicleHealthResponseModel
 # Type variable for generic model handling
 T = TypeVar(
     "T",
-    bound=Union[
-        StatusModel,
-        ElectricCommandResponseModel,
-        ElectricResponseModel,
-        LocationResponseModel,
-        NotificationResponseModel,
-        ServiceHistoryResponseModel,
-        RemoteStatusResponseModel,
-        TelemetryResponseModel,
-        TripsResponseModel,
-        VehiclesResponseModel,
-        VehicleHealthResponseModel,
-    ],
+    bound=StatusModel
+    | ElectricCommandResponseModel
+    | ElectricResponseModel
+    | LocationResponseModel
+    | NotificationResponseModel
+    | ServiceHistoryResponseModel
+    | RemoteStatusResponseModel
+    | TelemetryResponseModel
+    | TripsResponseModel
+    | VehiclesResponseModel
+    | VehicleHealthResponseModel,
 )
 
 
