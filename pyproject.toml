@@ -71,6 +71,6 @@ build-backend = "poetry_dynamic_versioning.backend"
 fix = true
 extend-exclude = ["tests", "sandbox"]
 lint.select = ["ALL"]
-lint.extend-ignore = ["D203", "D213", "COM812"]
+lint.extend-ignore = ["D203", "D213", "COM812", "UP045"]
 lint.pydocstyle.convention = "google"
 format.docstring-code-format = true
