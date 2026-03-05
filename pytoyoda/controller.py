@@ -155,9 +155,7 @@ class Controller:
             # Update tokens
             self._update_tokens(token_data)
 
-    async def _perform_authentication(
-        self, client: AsyncCacheClient
-    ) -> dict[str, Any]:
+    async def _perform_authentication(self, client: AsyncCacheClient) -> dict[str, Any]:
         """Perform the authentication part of the login flow."""
         data: dict[str, Any] = {}
 
