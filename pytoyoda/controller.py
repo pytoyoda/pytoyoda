@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from urllib import parse
 from uuid import uuid4
 
-import hishel
 import httpx
 import jwt
+from hishel.httpx import AsyncCacheClient
 from loguru import logger
 
 from pytoyoda.const import (
@@ -135,7 +135,7 @@ class Controller:
     @asynccontextmanager
     async def _get_http_client(self) -> AsyncGenerator:
         """Context manager for HTTP client with consistent timeout."""
-        async with hishel.AsyncCacheClient(timeout=self._timeout) as client:
+        async with AsyncCacheClient(timeout=self._timeout) as client:
             yield client
 
     async def _authenticate(self) -> None:
@@ -155,9 +155,7 @@ class Controller:
             # Update tokens
             self._update_tokens(token_data)
 
-    async def _perform_authentication(
-        self, client: hishel.AsyncCacheClient
-    ) -> dict[str, Any]:
+    async def _perform_authentication(self, client: AsyncCacheClient) -> dict[str, Any]:
         """Perform the authentication part of the login flow."""
         data: dict[str, Any] = {}
 
@@ -195,7 +193,7 @@ class Controller:
         raise ToyotaLoginError(msg)
 
     async def _perform_authorization(
-        self, client: hishel.AsyncCacheClient, token_id: str
+        self, client: AsyncCacheClient, token_id: str
     ) -> list[str]:
         """Perform the authorization part of the login flow.
 
@@ -222,7 +220,7 @@ class Controller:
         ]
 
     async def _retrieve_tokens(
-        self, client: hishel.AsyncCacheClient, auth_code: list[str]
+        self, client: AsyncCacheClient, auth_code: list[str]
     ) -> dict[str, Any]:
         """Retrieve access and refresh tokens.
 
