@@ -192,34 +192,23 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 ),
                 EndpointDefinition(
                     name="climate_settings",
-                    capable=any(
-                        (
+                    capable=(
+                        getattr(
+                            getattr(self._vehicle_info, "features", False),
+                            "climate_start_engine",
+                            False,
+                        )
+                        or any(
                             getattr(
-                                getattr(self._vehicle_info, "features", False),
-                                "climate_start_engine",
+                                getattr(self._vehicle_info, "extended_capabilities", False),
+                                attr,
                                 False,
-                            ),
-                            getattr(
-                                getattr(
-                                    self._vehicle_info, "extended_capabilities", False
-                                ),
+                            )
+                            for attr in (
                                 "climate_capable",
-                                False,
-                            ),
-                            getattr(
-                                getattr(
-                                    self._vehicle_info, "extended_capabilities", False
-                                ),
                                 "econnect_climate_capable",
-                                False,
-                            ),
-                            getattr(
-                                getattr(
-                                    self._vehicle_info, "extended_capabilities", False
-                                ),
                                 "remote_engine_start_stop",
-                                False,
-                            ),
+                            )
                         )
                     ),
                     function=partial(
