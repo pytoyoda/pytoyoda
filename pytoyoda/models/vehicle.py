@@ -200,7 +200,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                         )
                         or any(
                             getattr(
-                                getattr(self._vehicle_info, "extended_capabilities", False),
+                                getattr(
+                                    self._vehicle_info, "extended_capabilities", False
+                                ),
                                 attr,
                                 False,
                             )
