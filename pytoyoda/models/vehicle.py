@@ -17,7 +17,7 @@ from loguru import logger
 from pydantic import computed_field
 
 from pytoyoda.api import Api
-from pytoyoda.exceptions import ToyotaApiError
+from pytoyoda.exceptions import ToyotaApiError, ToyotaInternalError
 from pytoyoda.models.climate import ClimateSettings, ClimateStatus
 from pytoyoda.models.dashboard import Dashboard
 from pytoyoda.models.electric_status import ElectricStatus
@@ -256,7 +256,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ) -> tuple[str, dict[str, Any]]:
             try:
                 r = await function()
-            except ToyotaApiError as e:
+            except (ToyotaApiError, ToyotaInternalError) as e:
                 logger.warning(f"Failed to fetch '{name}': {e}")
                 r = None
             return name, r
