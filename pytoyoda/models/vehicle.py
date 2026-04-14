@@ -254,7 +254,11 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         async def parallel_wrapper(
             name: str, function: partial
         ) -> tuple[str, dict[str, Any]]:
-            r = await function()
+            try:
+                r = await function()
+            except ToyotaApiError as e:
+                logger.warning(f"Failed to fetch '{name}': {e}")
+                r = None
             return name, r
 
         responses = asyncio.gather(
