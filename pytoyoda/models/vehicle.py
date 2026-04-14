@@ -268,7 +268,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             ]
         )
         for name, data in await responses:
-            self._endpoint_data[name] = data
+            if data is not None:
+                self._endpoint_data[name] = data
 
     @computed_field  # type: ignore[prop-decorator]
     @property
