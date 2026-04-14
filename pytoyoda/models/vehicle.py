@@ -17,7 +17,7 @@ from loguru import logger
 from pydantic import computed_field
 
 from pytoyoda.api import Api
-from pytoyoda.exceptions import ToyotaApiError
+from pytoyoda.exceptions import ToyotaApiError, ToyotaInternalError
 from pytoyoda.models.climate import ClimateSettings, ClimateStatus
 from pytoyoda.models.dashboard import Dashboard
 from pytoyoda.models.electric_status import ElectricStatus
@@ -254,7 +254,11 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         async def parallel_wrapper(
             name: str, function: partial
         ) -> tuple[str, dict[str, Any]]:
-            r = await function()
+            try:
+                r = await function()
+            except (ToyotaApiError, ToyotaInternalError) as e:
+                logger.warning(f"Failed to fetch '{name}': {e}")
+                r = None
             return name, r
 
         responses = asyncio.gather(
@@ -264,7 +268,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             ]
         )
         for name, data in await responses:
-            self._endpoint_data[name] = data
+            if data is not None:
+                self._endpoint_data[name] = data
 
     @computed_field  # type: ignore[prop-decorator]
     @property
