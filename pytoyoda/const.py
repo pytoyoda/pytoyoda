@@ -9,7 +9,7 @@ API_BASE_URL = "HTTPS://ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io"
 # Toyota / Lexus OAuth credentials
 TOYOTA_CLIENT_ID = "oneapp"
 TOYOTA_REDIRECT_URI = "com.toyota.oneapp:/oauth2Callback"
-TOYOTA_BASIC_AUTH = "basic b25lYXBwOm9uZWFwcA=="  # noqa : S105
+TOYOTA_BASIC_AUTH = "basic b25lYXBwOm9uZWFwcA=="
 TOYOTA_JWT_AUDIENCE = "oneappsdkclient"
 
 # Toyota / Lexus auth URLs (realm: tme)
@@ -22,13 +22,11 @@ AUTHORIZE_URL = "HTTPS://b2c-login.toyota-europe.com/oauth2/realms/root/realms/t
 # Subaru OAuth credentials
 SUBARU_CLIENT_ID = "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
 SUBARU_REDIRECT_URI = "com.subaru.oneapp:/oauth2Callback"
-SUBARU_BASIC_AUTH = "basic OGM0OTIxYjBiMDg5MDFmZWYzODljZTFhZjQ5YzRlMTAuc3ViYXJ1LmNvbTpJaGNkcjV4YmhIYlRSMk9aOGdRa3YyNTZicmhTYjc="  # noqa : S105
+SUBARU_BASIC_AUTH = "basic OGM0OTIxYjBiMDg5MDFmZWYzODljZTFhZjQ5YzRlMTAuc3ViYXJ1LmNvbTpJaGNkcjV4YmhIYlRSMk9aOGdRa3YyNTZicmhTYjc="
 SUBARU_JWT_AUDIENCE = "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
 
 # Subaru auth URLs (realm: alliance-subaru)
-SUBARU_ACCESS_TOKEN_URL = (
-    "HTTPS://b2c-login.toyota-europe.com/oauth2/realms/root/realms/alliance-subaru/access_token"  # noqa : S105
-)
+SUBARU_ACCESS_TOKEN_URL = "HTTPS://b2c-login.toyota-europe.com/oauth2/realms/root/realms/alliance-subaru/access_token"  # noqa : S105
 SUBARU_AUTHENTICATE_URL = "HTTPS://b2c-login.toyota-europe.com/json/realms/root/realms/alliance-subaru/authenticate?authIndexType=service&authIndexValue=oneapp"
 SUBARU_AUTHORIZE_URL = "HTTPS://b2c-login.toyota-europe.com/oauth2/realms/root/realms/alliance-subaru/authorize?client_id=8c4921b0b08901fef389ce1af49c4e10.subaru.com&scope=openid+profile+write&response_type=code&redirect_uri=com.subaru.oneapp:/oauth2Callback&code_challenge=plain&code_challenge_method=plain"
 
