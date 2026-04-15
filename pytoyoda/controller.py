@@ -25,6 +25,13 @@ from pytoyoda.const import (
     SUBARU_AUTHENTICATE_URL,
     SUBARU_AUTHORIZE_URL,
     SUBARU_BASIC_AUTH,
+    SUBARU_CLIENT_ID,
+    SUBARU_JWT_AUDIENCE,
+    SUBARU_REDIRECT_URI,
+    TOYOTA_BASIC_AUTH,
+    TOYOTA_CLIENT_ID,
+    TOYOTA_JWT_AUDIENCE,
+    TOYOTA_REDIRECT_URI,
 )
 from pytoyoda.exceptions import (
     ToyotaApiError,
@@ -72,16 +79,24 @@ class Controller:
         self._brand: str = brand
         self._timeout = timeout
 
-        # URLs - Subaru uses a different auth realm (alliance-subaru)
+        # Brand-specific auth config - Subaru uses a different realm and credentials
         self._api_base_url = httpx.URL(API_BASE_URL)
         if brand == "S":
             self._access_token_url = httpx.URL(SUBARU_ACCESS_TOKEN_URL)
             self._authenticate_url = httpx.URL(SUBARU_AUTHENTICATE_URL)
             self._authorize_url = httpx.URL(SUBARU_AUTHORIZE_URL)
+            self._oauth_basic_auth = SUBARU_BASIC_AUTH
+            self._oauth_client_id = SUBARU_CLIENT_ID
+            self._oauth_redirect_uri = SUBARU_REDIRECT_URI
+            self._jwt_audience = SUBARU_JWT_AUDIENCE
         else:
             self._access_token_url = httpx.URL(ACCESS_TOKEN_URL)
             self._authenticate_url = httpx.URL(AUTHENTICATE_URL)
             self._authorize_url = httpx.URL(AUTHORIZE_URL)
+            self._oauth_basic_auth = TOYOTA_BASIC_AUTH
+            self._oauth_client_id = TOYOTA_CLIENT_ID
+            self._oauth_redirect_uri = TOYOTA_REDIRECT_URI
+            self._jwt_audience = TOYOTA_JWT_AUDIENCE
 
         # Authentication state
         self._token_info: TokenInfo | None = None
@@ -241,22 +256,13 @@ class Controller:
             Token response data
 
         """
-        if self._brand == "S":
-            auth_header = SUBARU_BASIC_AUTH
-            client_id = "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
-            redirect_uri = "com.subaru.oneapp:/oauth2Callback"
-        else:
-            auth_header = "basic b25lYXBwOm9uZWFwcA=="
-            client_id = "oneapp"
-            redirect_uri = "com.toyota.oneapp:/oauth2Callback"
-
         resp = await client.post(
             self._access_token_url,
-            headers={"authorization": auth_header},
+            headers={"authorization": self._oauth_basic_auth},
             data={
-                "client_id": client_id,
+                "client_id": self._oauth_client_id,
                 "code": auth_code,
-                "redirect_uri": redirect_uri,
+                "redirect_uri": self._oauth_redirect_uri,
                 "grant_type": "authorization_code",
                 "code_verifier": "plain",
             },
@@ -273,22 +279,13 @@ class Controller:
         """Refresh the access token using the refresh token."""
         logger.debug("Refreshing tokens")
 
-        if self._brand == "S":
-            auth_header = SUBARU_BASIC_AUTH
-            client_id = "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
-            redirect_uri = "com.subaru.oneapp:/oauth2Callback"
-        else:
-            auth_header = "basic b25lYXBwOm9uZWFwcA=="
-            client_id = "oneapp"
-            redirect_uri = "com.toyota.oneapp:/oauth2Callback"
-
         async with self._get_http_client() as client:
             resp = await client.post(
                 self._access_token_url,
-                headers={"authorization": auth_header},
+                headers={"authorization": self._oauth_basic_auth},
                 data={
-                    "client_id": client_id,
-                    "redirect_uri": redirect_uri,
+                    "client_id": self._oauth_client_id,
+                    "redirect_uri": self._oauth_redirect_uri,
                     "grant_type": "refresh_token",
                     "code_verifier": "plain",
                     "refresh_token": self._refresh_token,
@@ -321,16 +318,11 @@ class Controller:
             raise ToyotaLoginError(msg)
 
         # Decode the JWT to get the UUID
-        audience = (
-            "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
-            if self._brand == "S"
-            else "oneappsdkclient"
-        )
         uuid = jwt.decode(
             response_data["id_token"],
             algorithms=["RS256"],
             options={"verify_signature": False},
-            audience=audience,
+            audience=self._jwt_audience,
         )["uuid"]
 
         # Calculate expiration time
@@ -363,7 +355,6 @@ class Controller:
         Args:
             method: The HTTP method to use ("GET", "POST", "PUT", "DELETE")
             endpoint: The API endpoint to request
-            brand: Brand of the car (T for Toyota, L for Lexus, S for Subaru)
             vin: Vehicle Identification Number (optional)
             body: Request body as dictionary (optional)
             params: URL query parameters (optional)
