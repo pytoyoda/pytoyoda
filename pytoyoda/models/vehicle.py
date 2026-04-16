@@ -739,6 +739,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         self, summary: list[_SummaryItemModel]
     ) -> list[Summary]:
         summary.sort(key=attrgetter("year", "month"))
+        # Skip histograms with summary=None - a hollow Summary crashes
+        # downstream when sensors read its properties (see #278).
         return [
             Summary(
                 histogram.summary,
@@ -749,6 +751,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             )
             for month in summary
             for histogram in sorted(month.histograms, key=attrgetter("day"))
+            if histogram.summary is not None
         ]
 
     def _generate_weekly_summaries(
@@ -776,13 +779,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
             for histogram in week_histograms[1:]:
                 add_with_none(build_hdc, histogram.hdc)
-                build_summary += histogram.summary
+                # histogram.summary (and the seed build_summary) may be None on
+                # days where the Toyota API returned a partial payload. Seed with
+                # the first non-None summary we see, then accumulate.
+                if histogram.summary is None:
+                    continue
+                if build_summary is None:
+                    build_summary = copy.copy(histogram.summary)
+                else:
+                    build_summary += histogram.summary
 
             end_date = Arrow(
                 week_histograms[-1].year,
                 week_histograms[-1].month,
                 week_histograms[-1].day,
             )
+            # Skip weeks where every histogram.summary was None - a hollow
+            # Summary crashes downstream when sensors read its properties.
+            if build_summary is None:
+                continue
             ret.append(
                 Summary(
                     build_summary,
@@ -802,6 +817,10 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ret: list[Summary] = []
         summary.sort(key=attrgetter("year", "month"))
         for month in summary:
+            # Skip months with summary=None - a hollow Summary crashes
+            # downstream when sensors read its properties (see #278).
+            if month.summary is None:
+                continue
             month_start = Arrow(month.year, month.month, 1).date()
             month_end = (
                 Arrow(month.year, month.month, 1).shift(months=1).shift(days=-1).date()
@@ -831,26 +850,40 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         start_date = date(day=1, month=summary[0].month, year=summary[0].year)
 
         if len(summary) == 1:
-            ret.append(
-                Summary(build_summary, self._metric, start_date, to_date, build_hdc)
-            )
+            if build_summary is not None:
+                ret.append(
+                    Summary(build_summary, self._metric, start_date, to_date, build_hdc)
+                )
         else:
             for month, next_month in zip(
                 summary[1:], [*summary[2:], None], strict=False
             ):
                 summary_month = date(day=1, month=month.month, year=month.year)
                 add_with_none(build_hdc, month.hdc)
-                build_summary += month.summary
+                # month.summary (and the seed build_summary) may be None when
+                # the Toyota API returned partial data.
+                if month.summary is not None:
+                    if build_summary is None:
+                        build_summary = copy.copy(month.summary)
+                    else:
+                        build_summary += month.summary
 
                 if next_month is None or next_month.year != month.year:
                     end_date = min(
                         to_date, date(day=31, month=12, year=summary_month.year)
                     )
-                    ret.append(
-                        Summary(
-                            build_summary, self._metric, start_date, end_date, build_hdc
+                    # Skip years where every month.summary was None - a hollow
+                    # Summary crashes downstream when sensors read its properties.
+                    if build_summary is not None:
+                        ret.append(
+                            Summary(
+                                build_summary,
+                                self._metric,
+                                start_date,
+                                end_date,
+                                build_hdc,
+                            )
                         )
-                    )
                     if next_month:
                         start_date = date(
                             day=1, month=next_month.month, year=next_month.year
