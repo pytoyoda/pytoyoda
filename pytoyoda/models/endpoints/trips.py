@@ -14,16 +14,22 @@ from pytoyoda.utils.models import CustomEndpointBaseModel
 
 
 class _SummaryBaseModel(CustomEndpointBaseModel):
-    length: int | None
-    duration: int | None
-    duration_idle: int | None = Field(alias="durationIdle")
-    countries: list[str] | None
-    max_speed: float | None = Field(alias="maxSpeed")
-    average_speed: float | None = Field(alias="averageSpeed")
-    length_overspeed: int | None = Field(alias="lengthOverspeed")
-    duration_overspeed: int | None = Field(alias="durationOverspeed")
-    length_highway: int | None = Field(alias="lengthHighway")
-    duration_highway: int | None = Field(alias="durationHighway")
+    # Every field is optional. The Toyota /v1/trips endpoint currently returns
+    # only {length, duration, averageSpeed, fuelConsumption} at the histogram
+    # summary level; the rest (durationIdle, countries, min/max speed,
+    # overspeed/highway breakdowns) are not present in the payload. Without
+    # defaults here, the CustomEndpointBaseModel wrapper silently converts the
+    # whole summary to None on every field it can't fill, masking real data.
+    length: int | None = None
+    duration: int | None = None
+    duration_idle: int | None = Field(alias="durationIdle", default=None)
+    countries: list[str] | None = None
+    max_speed: float | None = Field(alias="maxSpeed", default=None)
+    average_speed: float | None = Field(alias="averageSpeed", default=None)
+    length_overspeed: int | None = Field(alias="lengthOverspeed", default=None)
+    duration_overspeed: int | None = Field(alias="durationOverspeed", default=None)
+    length_highway: int | None = Field(alias="lengthHighway", default=None)
+    duration_highway: int | None = Field(alias="durationHighway", default=None)
     fuel_consumption: float | None = Field(
         alias="fuelConsumption", default=None
     )  # Electric cars might not use fuel. Milliliters.
