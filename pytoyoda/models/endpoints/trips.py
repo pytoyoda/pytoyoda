@@ -37,50 +37,52 @@ class _SummaryBaseModel(CustomEndpointBaseModel):
     def __add__(self, other: _SummaryBaseModel) -> _SummaryBaseModel:
         """Add together two SummaryBaseModel's.
 
-        Handles Min/Max/Average fields correctly. Every numeric field is declared
-        ``int | None`` / ``float | None``, so either operand may be ``None`` on any
-        given day. Use ``add_with_none`` throughout and guard list/max/avg ops so
-        a single missing day doesn't crash the whole weekly summary.
+        Returns a new instance rather than mutating ``self`` (Python convention
+        for ``__add__`` vs ``__iadd__``). Every numeric field is declared
+        ``int | None`` / ``float | None``, so either operand may be ``None`` on
+        any given day. Use ``add_with_none`` throughout and guard list/max/avg
+        ops so a single missing day doesn't crash the whole weekly summary.
 
         Args:
             other (_SummaryBaseModel): to be added
 
         """
-        if other is not None:
-            self.length = add_with_none(self.length, other.length)
-            self.duration = add_with_none(self.duration, other.duration)
-            self.duration_idle = add_with_none(self.duration_idle, other.duration_idle)
-            if other.countries:
-                if self.countries is None:
-                    self.countries = []
-                self.countries.extend(
-                    x for x in other.countries if x not in self.countries
-                )
-            if self.max_speed is None:
-                self.max_speed = other.max_speed
-            elif other.max_speed is not None:
-                self.max_speed = max(self.max_speed, other.max_speed)
-            if self.average_speed is None:
-                self.average_speed = other.average_speed
-            elif other.average_speed is not None:
-                self.average_speed = (self.average_speed + other.average_speed) / 2.0
-            self.length_overspeed = add_with_none(
-                self.length_overspeed, other.length_overspeed
+        result = self.model_copy(deep=True)
+        if other is None:
+            return result
+        result.length = add_with_none(result.length, other.length)
+        result.duration = add_with_none(result.duration, other.duration)
+        result.duration_idle = add_with_none(result.duration_idle, other.duration_idle)
+        if other.countries:
+            if result.countries is None:
+                result.countries = []
+            result.countries.extend(
+                x for x in other.countries if x not in result.countries
             )
-            self.duration_overspeed = add_with_none(
-                self.duration_overspeed, other.duration_overspeed
-            )
-            self.length_highway = add_with_none(
-                self.length_highway, other.length_highway
-            )
-            self.duration_highway = add_with_none(
-                self.duration_highway, other.duration_highway
-            )
-            self.fuel_consumption = add_with_none(
-                self.fuel_consumption, other.fuel_consumption
-            )
-
-        return self
+        if result.max_speed is None:
+            result.max_speed = other.max_speed
+        elif other.max_speed is not None:
+            result.max_speed = max(result.max_speed, other.max_speed)
+        if result.average_speed is None:
+            result.average_speed = other.average_speed
+        elif other.average_speed is not None:
+            result.average_speed = (result.average_speed + other.average_speed) / 2.0
+        result.length_overspeed = add_with_none(
+            result.length_overspeed, other.length_overspeed
+        )
+        result.duration_overspeed = add_with_none(
+            result.duration_overspeed, other.duration_overspeed
+        )
+        result.length_highway = add_with_none(
+            result.length_highway, other.length_highway
+        )
+        result.duration_highway = add_with_none(
+            result.duration_highway, other.duration_highway
+        )
+        result.fuel_consumption = add_with_none(
+            result.fuel_consumption, other.fuel_consumption
+        )
+        return result
 
 
 class _SummaryModel(_SummaryBaseModel):
@@ -128,23 +130,24 @@ class _HDCModel(CustomEndpointBaseModel):
     def __add__(self, other: _HDCModel) -> _HDCModel:
         """Add together two HDCModel's.
 
-        Handles Min/Max/Average fields correctly.
+        Returns a new instance rather than mutating ``self``.
 
         Args:
-            other (_SummaryBaseModel): to be added
+            other (_HDCModel): to be added
 
         """
-        if other is not None:
-            self.ev_time = add_with_none(self.ev_time, other.ev_time)
-            self.ev_distance = add_with_none(self.ev_distance, other.ev_distance)
-            self.charge_time = add_with_none(self.charge_time, other.charge_time)
-            self.charge_dist = add_with_none(self.charge_dist, other.charge_dist)
-            self.eco_time = add_with_none(self.eco_time, other.eco_time)
-            self.eco_dist = add_with_none(self.eco_dist, other.eco_dist)
-            self.power_time = add_with_none(self.power_time, other.power_time)
-            self.power_dist = add_with_none(self.power_dist, other.power_dist)
-
-        return self
+        result = self.model_copy(deep=True)
+        if other is None:
+            return result
+        result.ev_time = add_with_none(result.ev_time, other.ev_time)
+        result.ev_distance = add_with_none(result.ev_distance, other.ev_distance)
+        result.charge_time = add_with_none(result.charge_time, other.charge_time)
+        result.charge_dist = add_with_none(result.charge_dist, other.charge_dist)
+        result.eco_time = add_with_none(result.eco_time, other.eco_time)
+        result.eco_dist = add_with_none(result.eco_dist, other.eco_dist)
+        result.power_time = add_with_none(result.power_time, other.power_time)
+        result.power_dist = add_with_none(result.power_dist, other.power_dist)
+        return result
 
 
 class _RouteModel(CustomEndpointBaseModel):

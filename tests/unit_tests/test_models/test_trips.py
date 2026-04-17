@@ -90,6 +90,29 @@ def test_summary_base_model_add_handles_both_none() -> None:
 
 
 def test_summary_base_model_add_noop_when_other_is_none() -> None:
-    """Adding None returns self unchanged (predates this fix, kept as a guard)."""
+    """Adding None returns a copy with the same values and no side effects."""
     summary = _SummaryBaseModel.model_validate({"length": 42})
-    assert (summary + None).length == 42
+    result = summary + None
+    assert result.length == 42
+    assert result is not summary
+
+
+def test_summary_base_model_add_does_not_mutate_operands() -> None:
+    """``__add__`` must return a new instance; operands must be untouched.
+
+    Python convention: ``a + b`` leaves ``a`` and ``b`` alone. In-place
+    mutation belongs on ``__iadd__`` / ``+=``.
+    """
+    full = _make_full()
+    sparse = _SummaryBaseModel.model_validate({"length": 50, "duration": 30})
+    full_snapshot = full.model_copy(deep=True)
+    sparse_snapshot = sparse.model_copy(deep=True)
+
+    result = full + sparse
+
+    assert result is not full
+    assert result is not sparse
+    assert full.length == full_snapshot.length
+    assert full.duration == full_snapshot.duration
+    assert sparse.length == sparse_snapshot.length
+    assert sparse.duration == sparse_snapshot.duration
