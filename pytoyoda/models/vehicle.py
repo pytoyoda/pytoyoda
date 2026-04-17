@@ -778,7 +778,10 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             )
 
             for histogram in week_histograms[1:]:
-                add_with_none(build_hdc, histogram.hdc)
+                # ``add_with_none`` returns the sum, so we must capture it;
+                # without the assignment ``build_hdc`` would stay at the
+                # first histogram's hdc (or ``None`` if that was None).
+                build_hdc = add_with_none(build_hdc, histogram.hdc)
                 # histogram.summary (and the seed build_summary) may be None on
                 # days where the Toyota API returned a partial payload. Seed with
                 # the first non-None summary we see, then accumulate.
@@ -859,7 +862,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 summary[1:], [*summary[2:], None], strict=False
             ):
                 summary_month = date(day=1, month=month.month, year=month.year)
-                add_with_none(build_hdc, month.hdc)
+                # ``add_with_none`` returns the sum; capture it or ``build_hdc``
+                # stays at the year's first month's hdc.
+                build_hdc = add_with_none(build_hdc, month.hdc)
                 # month.summary (and the seed build_summary) may be None when
                 # the Toyota API returned partial data.
                 if month.summary is not None:
