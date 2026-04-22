@@ -776,11 +776,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
             for histogram in week_histograms[1:]:
                 add_with_none(build_hdc, histogram.hdc)
-                if histogram.summary is not None:
-                    if build_summary is not None:
-                        build_summary += histogram.summary
-                    else:
-                        build_summary = histogram.summary
+                add_with_none(build_summary, histogram.summary)
 
             end_date = Arrow(
                 week_histograms[-1].year,
@@ -844,11 +840,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             ):
                 summary_month = date(day=1, month=month.month, year=month.year)
                 add_with_none(build_hdc, month.hdc)
-                if month.summary is not None:
-                    if build_summary is not None:
-                        build_summary += month.summary
-                    else:
-                        build_summary = month.summary
+                add_with_none(build_summary, month.summary)
 
                 if next_month is None or next_month.year != month.year:
                     end_date = min(
