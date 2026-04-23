@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -362,23 +363,48 @@ class Controller:
         # Prepare headers
         request_headers = self._prepare_headers(vin, headers)
 
-        # Make the request using the reused client, so TCP/TLS state is pooled
-        # across calls instead of a fresh SSL handshake per request.
+        # Make the request using the reused client (TCP/TLS state is pooled
+        # across calls instead of a fresh SSL handshake per request). Retry on
+        # 429 (rate-limited) and 5xx with exponential backoff; 4xx client
+        # errors fail fast. Total worst-case wait when Toyota is unhealthy:
+        # 2 + 4 + 8 = 14s.
         if self._client is None:
             self._client = httpx.AsyncClient(timeout=self._timeout)
 
-        response = await self._client.request(
-            method,
-            f"{self._api_base_url}{endpoint}",
-            headers=request_headers,
-            json=body,
-            params=params,
-            follow_redirects=True,
-        )
-        logger.debug(format_httpx_response(response))
+        backoffs_s = (2, 4, 8)
+        response: httpx.Response | None = None
 
-        if response.status_code in [HTTPStatus.OK, HTTPStatus.ACCEPTED]:
-            return response
+        for attempt in range(len(backoffs_s) + 1):
+            response = await self._client.request(
+                method,
+                f"{self._api_base_url}{endpoint}",
+                headers=request_headers,
+                json=body,
+                params=params,
+                follow_redirects=True,
+            )
+            logger.debug(format_httpx_response(response))
+
+            if response.status_code in [HTTPStatus.OK, HTTPStatus.ACCEPTED]:
+                return response
+
+            is_transient = (
+                response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+                or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+            if not is_transient or attempt >= len(backoffs_s):
+                break
+
+            wait = backoffs_s[attempt]
+            logger.warning(
+                "Toyota API {} on {}; retrying in {}s (attempt {} of {})",
+                response.status_code,
+                endpoint,
+                wait,
+                attempt + 2,
+                len(backoffs_s) + 1,
+            )
+            await asyncio.sleep(wait)
 
         msg = f"Request Failed. {response.status_code}, {response.text}."
         raise ToyotaApiError(msg)
