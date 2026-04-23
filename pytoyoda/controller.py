@@ -77,6 +77,11 @@ class Controller:
         # Authentication state
         self._token_info: TokenInfo | None = None
 
+        # Reused httpx.AsyncClient for data requests. Lazily constructed inside
+        # an async context and kept for the lifetime of the Controller, so that
+        # SSL context + TCP connection pool survive across request_raw calls.
+        self._client: httpx.AsyncClient | None = None
+
         # Load from cache if available
         if self._username in self._TOKEN_CACHE:
             self._token_info = self._TOKEN_CACHE[self._username]
@@ -357,23 +362,32 @@ class Controller:
         # Prepare headers
         request_headers = self._prepare_headers(vin, headers)
 
-        # Make the request
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.request(
-                method,
-                f"{self._api_base_url}{endpoint}",
-                headers=request_headers,
-                json=body,
-                params=params,
-                follow_redirects=True,
-            )
-            logger.debug(format_httpx_response(response))
+        # Make the request using the reused client, so TCP/TLS state is pooled
+        # across calls instead of a fresh SSL handshake per request.
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=self._timeout)
 
-            if response.status_code in [HTTPStatus.OK, HTTPStatus.ACCEPTED]:
-                return response
+        response = await self._client.request(
+            method,
+            f"{self._api_base_url}{endpoint}",
+            headers=request_headers,
+            json=body,
+            params=params,
+            follow_redirects=True,
+        )
+        logger.debug(format_httpx_response(response))
+
+        if response.status_code in [HTTPStatus.OK, HTTPStatus.ACCEPTED]:
+            return response
 
         msg = f"Request Failed. {response.status_code}, {response.text}."
         raise ToyotaApiError(msg)
+
+    async def aclose(self) -> None:
+        """Release the pooled httpx client. Safe to call multiple times."""
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
     def _prepare_headers(
         self,
