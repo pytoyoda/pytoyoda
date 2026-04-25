@@ -1,6 +1,5 @@
 """Vehicle model."""
 
-import asyncio
 import copy
 import json
 from collections.abc import Callable
@@ -243,28 +242,19 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
     async def update(self) -> None:
         """Update the data for the vehicle.
 
-        This method asynchronously updates the data for the vehicle by
-        calling the endpoint functions in parallel.
+        Endpoint functions are awaited sequentially rather than in a single
+        asyncio.gather. Toyota's API gateway appears to rate-limit on bursts
+        of near-simultaneous requests: firing ~10 requests in the same event
+        loop tick reliably trips a 429 with `{"description": "Unauthorized"}`
+        response bodies, while the same requests serialised at poll cadence
+        succeed cleanly. See pytoyoda/ha_toyota#282 for measurement evidence.
 
         Returns:
             None
 
         """
-
-        async def parallel_wrapper(
-            name: str, function: partial
-        ) -> tuple[str, dict[str, Any]]:
-            r = await function()
-            return name, r
-
-        responses = asyncio.gather(
-            *[
-                parallel_wrapper(name, function)
-                for name, function in self._endpoint_collect
-            ]
-        )
-        for name, data in await responses:
-            self._endpoint_data[name] = data
+        for name, function in self._endpoint_collect:
+            self._endpoint_data[name] = await function()
 
     @computed_field  # type: ignore[prop-decorator]
     @property
