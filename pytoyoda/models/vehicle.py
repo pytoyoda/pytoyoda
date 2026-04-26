@@ -26,6 +26,7 @@ from pytoyoda.models.endpoints.electric import (
     ElectricCommandResponseModel,
     NextChargeSettings,
 )
+from pytoyoda.models.endpoints.refresh_status import RefreshStatusResponseModel
 from pytoyoda.models.endpoints.trips import _SummaryItemModel
 from pytoyoda.models.endpoints.vehicle_guid import VehicleGuidModel
 from pytoyoda.models.location import Location
@@ -239,7 +240,11 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             if endpoint.capable
         ]
 
-    async def update(self) -> None:
+    async def update(
+        self,
+        skip: list[str] | None = None,
+        only: list[str] | None = None,
+    ) -> None:
         """Update the data for the vehicle.
 
         Endpoint functions are awaited sequentially rather than in a single
@@ -249,11 +254,37 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         response bodies, while the same requests serialised at poll cadence
         succeed cleanly. See pytoyoda/ha_toyota#282 for measurement evidence.
 
+        Args:
+            skip: Endpoint names (matching EndpointDefinition.name values
+                like "status", "telemetry", etc.) to skip this cycle.
+                Skipped endpoints retain their previous _endpoint_data
+                entry, so consumers continue to see the last-known value.
+                Used by ha_toyota's smart-refresh strategy to skip
+                /v1/global/remote/status when a separate POST/GET cycle
+                handles it explicitly.
+            only: Inverse of skip - if provided, ONLY these endpoint names
+                will be fetched. Mutually exclusive with skip.
+                Used by ha_toyota's smart-refresh strategy to update just
+                /v1/global/remote/status after a wake POST without
+                re-hitting the other endpoints that are already fresh.
+
         Returns:
             None
 
+        Raises:
+            ValueError: If both skip and only are provided.
+
         """
+        if skip is not None and only is not None:
+            msg = "update(): pass either skip or only, not both"
+            raise ValueError(msg)
+        skip_set = set(skip or [])
+        only_set = set(only) if only is not None else None
         for name, function in self._endpoint_collect:
+            if only_set is not None and name not in only_set:
+                continue
+            if name in skip_set:
+                continue
             self._endpoint_data[name] = await function()
 
     @computed_field  # type: ignore[prop-decorator]
@@ -357,6 +388,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         """
         return await self._api.refresh_electric_realtime_status(self.vin)
+
+    async def refresh_status(self) -> RefreshStatusResponseModel:
+        """Wake the vehicle and request a fresh /status cache populate.
+
+        Issues POST /v1/global/remote/refresh-status. Use sparingly:
+        each call uses cellular airtime and a small amount of 12V battery.
+        Returns when the gateway has accepted the wake request, NOT when
+        the cache has actually been populated; the caller should poll
+        /status afterwards (and check occurrence_date advancement) to
+        verify the wake succeeded end-to-end.
+
+        Returns:
+            RefreshStatusResponseModel: payload.return_code "000000"
+                = wake accepted, anything else = vehicle does not
+                support refresh-status (caller should disable further
+                attempts for this VIN).
+
+        """
+        return await self._api.refresh_vehicle_status(self.vin)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

@@ -18,6 +18,7 @@ VEHICLE_GUID_ENDPOINT = "/v2/vehicle/guid"
 VEHICLE_LOCATION_ENDPOINT = "/v1/location"
 VEHICLE_HEALTH_STATUS_ENDPOINT = "/v1/vehiclehealth/status"
 VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT = "/v1/global/remote/status"
+VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT = "/v1/global/remote/refresh-status"
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT = "/v1/global/remote/electric/status"
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT = (
     "/v1/global/remote/electric/realtime-status"

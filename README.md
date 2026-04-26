@@ -59,6 +59,7 @@ For an overview of the current official interfaces, please take a look at our [d
 
 - Statistical endpoint will return `None` if no trip have been performed in the requested timeframe. This problem will often happen at the start of each week, month or year. Also daily stats will of course also be unavailable if no trip have been performed.
 - Currently, it is only possible to get various vehicle information. Functions for controlling and setting vehicle properties have not yet been implemented.
+- `GET /v1/global/remote/status` (used by `Vehicle.lock_status`) returns `429 APIGW-403 "Unauthorized"` frequently, often without obvious correlation to call rate. Empirically, issuing `POST /v1/global/remote/refresh-status` first - the same wake the Toyota Android app uses - improves the success rate of subsequent GETs and gives fresher `occurrence_date` payloads, suggesting at least some of the 429s come from a stale or empty server-side cache rather than rate-limiting. Other 429s appear to be unrelated to cache state and happen seemingly at random; pytoyoda retries those with exponential backoff. Call `Vehicle.refresh_status()` first, then poll `Vehicle.update(only=["status"])` until `lock_status.last_updated` advances.
 
 ## Contributing
 
