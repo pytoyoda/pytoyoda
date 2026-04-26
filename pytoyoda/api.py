@@ -16,6 +16,7 @@ from pytoyoda.const import (
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT,
+    VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT,
     VEHICLE_GUID_ENDPOINT,
     VEHICLE_HEALTH_STATUS_ENDPOINT,
@@ -41,6 +42,7 @@ from pytoyoda.models.endpoints.electric import (
 )
 from pytoyoda.models.endpoints.location import LocationResponseModel
 from pytoyoda.models.endpoints.notifications import NotificationResponseModel
+from pytoyoda.models.endpoints.refresh_status import RefreshStatusResponseModel
 from pytoyoda.models.endpoints.service_history import ServiceHistoryResponseModel
 from pytoyoda.models.endpoints.status import RemoteStatusResponseModel
 from pytoyoda.models.endpoints.telemetry import TelemetryResponseModel
@@ -242,6 +244,42 @@ class Api:
             "POST",
             VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
             vin=vin,
+        )
+
+    async def refresh_vehicle_status(self, vin: str) -> RefreshStatusResponseModel:
+        """Wake the vehicle and request a fresh /status cache populate.
+
+        Calls Toyota's POST /v1/global/remote/refresh-status. The car's
+        cellular modem is woken; on success the gateway populates the
+        cache that GET /status reads. Toyota's mobile app issues this
+        before reading status to avoid 429+APIGW-403 from a cold cache.
+
+        The body shape (deviceId/deviceType/guid/vin) is required;
+        without it the gateway returns 500 (this was the root cause of
+        the abandoned PR #302/#77 force_update path).
+
+        Args:
+            vin: Vehicle Identification Number
+
+        Returns:
+            RefreshStatusResponseModel: Response payload contains
+                return_code; "000000" indicates the gateway accepted
+                the wake request. Any other value indicates the vehicle
+                does not support the endpoint.
+
+        """
+        body = {
+            "deviceId": "pytoyoda",
+            "deviceType": "Android",
+            "guid": self.controller._uuid,  # noqa: SLF001
+            "vin": vin,
+        }
+        return await self._request_and_parse(
+            RefreshStatusResponseModel,
+            "POST",
+            VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT,
+            vin=vin,
+            body=body,
         )
 
     async def get_telemetry(self, vin: str) -> TelemetryResponseModel:
