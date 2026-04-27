@@ -157,9 +157,7 @@ class Controller:
         """
         if self._ssl_ctx is None:
             loop = asyncio.get_running_loop()
-            self._ssl_ctx = await loop.run_in_executor(
-                None, httpx.create_ssl_context
-            )
+            self._ssl_ctx = await loop.run_in_executor(None, httpx.create_ssl_context)
         return self._ssl_ctx
 
     @asynccontextmanager
@@ -395,9 +393,7 @@ class Controller:
         # 2 + 4 + 8 = 14s.
         if self._client is None:
             ssl_ctx = await self._get_ssl_context()
-            self._client = httpx.AsyncClient(
-                timeout=self._timeout, verify=ssl_ctx
-            )
+            self._client = httpx.AsyncClient(timeout=self._timeout, verify=ssl_ctx)
 
         backoffs_s = (2, 4, 8)
         response: httpx.Response | None = None
