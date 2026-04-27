@@ -26,7 +26,7 @@ jobs:
       - name: "🚀 Generate docs"
         run: poetry run pdoc pytoyoda -o docs/ --docformat google
       - name: "⬆️ Upload docs artifact"
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/
 
