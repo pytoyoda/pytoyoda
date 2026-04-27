@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import ssl
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -83,6 +84,13 @@ class Controller:
         # SSL context + TCP connection pool survive across request_raw calls.
         self._client: httpx.AsyncClient | None = None
 
+        # Cached SSL context shared by every AsyncClient this Controller builds.
+        # ssl.create_default_context() reads the CA bundle from disk
+        # synchronously, which trips Home Assistant's blocking-call watchdog
+        # when called from the event loop (one warning per AsyncClient
+        # construction). We build it once in an executor and reuse.
+        self._ssl_ctx: ssl.SSLContext | None = None
+
         # Load from cache if available
         if self._username in self._TOKEN_CACHE:
             self._token_info = self._TOKEN_CACHE[self._username]
@@ -138,10 +146,27 @@ class Controller:
 
             await self._authenticate()
 
+    async def _get_ssl_context(self) -> ssl.SSLContext:
+        """Return a cached SSL context, building it off the event loop on first use.
+
+        httpx.create_ssl_context() reads the CA bundle synchronously, which
+        blocks the event loop for ~1-10ms and trips Home Assistant's
+        blocking-call watchdog. By caching the context on the Controller and
+        sharing it across AsyncClient constructions, we pay that cost once
+        per Controller lifetime instead of per HTTP client.
+        """
+        if self._ssl_ctx is None:
+            loop = asyncio.get_running_loop()
+            self._ssl_ctx = await loop.run_in_executor(
+                None, httpx.create_ssl_context
+            )
+        return self._ssl_ctx
+
     @asynccontextmanager
     async def _get_http_client(self) -> AsyncGenerator:
         """Context manager for HTTP client with consistent timeout."""
-        async with AsyncCacheClient(timeout=self._timeout) as client:
+        ssl_ctx = await self._get_ssl_context()
+        async with AsyncCacheClient(timeout=self._timeout, verify=ssl_ctx) as client:
             yield client
 
     async def _authenticate(self) -> None:
@@ -369,7 +394,10 @@ class Controller:
         # errors fail fast. Total worst-case wait when Toyota is unhealthy:
         # 2 + 4 + 8 = 14s.
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=self._timeout)
+            ssl_ctx = await self._get_ssl_context()
+            self._client = httpx.AsyncClient(
+                timeout=self._timeout, verify=ssl_ctx
+            )
 
         backoffs_s = (2, 4, 8)
         response: httpx.Response | None = None
