@@ -192,10 +192,26 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 ),
                 EndpointDefinition(
                     name="climate_settings",
-                    capable=getattr(
-                        getattr(self._vehicle_info, "features", False),
-                        "climate_start_engine",
-                        False,
+                    capable=(
+                        getattr(
+                            getattr(self._vehicle_info, "features", False),
+                            "climate_start_engine",
+                            False,
+                        )
+                        or any(
+                            getattr(
+                                getattr(
+                                    self._vehicle_info, "extended_capabilities", False
+                                ),
+                                attr,
+                                False,
+                            )
+                            for attr in (
+                                "climate_capable",
+                                "econnect_climate_capable",
+                                "remote_engine_start_stop",
+                            )
+                        )
                     ),
                     function=partial(
                         self._api.get_climate_settings, vin=self._vehicle_info.vin
