@@ -296,14 +296,14 @@ files = [
 
 [[package]]
 name = "hishel"
-version = "1.1.9"
+version = "1.2.1"
 description = "Elegant HTTP Caching for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "hishel-1.1.9-py3-none-any.whl", hash = "sha256:6b6f294cb7593f170a9bf874849cc85330ff81f5e35d2ca189548498fed10806"},
-    {file = "hishel-1.1.9.tar.gz", hash = "sha256:47248a50e4cff4fbaa141832782d8c07b2169914916f4bd792f37449176dfa23"},
+    {file = "hishel-1.2.1-py3-none-any.whl", hash = "sha256:5e1c1e38f4c970eeef69bc8528e85fd5c02eab15a22f9845d30fc880da32b881"},
+    {file = "hishel-1.2.1.tar.gz", hash = "sha256:87212cd31a7a6904352ec5bd7119ed3b43d0ab1259d5995751a2a2b173d7c305"},
 ]
 
 [package.dependencies]
@@ -317,6 +317,7 @@ typing-extensions = ">=4.14.1"
 async = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)"]
 fastapi = ["fastapi (>=0.119.1)"]
 httpx = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)", "httpx (>=0.28.1)"]
+redis = ["redis (>=7.0.0)"]
 requests = ["requests (>=2.32.5)"]
 
 [[package]]
