@@ -1,0 +1,244 @@
+[
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://b2c-login.toyota-europe.com/json/realms/root/realms/alliance-subaru/authenticate?authIndexType=service&authIndexValue=oneapp",
+      "content": ""
+    },
+    "response": {
+      "status": 200,
+      "content": {
+        "authId": "REDACTED_AUTH_ID",
+        "callbacks": [
+          {
+            "type": "NameCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "Market Locale"
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken1",
+                "value": ""
+              }
+            ],
+            "_id": 0
+          },
+          {
+            "type": "NameCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "Internationalization"
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken2",
+                "value": ""
+              }
+            ],
+            "_id": 1
+          },
+          {
+            "type": "NameCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "UI Locales"
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken3",
+                "value": ""
+              }
+            ],
+            "_id": 2
+          }
+        ]
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://b2c-login.toyota-europe.com/json/realms/root/realms/alliance-subaru/authenticate?authIndexType=service&authIndexValue=oneapp",
+      "content": "{\"authId\": \"REDACTED_AUTH_ID\", \"callbacks\": [{\"type\": \"NameCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"Market Locale\"}], \"input\": [{\"name\": \"IDToken1\", \"value\": \"de-DE\"}], \"_id\": 0}, {\"type\": \"NameCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"Internationalization\"}], \"input\": [{\"name\": \"IDToken2\", \"value\": \"de-DE\"}], \"_id\": 1}, {\"type\": \"NameCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"UI Locales\"}], \"input\": [{\"name\": \"IDToken3\", \"value\": \"de-DE\"}], \"_id\": 2}]}"
+    },
+    "response": {
+      "status": 200,
+      "content": {
+        "authId": "REDACTED_AUTH_ID",
+        "callbacks": [
+          {
+            "type": "NameCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "User Name"
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken1",
+                "value": ""
+              }
+            ],
+            "_id": 3
+          },
+          {
+            "type": "ChoiceCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "Prompt"
+              },
+              {
+                "name": "choices",
+                "value": [
+                  "Local",
+                  "Google",
+                  "Facebook",
+                  "Apple"
+                ]
+              },
+              {
+                "name": "defaultChoice",
+                "value": 0
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken2",
+                "value": 0
+              }
+            ],
+            "_id": 4
+          }
+        ]
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://b2c-login.toyota-europe.com/json/realms/root/realms/alliance-subaru/authenticate?authIndexType=service&authIndexValue=oneapp",
+      "content": "{\"authId\": \"REDACTED_AUTH_ID\", \"callbacks\": [{\"type\": \"NameCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"User Name\"}], \"input\": [{\"name\": \"IDToken1\", \"value\": \"user@email.info\"}], \"_id\": 3}, {\"type\": \"ChoiceCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"Prompt\"}, {\"name\": \"choices\", \"value\": [\"Local\", \"Google\", \"Facebook\", \"Apple\"]}, {\"name\": \"defaultChoice\", \"value\": 0}], \"input\": [{\"name\": \"IDToken2\", \"value\": 0}], \"_id\": 4}]}"
+    },
+    "response": {
+      "status": 200,
+      "content": {
+        "authId": "REDACTED_AUTH_ID",
+        "callbacks": [
+          {
+            "type": "PasswordCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "Password"
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken1",
+                "value": ""
+              }
+            ],
+            "_id": 5
+          },
+          {
+            "type": "ChoiceCallback",
+            "output": [
+              {
+                "name": "prompt",
+                "value": "Prompt"
+              },
+              {
+                "name": "choices",
+                "value": [
+                  "continue",
+                  "resetpass"
+                ]
+              },
+              {
+                "name": "defaultChoice",
+                "value": 0
+              }
+            ],
+            "input": [
+              {
+                "name": "IDToken2",
+                "value": 0
+              }
+            ],
+            "_id": 6
+          }
+        ]
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://b2c-login.toyota-europe.com/json/realms/root/realms/alliance-subaru/authenticate?authIndexType=service&authIndexValue=oneapp",
+      "content": "{\"authId\": \"REDACTED_AUTH_ID\", \"callbacks\": [{\"type\": \"PasswordCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"Password\"}], \"input\": [{\"name\": \"IDToken1\", \"value\": \"password\"}], \"_id\": 5}, {\"type\": \"ChoiceCallback\", \"output\": [{\"name\": \"prompt\", \"value\": \"Prompt\"}, {\"name\": \"choices\", \"value\": [\"continue\", \"resetpass\"]}, {\"name\": \"defaultChoice\", \"value\": 0}], \"input\": [{\"name\": \"IDToken2\", \"value\": 0}], \"_id\": 6}]}"
+    },
+    "response": {
+      "status": 200,
+      "content": {
+        "tokenId": "REDACTED_TOKEN_ID",
+        "successUrl": "/console",
+        "realm": "/alliance-subaru"
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "url": "https://b2c-login.toyota-europe.com/oauth2/realms/root/realms/alliance-subaru/authorize?client_id=8c4921b0b08901fef389ce1af49c4e10.subaru.com&scope=openid+profile+write&response_type=code&redirect_uri=com.subaru.oneapp:/oauth2Callback&code_challenge=plain&code_challenge_method=plain"
+    },
+    "response": {
+      "status": 302,
+      "content": "",
+      "headers": {
+        "Content-Type": "text/html",
+        "Location": "com.subaru.oneapp:/oauth2Callback?code=REDACTED_CODE"
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://b2c-login.toyota-europe.com/oauth2/realms/root/realms/alliance-subaru/access_token"
+    },
+    "response": {
+      "status": 200,
+      "content": {
+        "access_token": "REMOVED",
+        "refresh_token": "REMOVED",
+        "scope": "openid profile write",
+        "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJ1dWlkIjoiMTIzNDU2Nzg5IiwiYXVkIjoiOGM0OTIxYjBiMDg5MDFmZWYzODljZTFhZjQ5YzRlMTAuc3ViYXJ1LmNvbSJ9.Xx1eRGkSoldtj2fx4U6syrkjJtArvT5BldpS4SpYA7E",
+        "token_type": "Bearer",
+        "expires_in": 3599
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  }
+]
