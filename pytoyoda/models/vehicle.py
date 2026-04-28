@@ -86,6 +86,9 @@ class EndpointDefinition:
     name: str
     capable: bool
     function: Callable
+    # If True, failures here are caught + recorded in
+    # Vehicle._endpoint_errors instead of aborting update().
+    optional: bool = False
 
 
 class Vehicle(CustomAPIBaseModel[type[T]]):
@@ -200,6 +203,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     function=partial(
                         self._api.get_climate_settings, vin=self._vehicle_info.vin
                     ),
+                    # Toyota selectively 500s on this endpoint for some
+                    # accounts. See ha_toyota#291.
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="climate_status",
@@ -211,6 +217,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     function=partial(
                         self._api.get_climate_status, vin=self._vehicle_info.vin
                     ),
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="trip_history",
@@ -235,10 +242,12 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 )
             )
         self._endpoint_collect = [
-            (endpoint.name, endpoint.function)
+            (endpoint.name, endpoint.function, endpoint.optional)
             for endpoint in self._api_endpoints
             if endpoint.capable
         ]
+        # Failures on optional endpoints from the most recent update().
+        self._endpoint_errors: dict[str, Exception] = {}
 
     async def update(
         self,
@@ -280,12 +289,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             raise ValueError(msg)
         skip_set = set(skip or [])
         only_set = set(only) if only is not None else None
-        for name, function in self._endpoint_collect:
+        self._endpoint_errors = {}
+        for name, function, optional in self._endpoint_collect:
             if only_set is not None and name not in only_set:
                 continue
             if name in skip_set:
                 continue
-            self._endpoint_data[name] = await function()
+            try:
+                self._endpoint_data[name] = await function()
+            except Exception as ex:
+                if not optional:
+                    raise
+                self._endpoint_errors[name] = ex
+                logger.warning(
+                    "Optional endpoint '{}' failed and will be skipped this "
+                    "cycle: {}: {}",
+                    name,
+                    type(ex).__name__,
+                    ex,
+                )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
