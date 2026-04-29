@@ -18,8 +18,6 @@ from pytoyoda.models.vehicle import EndpointDefinition, Vehicle
 class _FakeApi:
     """Stub Api object that satisfies Vehicle's constructor."""
 
-    pass
-
 
 class _FakeVehicleInfo:
     """Minimal vehicle info shape: a vin and feature/capability stubs."""
@@ -49,9 +47,7 @@ def _build_vehicle_with_endpoints(endpoints: list[EndpointDefinition]) -> Vehicl
     v._endpoint_data = {}
     v._endpoint_errors = {}
     v._api_endpoints = endpoints
-    v._endpoint_collect = [
-        (e.name, e.function, e.optional) for e in endpoints if e.capable
-    ]
+    v._endpoint_collect = [e for e in endpoints if e.capable]
     return v
 
 
@@ -137,8 +133,38 @@ async def test_endpoint_errors_resets_each_update() -> None:
 
 
 @pytest.mark.asyncio
+async def test_optional_failure_clears_stale_data() -> None:
+    """A failure on an optional endpoint must clear last cycle's payload.
+
+    Otherwise downstream getters keep returning stale data instead of None,
+    which would silently mask the failure to the user.
+    """
+    state = {"raise": False}
+
+    async def sometimes_bad() -> str:
+        if state["raise"]:
+            raise RuntimeError("now broken")
+        return "fresh"
+
+    v = _build_vehicle_with_endpoints(
+        [EndpointDefinition("x", capable=True, function=sometimes_bad, optional=True)]
+    )
+
+    # Cycle 1: success populates _endpoint_data["x"].
+    await v.update()
+    assert v._endpoint_data["x"] == "fresh"
+
+    # Cycle 2: failure must remove the stale entry.
+    state["raise"] = True
+    await v.update()
+    assert "x" not in v._endpoint_data
+    assert "x" in v._endpoint_errors
+
+
+@pytest.mark.asyncio
 async def test_skip_does_not_record_as_error() -> None:
     """Endpoints filtered via skip= are not called; not in errors."""
+
     async def good() -> str:
         return "ok"
 
@@ -160,6 +186,7 @@ async def test_skip_does_not_record_as_error() -> None:
 @pytest.mark.asyncio
 async def test_only_filter_works_with_optional_flag() -> None:
     """only= filters endpoints; optional flag still applies for those that run."""
+
     async def good() -> str:
         return "ok"
 
