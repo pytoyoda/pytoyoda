@@ -242,9 +242,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 )
             )
         self._endpoint_collect = [
-            (endpoint.name, endpoint.function, endpoint.optional)
-            for endpoint in self._api_endpoints
-            if endpoint.capable
+            endpoint for endpoint in self._api_endpoints if endpoint.capable
         ]
         # Failures on optional endpoints from the most recent update().
         self._endpoint_errors: dict[str, Exception] = {}
@@ -290,21 +288,24 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         skip_set = set(skip or [])
         only_set = set(only) if only is not None else None
         self._endpoint_errors = {}
-        for name, function, optional in self._endpoint_collect:
-            if only_set is not None and name not in only_set:
+        for endpoint in self._endpoint_collect:
+            if only_set is not None and endpoint.name not in only_set:
                 continue
-            if name in skip_set:
+            if endpoint.name in skip_set:
                 continue
             try:
-                self._endpoint_data[name] = await function()
+                self._endpoint_data[endpoint.name] = await endpoint.function()
             except Exception as ex:
-                if not optional:
+                if not endpoint.optional:
                     raise
-                self._endpoint_errors[name] = ex
+                self._endpoint_errors[endpoint.name] = ex
+                # Clear any stale payload from a previous successful cycle so
+                # downstream getters return None instead of outdated data.
+                self._endpoint_data.pop(endpoint.name, None)
                 logger.warning(
-                    "Optional endpoint '{}' failed and will be skipped this "
+                    "Optional endpoint '{}' failed and will be cleared this "
                     "cycle: {}: {}",
-                    name,
+                    endpoint.name,
                     type(ex).__name__,
                     ex,
                 )
