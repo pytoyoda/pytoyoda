@@ -706,6 +706,56 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ret = next(iter(resp.payload.trips), None)
         return None if ret is None else Trip(ret, self._metric)
 
+    async def get_recent_trips(
+        self,
+        limit: int = 5,
+        with_route: bool = False,  # noqa: FBT001, FBT002
+        from_date: date | None = None,
+        to_date: date | None = None,
+        offset: int = 0,
+    ) -> list[Trip]:
+        """Fetch a single page of trips, most-recent-first (one HTTP call).
+
+        Args:
+            limit: Page size, 1..50.
+            with_route: Include per-trip route coordinates (larger payload).
+            from_date: Lower bound, inclusive. Defaults to today minus 90 days.
+            to_date: Upper bound, inclusive. Defaults to today.
+            offset: 0-based offset into the most-recent-first result set.
+
+        Returns:
+            List of Trip models, empty if no trips match.
+
+        Raises:
+            ValueError: ``limit`` outside 1..50, or ``offset`` negative.
+
+        """
+        if not 1 <= limit <= 50:  # noqa: PLR2004
+            msg = f"limit must be between 1 and 50, got {limit}"
+            raise ValueError(msg)
+        if offset < 0:
+            msg = f"offset must be >= 0, got {offset}"
+            raise ValueError(msg)
+        if from_date is None:
+            from_date = date.today() - timedelta(days=90)  # noqa: DTZ011
+        if to_date is None:
+            to_date = date.today()  # noqa: DTZ011
+
+        resp = await self._api.get_trips(
+            self.vin,
+            from_date,
+            to_date,
+            summary=False,
+            limit=limit,
+            offset=offset,
+            route=with_route,
+        )
+
+        if resp.payload is None or not resp.payload.trips:
+            return []
+
+        return [Trip(t, self._metric) for t in resp.payload.trips]
+
     async def refresh_climate_status(self) -> StatusModel:
         """Force update of climate status.
 
