@@ -18,7 +18,7 @@ read models below no longer share their shape — actuation is moving to
 
 from datetime import datetime
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from pytoyoda.models.endpoints.common import StatusModel, UnitValueModel
 from pytoyoda.utils.models import CustomEndpointBaseModel
@@ -33,6 +33,10 @@ class HeatingOptionsModel(CustomEndpointBaseModel):
         steering_heater: Steering-wheel heater state.
 
     """
+
+    # Also constructed in Python (the climate-control write body), so accept both the
+    # snake_case field names and the camelCase wire aliases.
+    model_config = ConfigDict(populate_by_name=True)
 
     front_defroster: str | None = Field(alias="frontDefroster", default=None)
     rear_defogger: str | None = Field(alias="rearDefogger", default=None)
@@ -49,6 +53,8 @@ class SeatOptionsModel(CustomEndpointBaseModel):
         rear_passenger_seat: Rear passenger-side seat heater level.
 
     """
+
+    model_config = ConfigDict(populate_by_name=True)
 
     driver_seat: str | None = Field(alias="driverSeat", default=None)
     passenger_seat: str | None = Field(alias="passengerSeat", default=None)
@@ -109,89 +115,53 @@ class ClimateSettingsModel(CustomEndpointBaseModel):
     seat_options: SeatOptionsModel | None = Field(alias="seatOptions", default=None)
 
 
-# --- Legacy write bodies (actuation not yet migrated to /v2/remote/climate-control) ---
+# --- Climate control (actuation) — POST /v2/remote/climate-control ---
 
 
-class ACParameters(CustomEndpointBaseModel):
-    """Legacy AC parameter (write body).
+class V2RemoteClimateControlRequestModel(CustomEndpointBaseModel):
+    """Unified climate-control request body (``POST /v2/remote/climate-control``).
+
+    Replaces the old settings-PUT + control-POST. A ``start`` carries the full desired
+    settings; a ``stop`` is just ``command`` (the rest serialize away via
+    ``exclude_none``). Reuses the shared ``HeatingOptionsModel``/``SeatOptionsModel``
+    read shapes, so the model already supports future writable seat/steering surfaces.
 
     Attributes:
-        available: Whether the AC parameter is available
-        display_name: User-friendly name to display in UI
-        enabled: Whether the AC parameter is enabled
-        icon_url: URL to icon representing the parameter
-        name: Internal identifier for the parameter
+        command: ``"start"`` or ``"stop"`` (RemoteClimateControl backend values).
+        duration: Run duration in minutes; ``None`` = car's saved/default.
+        temperature: Target temperature (value + unit).
+        heating_options: Front defroster / rear defogger / steering heater (on/off).
+        seat_options: Per-seat heater levels.
+        save_settings: Persist these settings as the car's defaults.
 
     """
 
-    available: bool | None = None
-    display_name: str | None = Field(alias="displayName", default=None)
-    enabled: bool = False
-    icon_url: str | None = Field(alias="iconUrl", default=None)
-    name: str
-
-
-class ACOperations(CustomEndpointBaseModel):
-    """Legacy AC operation (write body).
-
-    Attributes:
-        available: Whether the operation is available
-        category_display_name: User-friendly category name
-        category_name: Internal category identifier
-        ac_parameters: List of AC parameters for this operation
-
-    """
-
-    available: bool | None = None
-    category_display_name: str | None = Field(alias="categoryDisplayName", default=None)
-    category_name: str = Field(alias="categoryName")
-    ac_parameters: list[ACParameters] = Field(
-        alias="acParameters", default_factory=list
-    )
-
-
-class ClimateSettingsRequestModel(CustomEndpointBaseModel):
-    """Legacy climate-settings write body (``PUT`` climate-settings).
-
-    Superseded by the unified ``POST /v2/remote/climate-control`` request; kept so the
-    not-yet-migrated actuation path continues to type-check.
-
-    Attributes:
-        ac_operations: List of AC operations to apply
-        settings_on: Whether climate settings are active
-        temperature: Target temperature
-        temperature_unit: Unit of temperature (C or F)
-
-    """
-
-    ac_operations: list[ACOperations] | None = Field(alias="acOperations", default=None)
-    settings_on: bool | None = Field(alias="settingsOn", default=None)
-    temperature: float | None = None
-    temperature_unit: str | None = Field(alias="temperatureUnit", default=None)
-
-
-class RemoteHVACModel(CustomEndpointBaseModel):
-    """Model representing remote HVAC settings.
-
-    Attributes:
-        engine_start_time: Time in minutes for engine to run
-
-    """
-
-    engine_start_time: int = Field(alias="engineStartTime")
-
-
-class ClimateControlModel(CustomEndpointBaseModel):
-    """Legacy climate control command body.
-
-    Attributes:
-        command: Command to execute (e.g., "engine-start", "engine-stop")
-        remote_hvac: Additional HVAC settings if applicable
-
-    """
+    # Built in Python by the consumer; accept snake_case field names too.
+    model_config = ConfigDict(populate_by_name=True)
 
     command: str
-    remote_hvac: RemoteHVACModel | None = Field(alias="remoteHvac", default=None)
+    duration: int | None = None
+    temperature: UnitValueModel | None = None
+    heating_options: HeatingOptionsModel | None = Field(
+        alias="heatingOptions", default=None
+    )
+    seat_options: SeatOptionsModel | None = Field(alias="seatOptions", default=None)
+    save_settings: bool | None = Field(alias="saveSettings", default=None)
+
+
+class RemoteClimateControlPayloadModel(CustomEndpointBaseModel):
+    """Climate-control command acknowledgement payload.
+
+    Attributes:
+        app_request_no: Backend request id for the async command.
+        return_code: Command result; ``"000000"`` = accepted/success. Other codes
+            (e.g. ``118003``/``600000``/``200000``) are precondition failures
+            (car unlocked, door open, key inside, already started).
+
+    """
+
+    app_request_no: str | None = Field(alias="appRequestNo", default=None)
+    return_code: str | None = Field(alias="returnCode", default=None)
 
 
 class ClimateSettingsResponseModel(StatusModel):
@@ -214,3 +184,17 @@ class ClimateStatusResponseModel(StatusModel):
     """
 
     payload: ClimateStatusModel | None = None
+
+
+class RemoteClimateControlResponseModel(StatusModel):
+    """Model representing a climate-control command response.
+
+    The command result lives in ``payload.return_code`` (``"000000"`` = success),
+    a distinct layer from the envelope's ``status.messages[].response_code``.
+
+    Attributes:
+        payload: The command acknowledgement (request id + return code).
+
+    """
+
+    payload: RemoteClimateControlPayloadModel | None = None

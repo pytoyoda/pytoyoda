@@ -8,7 +8,12 @@ from pytoyoda.models.climate import ClimateSettings, ClimateStatus
 from pytoyoda.models.endpoints.climate import (
     ClimateSettingsResponseModel,
     ClimateStatusResponseModel,
+    HeatingOptionsModel,
+    RemoteClimateControlResponseModel,
+    SeatOptionsModel,
+    V2RemoteClimateControlRequestModel,
 )
+from pytoyoda.models.endpoints.common import UnitValueModel
 
 # --- Fixtures: real off-state capture + synthesized on-state (decompiled shape) ---
 
@@ -188,3 +193,71 @@ class TestClimateSettings:
         """A None/absent payload must not raise."""
         assert _settings({"status": {"messages": []}, "payload": None}).temperature is None
         assert ClimateSettings(None).temperature is None
+
+
+class TestV2ClimateControl:
+    """V2 climate-control request/response models (POST /v2/remote/climate-control)."""
+
+    def test_stop_serializes_to_command_only(self) -> None:
+        """STOP reduces to just {"command": "stop"} under exclude_none."""
+        stop = V2RemoteClimateControlRequestModel(command="stop")
+        assert stop.model_dump(exclude_none=True, by_alias=True) == {"command": "stop"}
+
+    def test_start_full_body_by_alias(self) -> None:
+        """START emits the full camelCase wire body from snake_case construction."""
+        start = V2RemoteClimateControlRequestModel(
+            command="start",
+            temperature=UnitValueModel(unit="C", value=21.0),
+            heating_options=HeatingOptionsModel(
+                front_defroster="on", rear_defogger="off", steering_heater="off"
+            ),
+            seat_options=SeatOptionsModel(
+                driver_seat="off",
+                passenger_seat="off",
+                rear_driver_seat="off",
+                rear_passenger_seat="off",
+            ),
+            save_settings=True,
+        )
+        body = start.model_dump(exclude_none=True, by_alias=True)
+        assert body["command"] == "start"
+        assert body["temperature"] == {"unit": "C", "value": 21.0}
+        assert body["heatingOptions"] == {
+            "frontDefroster": "on",
+            "rearDefogger": "off",
+            "steeringHeater": "off",
+        }
+        assert body["seatOptions"]["driverSeat"] == "off"
+        assert body["saveSettings"] is True
+
+    def test_none_subfield_is_omitted_not_guessed(self) -> None:
+        """An unknown (None) heating value is omitted, never sent as a guessed off."""
+        start = V2RemoteClimateControlRequestModel(
+            command="start",
+            heating_options=HeatingOptionsModel(
+                front_defroster="on", rear_defogger="off", steering_heater=None
+            ),
+        )
+        heating = start.model_dump(exclude_none=True, by_alias=True)["heatingOptions"]
+        assert heating == {"frontDefroster": "on", "rearDefogger": "off"}
+        assert "steeringHeater" not in heating
+
+    def test_response_return_code(self) -> None:
+        """Command success lives in payload.return_code (not the envelope code)."""
+        resp = RemoteClimateControlResponseModel(
+            **{
+                "status": {"messages": [{"responseCode": "ONE-GLOBAL-RS-10000"}]},
+                "payload": {"appRequestNo": "req-1", "returnCode": "000000"},
+            }
+        )
+        assert resp.payload.return_code == "000000"
+        assert resp.payload.app_request_no == "req-1"
+
+    def test_response_degrades_without_payload(self) -> None:
+        """A missing payload (e.g. rejected/malformed) degrades to None, no raise."""
+        assert (
+            RemoteClimateControlResponseModel(
+                **{"status": {"messages": []}}
+            ).payload
+            is None
+        )
