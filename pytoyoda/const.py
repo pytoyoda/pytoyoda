@@ -31,10 +31,15 @@ VEHICLE_TELEMETRY_ENDPOINT = "/v3/telemetry"
 VEHICLE_NOTIFICATION_HISTORY_ENDPOINT = "/v2/notification/history"
 VEHICLE_TRIPS_ENDPOINT = "/v1/trips?from={from_date}&to={to_date}&route={route}&summary={summary}&limit={limit}&offset={offset}"  # noqa: E501
 VEHICLE_SERVICE_HISTORY_ENDPONT = "/v1/servicehistory/vehicle/summary"
+# Migrated 2026-07: Toyota retired the /v1/global/remote/climate-* read routes
+# (now behind AWS SigV4 -> APIGW-403). The live MyToyota app reads climate from
+# the plain-Bearer /v1/vehicle/climate-* namespace and wakes via /v1/remote/*.
+# Actuation (climate-control) moved to POST /v2/remote/climate-control with a new
+# body (V2RemoteClimateControlRequest) and is migrated separately.
 VEHICLE_CLIMATE_CONTROL_ENDPOINT = "/v1/global/remote/climate-control"
-VEHICLE_CLIMATE_SETTINGS_ENDPOINT = "/v1/global/remote/climate-settings"
-VEHICLE_CLIMATE_STATUS_ENDPOINT = "/v1/global/remote/climate-status"
-VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT = "/v1/global/remote/refresh-climate-status"
+VEHICLE_CLIMATE_SETTINGS_ENDPOINT = "/v1/vehicle/climate-settings"
+VEHICLE_CLIMATE_STATUS_ENDPOINT = "/v1/vehicle/climate-status"
+VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT = "/v1/remote/refresh-climate-status"
 VEHICLE_COMMAND_ENDPOINT = "/v1/global/remote/command"
 
 # Units

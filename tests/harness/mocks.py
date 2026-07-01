@@ -9,15 +9,12 @@ to reproduce (or rule out) the memory leak.
 from __future__ import annotations
 
 import json
-import time
-import uuid
 from pathlib import Path
 from typing import Any
 
 import httpx
 import jwt as pyjwt
 import respx
-
 
 TOKEN_EXPIRY_SECONDS = 1800
 
@@ -66,8 +63,25 @@ def _response_bodies() -> dict[str, Any]:
         "telemetry": _load_fixture("v3_telemetry.json"),
         "notifications": _load_fixture("v2_notification.json"),
         "service_history": _load_fixture("v1_service_history.json"),
-        "climate_status": {"payload": None, "status": {"messages": []}},
-        "climate_settings": {"payload": None, "status": {"messages": []}},
+        "climate_status": {"payload": {"status": "stopped"}, "status": {"messages": []}},
+        "climate_settings": {
+            "payload": {
+                "duration": 20,
+                "temperature": {"value": 18.0, "unit": "C"},
+                "heatingOptions": {
+                    "frontDefroster": "off",
+                    "rearDefogger": "off",
+                    "steeringHeater": "off",
+                },
+                "seatOptions": {
+                    "driverSeat": "off",
+                    "passengerSeat": "off",
+                    "rearDriverSeat": "off",
+                    "rearPassengerSeat": "off",
+                },
+            },
+            "status": {"messages": []},
+        },
         "trips": _load_fixture("v1_trips.json"),
     }
 
@@ -104,10 +118,10 @@ def register_all(router: respx.Router) -> None:
     router.get(url__regex=r".*/v1/global/remote/electric/status.*").mock(
         return_value=httpx.Response(200, json=bodies["electric"])
     )
-    router.get(url__regex=r".*/v1/global/remote/climate-status.*").mock(
+    router.get(url__regex=r".*/v1/vehicle/climate-status.*").mock(
         return_value=httpx.Response(200, json=bodies["climate_status"])
     )
-    router.get(url__regex=r".*/v1/global/remote/climate-settings.*").mock(
+    router.get(url__regex=r".*/v1/vehicle/climate-settings.*").mock(
         return_value=httpx.Response(200, json=bodies["climate_settings"])
     )
     router.get(url__regex=r".*/v1/global/remote/status.*").mock(

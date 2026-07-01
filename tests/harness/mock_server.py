@@ -103,8 +103,25 @@ def _bodies() -> dict[str, Any]:
         "service_history": _load_real_or(
             "get_v1_servicehistory_vehicle_summary.json", "v1_service_history.json"
         ),
-        "climate_status": {"payload": None, "status": {"messages": []}},
-        "climate_settings": {"payload": None, "status": {"messages": []}},
+        "climate_status": {"payload": {"status": "stopped"}, "status": {"messages": []}},
+        "climate_settings": {
+            "payload": {
+                "duration": 20,
+                "temperature": {"value": 18.0, "unit": "C"},
+                "heatingOptions": {
+                    "frontDefroster": "off",
+                    "rearDefogger": "off",
+                    "steeringHeater": "off",
+                },
+                "seatOptions": {
+                    "driverSeat": "off",
+                    "passengerSeat": "off",
+                    "rearDriverSeat": "off",
+                    "rearPassengerSeat": "off",
+                },
+            },
+            "status": {"messages": []},
+        },
         "trips": _load_real_or("get_v1_trips.json", "v1_trips.json"),
     }
 
@@ -339,8 +356,8 @@ def _route(
         ("/v1/location", "location"),
         ("/v1/vehiclehealth/status", "health"),
         ("/v1/global/remote/electric/status", "electric"),
-        ("/v1/global/remote/climate-status", "climate_status"),
-        ("/v1/global/remote/climate-settings", "climate_settings"),
+        ("/v1/vehicle/climate-status", "climate_status"),
+        ("/v1/vehicle/climate-settings", "climate_settings"),
         ("/v3/telemetry", "telemetry"),
         ("/v2/notification/history", "notifications"),
         ("/v1/servicehistory", "service_history"),

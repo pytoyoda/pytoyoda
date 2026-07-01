@@ -1,294 +1,202 @@
-"""Climate Settings Models."""
+"""Climate Status and Settings Models.
+
+Public wrappers over the ``/v1/vehicle/climate-status`` and
+``/v1/vehicle/climate-settings`` read endpoints.
+"""
 
 from datetime import datetime, timedelta
 
 from pydantic import computed_field
 
 from pytoyoda.models.endpoints.climate import (
-    ACOperations,
-    ACParameters,
-    ClimateOptions,
     ClimateSettingsModel,
     ClimateSettingsResponseModel,
-    ClimateStatusModel,
+    ClimateStatusResponseModel,
+    HeatingOptionsModel,
+    SeatOptionsModel,
 )
 from pytoyoda.utils.models import CustomAPIBaseModel, Temperature
 
+# Backend climate-status enum (RemoteClimateStatus$Status backendKeys). ``starting``
+# and ``stopping`` are transitional; on/off is decided by intent, and an unrecognised
+# value maps to None rather than being guessed.
+_CLIMATE_ON_STATES = frozenset({"starting", "running"})
+_CLIMATE_OFF_STATES = frozenset({"stopped", "stopping"})
 
-class ClimateOptionStatus(CustomAPIBaseModel[ClimateOptions]):
-    """Climate option status."""
 
-    def __init__(self, options: ClimateOptions, **kwargs: dict) -> None:
-        """Initialize climate option status.
+def _toggle_on(state: str | None) -> bool | None:
+    """Interpret an ``"off"``/``"on"`` toggle: on=True, off=False, unknown=None."""
+    if state is None:
+        return None
+    return state.lower() == "on"
+
+
+class HeatingOptions(CustomAPIBaseModel[HeatingOptionsModel]):
+    """Defroster / defogger / steering-heater states."""
+
+    def __init__(self, options: HeatingOptionsModel, **kwargs: dict) -> None:
+        """Initialize heating options.
 
         Args:
-            options (ClimateOptions): Contains all additional options for climate
-            **kwargs: Additional keyword arguments passed to the parent class
+            options (HeatingOptionsModel): The heating option states.
+            **kwargs: Additional keyword arguments passed to the parent class.
 
         """
         super().__init__(data=options, **kwargs)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def front_defogger(self) -> bool:
-        """The front defogger status.
-
-        Returns:
-            bool: The status of front defogger
-
-        """
-        return self._data.front_defogger
+    def front_defroster(self) -> bool | None:
+        """Whether the front defroster is on."""
+        return _toggle_on(self._data.front_defroster) if self._data else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def rear_defogger(self) -> bool:
-        """The rear defogger status.
+    def rear_defogger(self) -> bool | None:
+        """Whether the rear defogger is on."""
+        return _toggle_on(self._data.rear_defogger) if self._data else None
 
-        Returns:
-            bool: The status of rear defogger
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def steering_heater(self) -> bool | None:
+        """Whether the steering-wheel heater is on."""
+        return _toggle_on(self._data.steering_heater) if self._data else None
+
+
+class SeatOptions(CustomAPIBaseModel[SeatOptionsModel]):
+    """Per-seat heater levels.
+
+    Values are the raw backend level strings (``"off"``/``"low"``/``"medium"``/
+    ``"high"``) — kept as-is rather than coerced to bool because seat heaters are
+    multi-level.
+    """
+
+    def __init__(self, options: SeatOptionsModel, **kwargs: dict) -> None:
+        """Initialize seat options.
+
+        Args:
+            options (SeatOptionsModel): The per-seat heater levels.
+            **kwargs: Additional keyword arguments passed to the parent class.
 
         """
-        return self._data.rear_defogger
+        super().__init__(data=options, **kwargs)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def driver_seat(self) -> str | None:
+        """Driver seat heater level."""
+        return self._data.driver_seat if self._data else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def passenger_seat(self) -> str | None:
+        """Front passenger seat heater level."""
+        return self._data.passenger_seat if self._data else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def rear_driver_seat(self) -> str | None:
+        """Rear driver-side seat heater level."""
+        return self._data.rear_driver_seat if self._data else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def rear_passenger_seat(self) -> str | None:
+        """Rear passenger-side seat heater level."""
+        return self._data.rear_passenger_seat if self._data else None
 
 
-class ClimateStatus(CustomAPIBaseModel[ClimateStatusModel]):
+class ClimateStatus(CustomAPIBaseModel[ClimateStatusResponseModel]):
     """Climate status."""
 
-    def __init__(self, climate_status: ClimateStatusModel, **kwargs: dict) -> None:
+    def __init__(
+        self, climate_status: ClimateStatusResponseModel, **kwargs: dict
+    ) -> None:
         """Initialize climate status.
 
         Args:
-            climate_status (ClimateStatusModel): Contains all information
-              regarding the climate status
-            **kwargs: Additional keyword arguments passed to the parent class
+            climate_status (ClimateStatusResponseModel): The climate-status response
+                envelope; the typed payload is unwrapped here.
+            **kwargs: Additional keyword arguments passed to the parent class.
 
         """
         super().__init__(data=climate_status, **kwargs)
+        self._status = self._data.payload if self._data else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def type(self) -> str | None:
-        """The type.
-
-        Returns:
-            Optional[str]: The type, or None if unavailable
-
-        """
-        return self._data.type if self._data else None
+    def status(self) -> str | None:
+        """Raw backend state (``stopped``/``starting``/``stopping``/``running``)."""
+        return self._status.status if self._status else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def status(self) -> bool:
-        """The status.
+    def is_on(self) -> bool | None:
+        """Whether climate is engaged.
 
-        Returns:
-            bool: The status
-
+        ``starting``/``running`` -> True, ``stopped``/``stopping`` -> False, and an
+        unknown or missing state -> None.
         """
-        return self._data.status
+        if self._status is None or self._status.status is None:
+            return None
+        state = self._status.status.lower()
+        if state in _CLIMATE_ON_STATES:
+            return True
+        if state in _CLIMATE_OFF_STATES:
+            return False
+        return None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def start_time(self) -> datetime | None:
-        """Start time.
+    def started_at(self) -> datetime | None:
+        """When the current climate run started."""
+        return self._status.started_at if self._status else None
 
-        Returns:
-            datetime: Start time
-
-        """
-        return self._data.started_at
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def updated_at(self) -> datetime | None:
+        """When the backend last refreshed this state."""
+        return self._status.updated_at if self._status else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def duration(self) -> timedelta | None:
-        """The duration.
-
-        Returns:
-            timedelta: The duration
-
-        """
-        if self._data.duration is None:
+        """Programmed run duration."""
+        if self._status is None or self._status.duration is None:
             return None
-
-        return timedelta(seconds=self._data.duration)
+        return timedelta(minutes=self._status.duration)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def current_temperature(self) -> Temperature | None:
-        """The current temperature.
-
-        Returns:
-            Temperature: The current temperature with unit
-
-        """
-        if self._data.current_temperature is None:
+        """Measured cabin temperature."""
+        temp = self._status.current_temperature if self._status else None
+        if temp is None:
             return None
-
-        return Temperature(
-            value=self._data.current_temperature.value,
-            unit=self._data.current_temperature.unit,
-        )
+        return Temperature(value=temp.value, unit=temp.unit)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def target_temperature(self) -> Temperature | None:
-        """The target temperature.
-
-        Returns:
-            Temperature: The target temperature with unit
-
-        """
-        if self._data.target_temperature is None:
+        """Target temperature."""
+        temp = self._status.target_temperature if self._status else None
+        if temp is None:
             return None
-
-        return Temperature(
-            value=self._data.target_temperature.value,
-            unit=self._data.target_temperature.unit,
-        )
+        return Temperature(value=temp.value, unit=temp.unit)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def options(self) -> ClimateOptionStatus | None:
-        """The status of climate options.
-
-        Returns:
-            ClimateOptionsStatus: The statuses of climate options
-
-        """
-        if self._data.options is None:
-            return None
-
-        return ClimateOptionStatus(options=self._data.options)
-
-
-class ClimateSettingsParameter(CustomAPIBaseModel[ACParameters]):
-    """Climate settings parameter."""
-
-    def __init__(self, parameter: ACParameters, **kwargs: dict) -> None:
-        """Initialize climate settings parameter.
-
-        Args:
-            parameter (ACParameters): Contains all parameters
-            **kwargs: Additional keyword arguments passed to the parent class
-
-        """
-        super().__init__(data=parameter, **kwargs)
+    def heating_options(self) -> HeatingOptions | None:
+        """Defroster / defogger / steering-heater states."""
+        options = self._status.heating_options if self._status else None
+        return HeatingOptions(options) if options is not None else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def available(self) -> bool | None:
-        """The parameter availability.
-
-        Returns:
-            bool: The parameter availability value
-
-        """
-        return self._data.available
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def enabled(self) -> bool:
-        """The parameter enable.
-
-        Returns:
-            bool: The parameter enable value
-
-        """
-        return self._data.enabled
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def display_name(self) -> str | None:
-        """The parameter display name.
-
-        Returns:
-            str: The parameter display name
-
-        """
-        return self._data.display_name
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def name(self) -> str:
-        """The parameter name.
-
-        Returns:
-            str: The parameter name
-
-        """
-        return self._data.name
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def icon_url(self) -> str | None:
-        """The parameter icon url.
-
-        Returns:
-            str: The parameter icon url
-
-        """
-        return self._data.icon_url
-
-
-class ClimateSettingsOperation(CustomAPIBaseModel[ACOperations]):
-    """Climate settings operation."""
-
-    def __init__(self, operations: ACOperations, **kwargs: dict) -> None:
-        """Initialize climate settings operation.
-
-        Args:
-            operations (ACOperations): Contains all options for climate
-            **kwargs: Additional keyword arguments passed to the parent class
-
-        """
-        super().__init__(data=operations, **kwargs)
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def available(self) -> bool | None:
-        """The operation availability.
-
-        Returns:
-            bool: The operation availability value
-
-        """
-        return self._data.available
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def category_name(self) -> str:
-        """The operation category name.
-
-        Returns:
-            str: The operation category name
-
-        """
-        return self._data.category_name
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def category_display_name(self) -> str | None:
-        """The operation category display name.
-
-        Returns:
-            str: The operation category display name
-
-        """
-        return self._data.category_display_name
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def parameters(self) -> list[ClimateSettingsParameter] | None:
-        """The operation parameter.
-
-        Returns:
-            list[ClimateSettingsParameter]: The operation parameter
-
-        """
-        if self._data.ac_parameters is None:
-            return None
-
-        return [ClimateSettingsParameter(parameter=p) for p in self._data.ac_parameters]
+    def seat_options(self) -> SeatOptions | None:
+        """Per-seat heater levels."""
+        options = self._status.seat_options if self._status else None
+        return SeatOptions(options) if options is not None else None
 
 
 class ClimateSettings(CustomAPIBaseModel[ClimateSettingsResponseModel]):
@@ -300,92 +208,78 @@ class ClimateSettings(CustomAPIBaseModel[ClimateSettingsResponseModel]):
         """Initialize climate settings.
 
         Args:
-            climate_settings (ClimateSettingsResponseModel): Contains all information
-                regarding the climate settings
-            **kwargs: Additional keyword arguments passed to the parent class
+            climate_settings (ClimateSettingsResponseModel): The climate-settings
+                response envelope; the typed payload is unwrapped here.
+            **kwargs: Additional keyword arguments passed to the parent class.
 
         """
         super().__init__(data=climate_settings, **kwargs)
-        self._climate_settings: ClimateSettingsModel | None = (
+        self._settings: ClimateSettingsModel | None = (
             self._data.payload if self._data else None
         )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def settings_on(self) -> bool | None:
-        """The settings on value.
-
-        Returns:
-            bool: The value of settings on
-
-        """
-        return self._climate_settings.settings_on if self._climate_settings else None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def temp_interval(self) -> float | None:
-        """The temperature interval.
-
-        Returns:
-            float: The value of temperature interval
-
-        """
-        return self._climate_settings.temp_interval if self._climate_settings else None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def min_temp(self) -> float | None:
-        """The min temperature.
-
-        Returns:
-            float: The value of min temperature
-
-        """
-        return self._climate_settings.min_temp if self._climate_settings else None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def max_temp(self) -> float | None:
-        """The max temperature.
-
-        Returns:
-            float: The value of max temperature
-
-        """
-        return self._climate_settings.max_temp if self._climate_settings else None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
     def temperature(self) -> Temperature | None:
-        """The temperature.
+        """Target temperature."""
+        temp = self._settings.temperature if self._settings else None
+        if temp is None:
+            return None
+        return Temperature(value=temp.value, unit=temp.unit)
 
-        Returns:
-            Temperature: The temperature with unit
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def duration(self) -> timedelta | None:
+        """Programmed run duration."""
+        if self._settings is None or self._settings.duration is None:
+            return None
+        return timedelta(minutes=self._settings.duration)
 
-        """
-        if self._climate_settings:
-            return Temperature(
-                value=self._climate_settings.temperature,
-                unit=self._climate_settings.temperature_unit,
-            )
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def heating_options(self) -> HeatingOptions | None:
+        """Defroster / defogger / steering-heater settings."""
+        options = self._settings.heating_options if self._settings else None
+        return HeatingOptions(options) if options is not None else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def seat_options(self) -> SeatOptions | None:
+        """Per-seat heater level settings."""
+        options = self._settings.seat_options if self._settings else None
+        return SeatOptions(options) if options is not None else None
+
+    # --- Deprecated back-compat accessors -----------------------------------
+    # The new /v1/vehicle/climate-settings payload no longer carries these. They
+    # are kept (returning None/[]) so external consumers of the old shape do not
+    # break; new code should read temperature/duration/heating_options/seat_options.
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def settings_on(self) -> None:
+        """Deprecated: removed from the new climate-settings payload."""
         return None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def operations(self) -> list[ClimateSettingsOperation] | None:
-        """The climate operation settings.
+    def min_temp(self) -> None:
+        """Deprecated: removed from the new climate-settings payload."""
+        return None
 
-        Returns:
-            list[ClimateSettingsOperation]: The settings of climate operation
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def max_temp(self) -> None:
+        """Deprecated: removed from the new climate-settings payload."""
+        return None
 
-        """
-        if (
-            self._climate_settings is None
-            or self._climate_settings.ac_operations is None
-        ):
-            return None
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def temp_interval(self) -> None:
+        """Deprecated: removed from the new climate-settings payload."""
+        return None
 
-        return [
-            ClimateSettingsOperation(operations=p)
-            for p in self._climate_settings.ac_operations
-        ]
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def operations(self) -> list:
+        """Deprecated: acOperations no longer exist in the new payload."""
+        return []

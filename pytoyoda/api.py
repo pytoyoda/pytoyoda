@@ -29,7 +29,7 @@ from pytoyoda.const import (
 from pytoyoda.controller import Controller
 from pytoyoda.models.endpoints.climate import (
     ClimateControlModel,
-    ClimateSettingsModel,
+    ClimateSettingsRequestModel,
     ClimateSettingsResponseModel,
     ClimateStatusResponseModel,
 )
@@ -341,8 +341,9 @@ class Api:
     async def get_climate_status(self, vin: str) -> ClimateStatusResponseModel:
         """Get the current climate control status.
 
-        Note: Only returns data if climate control is on. If off,
-        it returns status == 0 and all other fields are None.
+        Reads the server-cached climate state from /v1/vehicle/climate-status. When
+        climate is off the payload collapses to just ``{"status": "stopped"}``; the
+        temperature/duration/heating/seat fields populate while it is starting/running.
 
         Args:
             vin: Vehicle Identification Number
@@ -390,7 +391,7 @@ class Api:
         )
 
     async def update_climate_settings(
-        self, vin: str, settings: ClimateSettingsModel
+        self, vin: str, settings: ClimateSettingsRequestModel
     ) -> StatusModel:
         """Update the climate control settings for a vehicle.
 
