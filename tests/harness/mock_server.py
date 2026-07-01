@@ -133,10 +133,11 @@ _BODIES_CACHE: dict[str, Any] | None = None
 # ---------------------------------------------------------------------------
 # Per-VIN cache-expiry simulator (for smart-strategy TDD, 2026-04-25+).
 #
-# Models the Toyota two-stage protocol we discovered on 2026-04-24:
-#   - GET  /v1/global/remote/status         reads the cache (429+APIGW-403 if cold/stale)
-#   - POST /v1/global/remote/refresh-status wakes the car (200/returnCode 000000),
-#                                            cache populates if the car responds
+# Models the Toyota two-stage protocol we discovered on 2026-04-24 (endpoints
+# migrated 2026-07 off the retired /v1/global/remote/* family):
+#   - GET  /v1/vehicle/status  reads the cache (429+APIGW-403 if cold/stale)
+#   - POST /v1/remote/status   wakes the car (200/returnCode 000000),
+#                              cache populates if the car responds
 #
 # Simulator invariants (per VIN):
 #   - cache_populated_at: when the cache was last refreshed by a successful POST
@@ -240,24 +241,6 @@ class _Registry:
 SIM = _Registry()
 
 
-def _vin_from_path_or_body(path: str, body_bytes: bytes | None) -> str:
-    """Resolve the VIN this request targets.
-
-    /status: VIN comes from the X-VIN header (handled separately - we cannot get
-    headers here). Fallback to a default 'DEFAULT' VIN if nothing else.
-
-    /refresh-status: VIN is in the JSON body.
-    """
-    if body_bytes:
-        try:
-            data = json.loads(body_bytes)
-            if isinstance(data, dict) and "vin" in data:
-                return str(data["vin"])
-        except (json.JSONDecodeError, ValueError):
-            pass
-    return "DEFAULT"
-
-
 _APIGW_403_BODY = json.dumps({"code": "APIGW-403", "message": "Unauthorized"}).encode()
 
 
@@ -305,9 +288,10 @@ def _route(
         return 200, {"Content-Type": "application/json"}, json.dumps(b["tokens"]).encode()
 
     # --- Smart-strategy endpoints (simulator-backed) ---
-    # POST /v1/global/remote/refresh-status (must precede /status check below)
-    if method == "POST" and "/v1/global/remote/refresh-status" in base_path:
-        vin = _vin_from_path_or_body(path, body_bytes)
+    # POST /v1/remote/status wake (migrated from /v1/global/remote/refresh-status,
+    # now SigV4-fenced). VIN travels in the header now, not a JSON body.
+    if method == "POST" and "/v1/remote/status" in base_path:
+        vin = headers.get("vin") or headers.get("VIN") or "DEFAULT"
         sim = SIM.get(vin)
         now = time.monotonic()
         sim.last_post_at = now

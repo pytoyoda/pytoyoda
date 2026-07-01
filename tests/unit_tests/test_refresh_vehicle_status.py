@@ -20,10 +20,12 @@ GUID = "123e4567-e89b-12d3-a456-426614174000"
 
 
 @pytest.mark.asyncio
-async def test_refresh_vehicle_status_sends_correct_body_and_endpoint():
-    """The POST must hit /refresh-status with the four-field body shape that
-    the gateway requires (deviceId/deviceType/guid/vin). Without these fields
-    the gateway returns 500 (the trap PR #302 fell into)."""
+async def test_refresh_vehicle_status_sends_correct_endpoint_no_body():
+    """The POST must hit the migrated /v1/remote/status wake route with the vin
+    as a header only. The old /v1/global/remote/refresh-status route required a
+    deviceId/deviceType/guid/vin body and is now SigV4-fenced (APIGW-403); the
+    new route takes no body (confirmed against a live car 2026-07-01).
+    """
     controller = AsyncMock()
     controller._uuid = GUID
     controller.request_json.return_value = {"status": {"messages": []}, "payload": {}}
@@ -37,19 +39,14 @@ async def test_refresh_vehicle_status_sends_correct_body_and_endpoint():
     assert kwargs["method"] == "POST"
     assert kwargs["endpoint"] == VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT
     assert kwargs["vin"] == VIN
-    body = kwargs["body"]
-    assert body == {
-        "deviceId": "pytoyoda",
-        "deviceType": "Android",
-        "guid": GUID,
-        "vin": VIN,
-    }
+    assert "body" not in kwargs
 
 
 @pytest.mark.asyncio
 async def test_refresh_vehicle_status_parses_response_with_return_code():
     """The 'returnCode' field on the JSON payload becomes return_code on the
-    parsed model (snake_case via Pydantic Field alias)."""
+    parsed model (snake_case via Pydantic Field alias).
+    """
     controller = AsyncMock()
     controller._uuid = GUID
     controller.request_json.return_value = {
@@ -68,7 +65,8 @@ async def test_refresh_vehicle_status_parses_response_with_return_code():
 @pytest.mark.asyncio
 async def test_refresh_vehicle_status_handles_layer1_failure_payload():
     """Non-000000 returnCode (vehicle does not support endpoint) parses as
-    a regular response - the caller decides what to do with it."""
+    a regular response - the caller decides what to do with it.
+    """
     controller = AsyncMock()
     controller._uuid = GUID
     controller.request_json.return_value = {

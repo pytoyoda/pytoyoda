@@ -392,7 +392,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
     async def refresh_status(self) -> RefreshStatusResponseModel:
         """Wake the vehicle and request a fresh /status cache populate.
 
-        Issues POST /v1/global/remote/refresh-status. Use sparingly:
+        Issues POST /v1/remote/status. Use sparingly:
         each call uses cellular airtime and a small amount of 12V battery.
         Returns when the gateway has accepted the wake request, NOT when
         the cache has actually been populated; the caller should poll
