@@ -117,6 +117,24 @@ class TestClimateStatus:
         body = {"status": {"messages": []}, "payload": payload}
         assert _status(body).is_on is expected
 
+    def test_heating_toggle_unknown_is_none(self) -> None:
+        """A heating value that is neither on/off maps to None, not False."""
+        body = {
+            "status": {"messages": []},
+            "payload": {
+                "status": "running",
+                "heatingOptions": {
+                    "frontDefroster": "on",
+                    "rearDefogger": "off",
+                    "steeringHeater": "unknown",
+                },
+            },
+        }
+        heating = _status(body).heating_options
+        assert heating.front_defroster is True
+        assert heating.rear_defogger is False
+        assert heating.steering_heater is None
+
     def test_null_payload_degrades(self) -> None:
         """A None/absent payload (e.g. 403/500) must not raise."""
         assert _status({"status": {"messages": []}, "payload": None}).status is None

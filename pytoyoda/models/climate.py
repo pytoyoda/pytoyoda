@@ -28,7 +28,12 @@ def _toggle_on(state: str | None) -> bool | None:
     """Interpret an ``"off"``/``"on"`` toggle: on=True, off=False, unknown=None."""
     if state is None:
         return None
-    return state.lower() == "on"
+    normalized = state.lower()
+    if normalized == "on":
+        return True
+    if normalized == "off":
+        return False
+    return None
 
 
 class HeatingOptions(CustomAPIBaseModel[HeatingOptionsModel]):
