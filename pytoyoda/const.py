@@ -21,7 +21,12 @@ VEHICLE_HEALTH_STATUS_ENDPOINT = "/v1/vehiclehealth/status"
 # AWS SigV4 -> returns APIGW-403). The live app reads status from /v1/vehicle/status
 # on the plain-Bearer authorizer. Const name kept to avoid churn in api.py.
 VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT = "/v1/vehicle/status"
-VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT = "/v1/global/remote/refresh-status"
+# Migrated 2026-07: the status wake moved off the retired /v1/global/remote/*
+# family (now SigV4-fenced -> APIGW-403) to the plain-Bearer /v1/remote/* refresh
+# namespace, mirroring the already-migrated climate wake. The new route takes no
+# body (vin header only) and returns payload.returnCode "000000" on accept.
+# Const name kept to avoid churn in api.py.
+VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT = "/v1/remote/status"
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT = "/v1/global/remote/electric/status"
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT = (
     "/v1/global/remote/electric/realtime-status"

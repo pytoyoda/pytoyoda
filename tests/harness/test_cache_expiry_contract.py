@@ -1,8 +1,8 @@
 """Contract tests for the cache-expiry simulator added to mock_server.py.
 
 These run in seconds against the in-process HTTPS harness, exercising the
-two-stage protocol we discovered on 2026-04-24 (POST /refresh-status to wake
-the car, GET /status to read the cache). This is the foundation of the
+two-stage protocol we discovered on 2026-04-24 (POST /v1/remote/status to wake
+the car, GET /v1/vehicle/status to read the cache). This is the foundation of the
 smart-strategy TDD work; pytoyoda's `refresh_vehicle_status()` and ha_toyota's
 decision tree will be tested against the same simulator.
 
@@ -46,10 +46,8 @@ def _get_status(client, vin: str) -> httpx.Response:
 
 
 def _post_refresh(client, vin: str) -> httpx.Response:
-    return client.post(
-        "/v1/global/remote/refresh-status",
-        json={"deviceId": "harness", "deviceType": "Android", "guid": "g", "vin": vin},
-    )
+    # Migrated wake: POST /v1/remote/status, vin in the header, no body.
+    return client.post("/v1/remote/status", headers={"vin": vin})
 
 
 # ---------------------------------------------------------------------------

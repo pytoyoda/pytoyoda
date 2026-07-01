@@ -250,14 +250,15 @@ class Api:
     async def refresh_vehicle_status(self, vin: str) -> RefreshStatusResponseModel:
         """Wake the vehicle and request a fresh /status cache populate.
 
-        Calls Toyota's POST /v1/global/remote/refresh-status. The car's
-        cellular modem is woken; on success the gateway populates the
-        cache that GET /status reads. Toyota's mobile app issues this
-        before reading status to avoid 429+APIGW-403 from a cold cache.
+        Calls Toyota's POST /v1/remote/status. The car's cellular modem is
+        woken; on success the gateway populates the cache that GET
+        /v1/vehicle/status reads. Toyota's mobile app issues this before
+        reading status to warm a cold cache.
 
-        The body shape (deviceId/deviceType/guid/vin) is required;
-        without it the gateway returns 500 (this was the root cause of
-        the abandoned PR #302/#77 force_update path).
+        The old /v1/global/remote/refresh-status route required a
+        deviceId/deviceType/guid/vin body and is now SigV4-fenced
+        (APIGW-403). The new /v1/remote/* route takes the vin as a header
+        only (no body), matching the migrated climate wake.
 
         Args:
             vin: Vehicle Identification Number
@@ -269,18 +270,11 @@ class Api:
                 does not support the endpoint.
 
         """
-        body = {
-            "deviceId": "pytoyoda",
-            "deviceType": "Android",
-            "guid": self.controller._uuid,  # noqa: SLF001
-            "vin": vin,
-        }
         return await self._request_and_parse(
             RefreshStatusResponseModel,
             "POST",
             VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT,
             vin=vin,
-            body=body,
         )
 
     async def get_telemetry(self, vin: str) -> TelemetryResponseModel:
