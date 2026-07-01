@@ -28,7 +28,6 @@ from typing import Any
 
 import jwt as pyjwt
 
-
 CERTS_DIR = Path(__file__).resolve().parent / "certs"
 CERT_PATH = CERTS_DIR / "cert.pem"
 KEY_PATH = CERTS_DIR / "key.pem"
@@ -249,12 +248,13 @@ def _build_status_response(sim: VehicleSim) -> bytes:
     """Render the /status fixture body but with the simulator's occurrence_date.
 
     We deep-copy lazily by re-loading the JSON each call (cheap; happens only on
-    cache-fresh hits) so we don't mutate _BODIES_CACHE."""
+    cache-fresh hits) so we don't mutate _BODIES_CACHE.
+    """
     raw = _load_real_or(
         "get_v1_global_remote_status.json", "v1_global_remote_status.json"
     )
     payload = raw.get("payload") or {}
-    payload["occurrenceDate"] = sim.occurrence_date()
+    payload["lastUpdateTimestamp"] = sim.occurrence_date()
     raw["payload"] = payload
     return json.dumps(raw).encode()
 
@@ -320,8 +320,9 @@ def _route(
             ).encode(),
         )
 
-    # GET /v1/global/remote/status (cache-expiry semantics)
-    if method == "GET" and "/v1/global/remote/status" in base_path:
+    # GET /v1/vehicle/status (cache-expiry semantics; migrated from
+    # /v1/global/remote/status which Toyota retired behind SigV4)
+    if method == "GET" and "/v1/vehicle/status" in base_path:
         vin = headers.get("vin") or headers.get("VIN") or "DEFAULT"
         sim = SIM.get(vin)
         sim.get_call_count += 1
@@ -355,7 +356,7 @@ def _route(
 class _Handler(BaseHTTPRequestHandler):
     """Minimal handler that silences default logging and dispatches on path."""
 
-    def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
+    def log_message(self, fmt: str, *args: Any) -> None:
         # Silent by default; stdlib http.server is very noisy otherwise.
         pass
 
@@ -372,13 +373,13 @@ class _Handler(BaseHTTPRequestHandler):
     def _request_headers(self) -> dict[str, str]:
         return {k: v for k, v in self.headers.items()}
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         status, headers, body = _route(
             "GET", self.path, headers=self._request_headers(), body_bytes=None
         )
         self._send(status, headers, body)
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", "0") or "0")
         body_bytes = self.rfile.read(length) if length > 0 else b""
         status, headers, body = _route(
@@ -437,5 +438,5 @@ class HarnessServer:
         self.start()
         return self
 
-    def __exit__(self, *exc_info: Any) -> None:
+    def __exit__(self, *exc_info: object) -> None:
         self.stop()
