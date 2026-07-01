@@ -10,7 +10,6 @@ from pytoyoda.const import (
     VEHICLE_ASSOCIATION_ENDPOINT,
     VEHICLE_CLIMATE_CONTROL_ENDPOINT,
     VEHICLE_CLIMATE_SETTINGS_ENDPOINT,
-    VEHICLE_CLIMATE_SETTINGS_WRITE_ENDPOINT,
     VEHICLE_CLIMATE_STATUS_ENDPOINT,
     VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT,
     VEHICLE_COMMAND_ENDPOINT,
@@ -29,10 +28,10 @@ from pytoyoda.const import (
 )
 from pytoyoda.controller import Controller
 from pytoyoda.models.endpoints.climate import (
-    ClimateControlModel,
-    ClimateSettingsRequestModel,
     ClimateSettingsResponseModel,
     ClimateStatusResponseModel,
+    RemoteClimateControlResponseModel,
+    V2RemoteClimateControlRequestModel,
 )
 from pytoyoda.models.endpoints.command import CommandType, RemoteCommandModel
 from pytoyoda.models.endpoints.common import StatusModel
@@ -385,46 +384,31 @@ class Api:
             vin=vin,
         )
 
-    async def update_climate_settings(
-        self, vin: str, settings: ClimateSettingsRequestModel
-    ) -> StatusModel:
-        """Update the climate control settings for a vehicle.
-
-        Args:
-            vin: Vehicle Identification Number
-            settings: New climate control settings
-
-        Returns:
-            Model containing status of the update request
-
-        """
-        return await self._request_and_parse(
-            StatusModel,
-            "PUT",
-            VEHICLE_CLIMATE_SETTINGS_WRITE_ENDPOINT,
-            vin=vin,
-            body=settings.model_dump(exclude_unset=True, by_alias=True),
-        )
-
     async def send_climate_control_command(
-        self, vin: str, command: ClimateControlModel
-    ) -> StatusModel:
-        """Send a control command to the climate system.
+        self, vin: str, request: V2RemoteClimateControlRequestModel
+    ) -> RemoteClimateControlResponseModel:
+        """Start or stop remote climate via POST /v2/remote/climate-control.
+
+        The unified V2 endpoint replaces the old settings-PUT + control-POST: a
+        ``start`` request carries the full desired settings (temperature + heating/
+        seat options + ``save_settings``); a ``stop`` is just ``command="stop"``.
+        Command success is ``response.payload.return_code == "000000"``; confirmation
+        of the actual on/off state is via the climate-status read.
 
         Args:
             vin: Vehicle Identification Number
-            command: Climate control command to send
+            request: The V2 climate-control request body.
 
         Returns:
-            Model containing status of the command request
+            Model containing the command acknowledgement (request id + return code).
 
         """
         return await self._request_and_parse(
-            StatusModel,
+            RemoteClimateControlResponseModel,
             "POST",
             VEHICLE_CLIMATE_CONTROL_ENDPOINT,
             vin=vin,
-            body=command.model_dump(exclude_unset=True, by_alias=True),
+            body=request.model_dump(exclude_none=True, by_alias=True),
         )
 
     # Trip Data

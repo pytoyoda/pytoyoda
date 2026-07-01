@@ -39,15 +39,11 @@ VEHICLE_SERVICE_HISTORY_ENDPONT = "/v1/servicehistory/vehicle/summary"
 # Migrated 2026-07: Toyota retired the /v1/global/remote/climate-* read routes
 # (now behind AWS SigV4 -> APIGW-403). The live MyToyota app reads climate from
 # the plain-Bearer /v1/vehicle/climate-* namespace and wakes via /v1/remote/*.
-# Actuation (climate-control) moves to POST /v2/remote/climate-control with a new
-# body (V2RemoteClimateControlRequest) and is migrated separately.
-VEHICLE_CLIMATE_CONTROL_ENDPOINT = "/v1/global/remote/climate-control"
+# Actuation (climate-control) moved to POST /v2/remote/climate-control with a new
+# unified body (V2RemoteClimateControlRequest: command start/stop + temperature +
+# heating/seat options + saveSettings) replacing the old settings-PUT + control-POST.
+VEHICLE_CLIMATE_CONTROL_ENDPOINT = "/v2/remote/climate-control"
 VEHICLE_CLIMATE_SETTINGS_ENDPOINT = "/v1/vehicle/climate-settings"
-# The settings *write* (update_climate_settings) still targets the retired
-# /v1/global/remote route. That route is already SigV4-fenced, so the write is
-# non-functional regardless; it is removed with the actuation migration. Split from
-# the read const above so this change moves only the read.
-VEHICLE_CLIMATE_SETTINGS_WRITE_ENDPOINT = "/v1/global/remote/climate-settings"
 VEHICLE_CLIMATE_STATUS_ENDPOINT = "/v1/vehicle/climate-status"
 VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT = "/v1/remote/refresh-climate-status"
 VEHICLE_COMMAND_ENDPOINT = "/v1/global/remote/command"
