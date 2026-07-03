@@ -15,30 +15,28 @@ from pytoyoda.models.endpoints.status import (
 )
 from pytoyoda.utils.models import CustomAPIBaseModel
 
-_CLOSED_VALUES = {"close", "closed"}
-_OPEN_VALUES = {"open"}
+_CLOSED_VALUES = frozenset({"close", "closed"})
+_OPEN_VALUES = frozenset({"open"})
+_LOCKED_VALUES = frozenset({"locked"})
+_UNLOCKED_VALUES = frozenset({"unlocked"})
 
 
-def _is_closed(status: str | None) -> bool | None:
-    """Interpret an open-state string: closed=True, open=False, unknown=None."""
-    if status is None:
+def _tristate(
+    value: str | None,
+    true_values: frozenset[str],
+    false_values: frozenset[str],
+) -> bool | None:
+    """Map a backend enum string to a tri-state bool (case-insensitive).
+
+    ``value`` in ``true_values`` -> True, in ``false_values`` -> False; ``None`` or an
+    unrecognised value -> None (never guessed).
+    """
+    if value is None:
         return None
-    lowered = status.lower()
-    if lowered in _CLOSED_VALUES:
+    lowered = value.lower()
+    if lowered in true_values:
         return True
-    if lowered in _OPEN_VALUES:
-        return False
-    return None
-
-
-def _is_locked(status: str | None) -> bool | None:
-    """Interpret a lock-state string: locked=True, unlocked=False, unknown=None."""
-    if status is None:
-        return None
-    lowered = status.lower()
-    if lowered == "locked":
-        return True
-    if lowered == "unlocked":
+    if lowered in false_values:
         return False
     return None
 
@@ -48,6 +46,16 @@ def _driver_on_left(status: RemoteStatusModel | None) -> bool:
     if status is None or status.left_hand_drive is None:
         return True
     return status.left_hand_drive
+
+
+def _rear_is_left(*, on_left: bool, driver_side: bool) -> bool:
+    """Whether a driver/passenger rear position maps to the physical rear-left slot.
+
+    The payload keys rear positions physically; the driver is on the left in an LHD
+    car. Shared by ``Doors`` and ``Windows`` so this left/right mapping — the
+    error-prone part — lives in one place.
+    """
+    return on_left if driver_side else not on_left
 
 
 class Door(CustomAPIBaseModel[Optional[DoorModel]]):
@@ -70,7 +78,7 @@ class Door(CustomAPIBaseModel[Optional[DoorModel]]):
         """If the door is closed."""
         if self._data is None or self._data.open_status is None:
             return None
-        return _is_closed(self._data.open_status.status)
+        return _tristate(self._data.open_status.status, _CLOSED_VALUES, _OPEN_VALUES)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -78,7 +86,9 @@ class Door(CustomAPIBaseModel[Optional[DoorModel]]):
         """If the door is locked."""
         if self._data is None or self._data.lock_status is None:
             return None
-        return _is_locked(self._data.lock_status.status)
+        return _tristate(
+            self._data.lock_status.status, _LOCKED_VALUES, _UNLOCKED_VALUES
+        )
 
 
 class Window(CustomAPIBaseModel[Optional[ComponentStateModel]]):
@@ -99,7 +109,9 @@ class Window(CustomAPIBaseModel[Optional[ComponentStateModel]]):
     @property
     def closed(self) -> bool | None:
         """Window closed state."""
-        return None if self._data is None else _is_closed(self._data.status)
+        if self._data is None:
+            return None
+        return _tristate(self._data.status, _CLOSED_VALUES, _OPEN_VALUES)
 
 
 class Doors(CustomAPIBaseModel[Optional[RemoteStatusModel]]):
@@ -117,18 +129,14 @@ class Doors(CustomAPIBaseModel[Optional[RemoteStatusModel]]):
         )
 
     def _rear(self, *, driver_side: bool) -> Door:
-        """Resolve a rear door by driver/passenger side via left_hand_drive.
-
-        The payload keys rear doors physically (rearLeft/rearRight); the driver
-        is on the left in an LHD car.
-        """
+        """Resolve a rear door by driver/passenger side via left_hand_drive."""
         doors = self._data.doors if self._data else None
         if doors is None:
             return Door(None)
-        on_left = _driver_on_left(self._data)
-        if driver_side:
-            return Door(doors.rear_left if on_left else doors.rear_right)
-        return Door(doors.rear_right if on_left else doors.rear_left)
+        left = _rear_is_left(
+            on_left=_driver_on_left(self._data), driver_side=driver_side
+        )
+        return Door(doors.rear_left if left else doors.rear_right)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -179,13 +187,14 @@ class Windows(CustomAPIBaseModel[Optional[RemoteStatusModel]]):
         )
 
     def _rear(self, *, driver_side: bool) -> Window:
+        """Resolve a rear window by driver/passenger side via left_hand_drive."""
         windows = self._data.windows if self._data else None
         if windows is None:
             return Window(None)
-        on_left = _driver_on_left(self._data)
-        if driver_side:
-            return Window(windows.rear_left if on_left else windows.rear_right)
-        return Window(windows.rear_right if on_left else windows.rear_left)
+        left = _rear_is_left(
+            on_left=_driver_on_left(self._data), driver_side=driver_side
+        )
+        return Window(windows.rear_left if left else windows.rear_right)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
