@@ -23,15 +23,27 @@ from pytoyoda.utils.models import CustomAPIBaseModel, Temperature
 _CLIMATE_ON_STATES = frozenset({"starting", "running"})
 _CLIMATE_OFF_STATES = frozenset({"stopped", "stopping"})
 
+# Simple on/off heating toggles (front defroster, rear defogger, steering heater).
+_TOGGLE_ON_STATES = frozenset({"on"})
+_TOGGLE_OFF_STATES = frozenset({"off"})
 
-def _toggle_on(state: str | None) -> bool | None:
-    """Interpret an ``"off"``/``"on"`` toggle: on=True, off=False, unknown=None."""
-    if state is None:
+
+def _tristate(
+    value: str | None,
+    true_values: frozenset[str],
+    false_values: frozenset[str],
+) -> bool | None:
+    """Map a backend enum string to a tri-state bool (case-insensitive).
+
+    ``value`` in ``true_values`` -> True, in ``false_values`` -> False; ``None`` or an
+    unrecognised value -> None (never guessed).
+    """
+    if value is None:
         return None
-    normalized = state.lower()
-    if normalized == "on":
+    lowered = value.lower()
+    if lowered in true_values:
         return True
-    if normalized == "off":
+    if lowered in false_values:
         return False
     return None
 
@@ -53,19 +65,25 @@ class HeatingOptions(CustomAPIBaseModel[HeatingOptionsModel]):
     @property
     def front_defroster(self) -> bool | None:
         """Whether the front defroster is on."""
-        return _toggle_on(self._data.front_defroster) if self._data else None
+        return _tristate(
+            self._data.front_defroster, _TOGGLE_ON_STATES, _TOGGLE_OFF_STATES
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def rear_defogger(self) -> bool | None:
         """Whether the rear defogger is on."""
-        return _toggle_on(self._data.rear_defogger) if self._data else None
+        return _tristate(
+            self._data.rear_defogger, _TOGGLE_ON_STATES, _TOGGLE_OFF_STATES
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def steering_heater(self) -> bool | None:
         """Whether the steering-wheel heater is on."""
-        return _toggle_on(self._data.steering_heater) if self._data else None
+        return _tristate(
+            self._data.steering_heater, _TOGGLE_ON_STATES, _TOGGLE_OFF_STATES
+        )
 
 
 class SeatOptions(CustomAPIBaseModel[SeatOptionsModel]):
@@ -90,25 +108,25 @@ class SeatOptions(CustomAPIBaseModel[SeatOptionsModel]):
     @property
     def driver_seat(self) -> str | None:
         """Driver seat heater level."""
-        return self._data.driver_seat if self._data else None
+        return self._data.driver_seat
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def passenger_seat(self) -> str | None:
         """Front passenger seat heater level."""
-        return self._data.passenger_seat if self._data else None
+        return self._data.passenger_seat
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def rear_driver_seat(self) -> str | None:
         """Rear driver-side seat heater level."""
-        return self._data.rear_driver_seat if self._data else None
+        return self._data.rear_driver_seat
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def rear_passenger_seat(self) -> str | None:
         """Rear passenger-side seat heater level."""
-        return self._data.rear_passenger_seat if self._data else None
+        return self._data.rear_passenger_seat
 
 
 class ClimateStatus(CustomAPIBaseModel[ClimateStatusResponseModel]):
@@ -142,14 +160,8 @@ class ClimateStatus(CustomAPIBaseModel[ClimateStatusResponseModel]):
         ``starting``/``running`` -> True, ``stopped``/``stopping`` -> False, and an
         unknown or missing state -> None.
         """
-        if self._status is None or self._status.status is None:
-            return None
-        state = self._status.status.lower()
-        if state in _CLIMATE_ON_STATES:
-            return True
-        if state in _CLIMATE_OFF_STATES:
-            return False
-        return None
+        status = self._status.status if self._status else None
+        return _tristate(status, _CLIMATE_ON_STATES, _CLIMATE_OFF_STATES)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
