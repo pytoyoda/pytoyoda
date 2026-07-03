@@ -35,10 +35,10 @@ def _tristate(
 ) -> bool | None:
     """Map a backend enum string to a tri-state bool (case-insensitive).
 
-    ``value`` in ``true_values`` -> True, in ``false_values`` -> False; ``None`` or an
-    unrecognised value -> None (never guessed).
+    ``value`` in ``true_values`` -> True, in ``false_values`` -> False; ``None``, a
+    non-string, or an unrecognised value -> None (never guessed).
     """
-    if value is None:
+    if not isinstance(value, str):
         return None
     lowered = value.lower()
     if lowered in true_values:
