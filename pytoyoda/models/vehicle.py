@@ -20,6 +20,10 @@ from pytoyoda.exceptions import ToyotaApiError
 from pytoyoda.models.climate import ClimateSettings, ClimateStatus
 from pytoyoda.models.dashboard import Dashboard
 from pytoyoda.models.electric_status import ElectricStatus
+from pytoyoda.models.endpoints.climate import (
+    RemoteClimateControlResponseModel,
+    V2RemoteClimateControlRequestModel,
+)
 from pytoyoda.models.endpoints.command import CommandType
 from pytoyoda.models.endpoints.common import StatusModel
 from pytoyoda.models.endpoints.electric import (
@@ -714,6 +718,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         """
         return await self._api.refresh_climate_status(self.vin)
+
+    async def set_climate(
+        self, request: V2RemoteClimateControlRequestModel
+    ) -> RemoteClimateControlResponseModel:
+        """Start or stop remote climate control (POST /v2/remote/climate-control).
+
+        A ``start`` request carries the full desired settings (temperature +
+        heating/seat options + ``save_settings``); a ``stop`` is just
+        ``command="stop"``. Acknowledgement is ``response.payload.return_code ==
+        "000000"``; confirm the actual on/off state via the climate-status read.
+
+        Args:
+            request: The V2 climate-control request body.
+
+        Returns:
+            RemoteClimateControlResponseModel: The command acknowledgement.
+
+        """
+        return await self._api.send_climate_control_command(self.vin, request)
 
     async def post_command(self, command: CommandType, beeps: int = 0) -> StatusModel:
         """Send remote command to the vehicle.
