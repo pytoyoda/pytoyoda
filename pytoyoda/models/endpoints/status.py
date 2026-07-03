@@ -55,23 +55,6 @@ class WindowsModel(CustomEndpointBaseModel):
     rear_right: ComponentStateModel | None = Field(alias="rearRight", default=None)
 
 
-class LightsModel(CustomEndpointBaseModel):
-    """Exterior light states (new in the v1/vehicle/status payload)."""
-
-    hazard: ComponentStateModel | None = None
-    head: ComponentStateModel | None = None
-    tail: ComponentStateModel | None = None
-
-
-class RearSeatReminderModel(CustomEndpointBaseModel):
-    """Rear-seat occupant reminder state (new in the v1/vehicle/status payload)."""
-
-    reason: str | None = None
-    last_update_timestamp: datetime | None = Field(
-        alias="lastUpdateTimestamp", default=None
-    )
-
-
 class RemoteStatusModel(CustomEndpointBaseModel):
     """Model representing the vehicle status payload (``/v1/vehicle/status``).
 
@@ -84,8 +67,6 @@ class RemoteStatusModel(CustomEndpointBaseModel):
             map physical rear-left/rear-right to driver/passenger rear.
         doors: Per-door lock/open state.
         windows: Per-window open state.
-        lights: Exterior light state.
-        rear_seat_reminder: Rear-seat occupant reminder.
 
     """
 
@@ -100,10 +81,6 @@ class RemoteStatusModel(CustomEndpointBaseModel):
     left_hand_drive: bool | None = Field(alias="leftHandDrive", default=None)
     doors: DoorsModel | None = None
     windows: WindowsModel | None = None
-    lights: LightsModel | None = None
-    rear_seat_reminder: RearSeatReminderModel | None = Field(
-        alias="rearSeatReminder", default=None
-    )
 
     @property
     def occurrence_date(self) -> datetime | None:
