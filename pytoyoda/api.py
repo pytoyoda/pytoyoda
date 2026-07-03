@@ -10,6 +10,7 @@ from pytoyoda.const import (
     VEHICLE_ASSOCIATION_ENDPOINT,
     VEHICLE_CLIMATE_CONTROL_ENDPOINT,
     VEHICLE_CLIMATE_SETTINGS_ENDPOINT,
+    VEHICLE_CLIMATE_SETTINGS_WRITE_ENDPOINT,
     VEHICLE_CLIMATE_STATUS_ENDPOINT,
     VEHICLE_CLIMATE_STATUS_REFRESH_ENDPOINT,
     VEHICLE_COMMAND_ENDPOINT,
@@ -406,7 +407,7 @@ class Api:
         return await self._request_and_parse(
             StatusModel,
             "PUT",
-            VEHICLE_CLIMATE_SETTINGS_ENDPOINT,
+            VEHICLE_CLIMATE_SETTINGS_WRITE_ENDPOINT,
             vin=vin,
             body=settings.model_dump(exclude_unset=True, by_alias=True),
         )
