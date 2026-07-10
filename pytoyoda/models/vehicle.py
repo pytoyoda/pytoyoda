@@ -275,6 +275,14 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 /v1/global/remote/status after a wake POST without
                 re-hitting the other endpoints that are already fresh.
 
+        Endpoints registered with ``optional=True`` do not raise on failure:
+        the exception is recorded in ``_endpoint_errors[name]`` and the
+        endpoint's ``_endpoint_data`` entry is cleared, so downstream getters
+        return None for that cycle instead of stale data (note the asymmetry
+        with ``skip``, which retains the previous data). Error records are
+        kept until the endpoint is attempted again, so partial updates via
+        ``skip``/``only`` leave other endpoints' diagnostics intact.
+
         Returns:
             None
 
@@ -287,12 +295,15 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             raise ValueError(msg)
         skip_set = set(skip or [])
         only_set = set(only) if only is not None else None
-        self._endpoint_errors = {}
         for endpoint in self._endpoint_collect:
             if only_set is not None and endpoint.name not in only_set:
                 continue
             if endpoint.name in skip_set:
                 continue
+            # Clear only the record of endpoints attempted this cycle, so a
+            # partial update (skip/only) does not erase the diagnostics of
+            # endpoints it never retried.
+            self._endpoint_errors.pop(endpoint.name, None)
             try:
                 self._endpoint_data[endpoint.name] = await endpoint.function()
             except Exception as ex:
