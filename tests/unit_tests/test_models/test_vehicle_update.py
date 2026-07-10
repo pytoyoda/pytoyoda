@@ -110,8 +110,13 @@ async def test_optional_endpoint_failure_swallowed_and_recorded() -> None:
 
 
 @pytest.mark.asyncio
-async def test_endpoint_errors_resets_each_update() -> None:
-    """A successful re-run clears stale entries from _endpoint_errors."""
+async def test_endpoint_errors_cleared_per_attempted_endpoint() -> None:
+    """Error records clear on re-attempt, but survive partial updates.
+
+    A partial update via only=/skip= must not erase the diagnostics of
+    endpoints it never retried (ha_toyota's smart-refresh strategy issues
+    exactly such partial updates every cycle).
+    """
     state = {"raise": True}
 
     async def maybe_bad() -> str:
@@ -119,17 +124,27 @@ async def test_endpoint_errors_resets_each_update() -> None:
             raise RuntimeError("transient")
         return "now-fine"
 
+    async def fine() -> str:
+        return "ok"
+
     v = _build_vehicle_with_endpoints(
-        [EndpointDefinition("x", capable=True, function=maybe_bad, optional=True)]
+        [
+            EndpointDefinition("x", capable=True, function=maybe_bad, optional=True),
+            EndpointDefinition("y", capable=True, function=fine, optional=True),
+        ]
     )
 
     await v.update()
     assert "x" in v._endpoint_errors
 
+    # Partial update that never retries "x": its error record must survive.
+    await v.update(only=["y"])
+    assert "x" in v._endpoint_errors
+
     state["raise"] = False
     await v.update()
     assert v._endpoint_data["x"] == "now-fine"
-    assert "x" not in v._endpoint_errors  # cleared on the new cycle
+    assert "x" not in v._endpoint_errors  # cleared on the re-attempt
 
 
 @pytest.mark.asyncio
