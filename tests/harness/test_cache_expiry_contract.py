@@ -12,7 +12,6 @@ Run via:
 
 from __future__ import annotations
 
-import json
 import ssl
 
 import httpx
@@ -21,7 +20,7 @@ import pytest
 from tests.harness.mock_server import SIM, HarnessServer
 
 
-@pytest.fixture()
+@pytest.fixture
 def server():
     SIM.reset()
     s = HarnessServer()
@@ -32,7 +31,7 @@ def server():
         s.stop()
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(server):
     # Mirror harness driver: trust the self-signed cert
     ctx = ssl.create_default_context()
@@ -43,7 +42,7 @@ def client(server):
 
 
 def _get_status(client, vin: str) -> httpx.Response:
-    return client.get("/v1/global/remote/status", headers={"vin": vin})
+    return client.get("/v1/vehicle/status", headers={"vin": vin})
 
 
 def _post_refresh(client, vin: str) -> httpx.Response:
@@ -76,7 +75,7 @@ def test_post_then_get_succeeds_when_responsive(client):
     assert post.json()["payload"]["returnCode"] == "000000"
     get = _get_status(client, "VIN-OK")
     assert get.status_code == 200
-    assert "occurrenceDate" in get.json()["payload"]
+    assert "lastUpdateTimestamp" in get.json()["payload"]
 
 
 def test_post_does_not_populate_when_unresponsive(client):
@@ -142,12 +141,12 @@ def test_call_counts_tracked(client):
     assert sim.get_call_count == 2
 
 
-def test_occurrence_date_is_iso8601_z(client):
-    """occurrenceDate is rendered with the trailing Z (matches real API shape)."""
+def test_last_update_timestamp_is_iso8601_z(client):
+    """LastUpdateTimestamp is rendered with the trailing Z (matches real API shape)."""
     SIM.configure("VIN-DATE", responsive=True)
     _post_refresh(client, "VIN-DATE")
     body = _get_status(client, "VIN-DATE").json()
-    occ = body["payload"]["occurrenceDate"]
+    occ = body["payload"]["lastUpdateTimestamp"]
     assert occ.endswith("Z")
     # Must be parseable by a simple consumer
     from datetime import datetime

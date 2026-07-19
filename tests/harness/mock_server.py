@@ -271,7 +271,7 @@ def _build_status_response(sim: VehicleSim) -> bytes:
         "get_v1_global_remote_status.json", "v1_global_remote_status.json"
     )
     payload = raw.get("payload") or {}
-    payload["occurrenceDate"] = sim.occurrence_date()
+    payload["lastUpdateTimestamp"] = sim.occurrence_date()
     raw["payload"] = payload
     return json.dumps(raw).encode()
 
@@ -337,8 +337,9 @@ def _route(
             ).encode(),
         )
 
-    # GET /v1/global/remote/status (cache-expiry semantics)
-    if method == "GET" and "/v1/global/remote/status" in base_path:
+    # GET /v1/vehicle/status (cache-expiry semantics; migrated from
+    # /v1/global/remote/status which Toyota retired behind SigV4)
+    if method == "GET" and "/v1/vehicle/status" in base_path:
         vin = headers.get("vin") or headers.get("VIN") or "DEFAULT"
         sim = SIM.get(vin)
         sim.get_call_count += 1
