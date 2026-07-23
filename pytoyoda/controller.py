@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-import ssl
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar
+
+if TYPE_CHECKING:
+    import ssl
 from urllib import parse
 from uuid import uuid4
 
