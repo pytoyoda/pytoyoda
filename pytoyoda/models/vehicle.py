@@ -90,6 +90,9 @@ class EndpointDefinition:
     name: str
     capable: bool
     function: Callable
+    # If True, failures here are caught + recorded in
+    # Vehicle._endpoint_errors instead of aborting update().
+    optional: bool = False
 
 
 class Vehicle(CustomAPIBaseModel[type[T]]):
@@ -204,6 +207,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     function=partial(
                         self._api.get_climate_settings, vin=self._vehicle_info.vin
                     ),
+                    # Toyota selectively 500s on this endpoint for some
+                    # accounts. See ha_toyota#291.
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="climate_status",
@@ -215,6 +221,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     function=partial(
                         self._api.get_climate_status, vin=self._vehicle_info.vin
                     ),
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="trip_history",
@@ -239,10 +246,10 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 )
             )
         self._endpoint_collect = [
-            (endpoint.name, endpoint.function)
-            for endpoint in self._api_endpoints
-            if endpoint.capable
+            endpoint for endpoint in self._api_endpoints if endpoint.capable
         ]
+        # Failures on optional endpoints from the most recent update().
+        self._endpoint_errors: dict[str, Exception] = {}
 
     async def update(
         self,
@@ -272,6 +279,14 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 /v1/global/remote/status after a wake POST without
                 re-hitting the other endpoints that are already fresh.
 
+        Endpoints registered with ``optional=True`` do not raise on failure:
+        the exception is recorded in ``_endpoint_errors[name]`` and the
+        endpoint's ``_endpoint_data`` entry is cleared, so downstream getters
+        return None for that cycle instead of stale data (note the asymmetry
+        with ``skip``, which retains the previous data). Error records are
+        kept until the endpoint is attempted again, so partial updates via
+        ``skip``/``only`` leave other endpoints' diagnostics intact.
+
         Returns:
             None
 
@@ -284,12 +299,31 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             raise ValueError(msg)
         skip_set = set(skip or [])
         only_set = set(only) if only is not None else None
-        for name, function in self._endpoint_collect:
-            if only_set is not None and name not in only_set:
+        for endpoint in self._endpoint_collect:
+            if only_set is not None and endpoint.name not in only_set:
                 continue
-            if name in skip_set:
+            if endpoint.name in skip_set:
                 continue
-            self._endpoint_data[name] = await function()
+            # Clear only the record of endpoints attempted this cycle, so a
+            # partial update (skip/only) does not erase the diagnostics of
+            # endpoints it never retried.
+            self._endpoint_errors.pop(endpoint.name, None)
+            try:
+                self._endpoint_data[endpoint.name] = await endpoint.function()
+            except Exception as ex:
+                if not endpoint.optional:
+                    raise
+                self._endpoint_errors[endpoint.name] = ex
+                # Clear any stale payload from a previous successful cycle so
+                # downstream getters return None instead of outdated data.
+                self._endpoint_data.pop(endpoint.name, None)
+                logger.warning(
+                    "Optional endpoint '{}' failed and will be cleared this "
+                    "cycle: {}: {}",
+                    endpoint.name,
+                    type(ex).__name__,
+                    ex,
+                )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
