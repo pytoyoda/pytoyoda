@@ -25,6 +25,17 @@ from pytoyoda.const import (
     AUTHENTICATE_URL,
     AUTHORIZE_URL,
     CLIENT_VERSION,
+    SUBARU_ACCESS_TOKEN_URL,
+    SUBARU_AUTHENTICATE_URL,
+    SUBARU_AUTHORIZE_URL,
+    SUBARU_BASIC_AUTH,
+    SUBARU_CLIENT_ID,
+    SUBARU_JWT_AUDIENCE,
+    SUBARU_REDIRECT_URI,
+    TOYOTA_BASIC_AUTH,
+    TOYOTA_CLIENT_ID,
+    TOYOTA_JWT_AUDIENCE,
+    TOYOTA_REDIRECT_URI,
 )
 from pytoyoda.exceptions import (
     ToyotaApiError,
@@ -63,7 +74,7 @@ class Controller:
         Args:
             username: Toyota account username
             password: Toyota account password
-            brand: Brand of the car (T for Toyota, L for Lexus)
+            brand: Brand of the car (T for Toyota, L for Lexus, S for Subaru)
             timeout: HTTP request timeout in seconds
 
         """
@@ -72,11 +83,24 @@ class Controller:
         self._brand: str = brand
         self._timeout = timeout
 
-        # URLs
+        # Brand-specific auth config - Subaru uses a different realm and credentials
         self._api_base_url = httpx.URL(API_BASE_URL)
-        self._access_token_url = httpx.URL(ACCESS_TOKEN_URL)
-        self._authenticate_url = httpx.URL(AUTHENTICATE_URL)
-        self._authorize_url = httpx.URL(AUTHORIZE_URL)
+        if brand == "S":
+            self._access_token_url = httpx.URL(SUBARU_ACCESS_TOKEN_URL)
+            self._authenticate_url = httpx.URL(SUBARU_AUTHENTICATE_URL)
+            self._authorize_url = httpx.URL(SUBARU_AUTHORIZE_URL)
+            self._oauth_basic_auth = SUBARU_BASIC_AUTH
+            self._oauth_client_id = SUBARU_CLIENT_ID
+            self._oauth_redirect_uri = SUBARU_REDIRECT_URI
+            self._jwt_audience = SUBARU_JWT_AUDIENCE
+        else:
+            self._access_token_url = httpx.URL(ACCESS_TOKEN_URL)
+            self._authenticate_url = httpx.URL(AUTHENTICATE_URL)
+            self._authorize_url = httpx.URL(AUTHORIZE_URL)
+            self._oauth_basic_auth = TOYOTA_BASIC_AUTH
+            self._oauth_client_id = TOYOTA_CLIENT_ID
+            self._oauth_redirect_uri = TOYOTA_REDIRECT_URI
+            self._jwt_audience = TOYOTA_JWT_AUDIENCE
 
         # Authentication state
         self._token_info: TokenInfo | None = None
@@ -265,11 +289,11 @@ class Controller:
         """
         resp = await client.post(
             self._access_token_url,
-            headers={"authorization": "basic b25lYXBwOm9uZWFwcA=="},
+            headers={"authorization": self._oauth_basic_auth},
             data={
-                "client_id": "oneapp",
+                "client_id": self._oauth_client_id,
                 "code": auth_code,
-                "redirect_uri": "com.toyota.oneapp:/oauth2Callback",
+                "redirect_uri": self._oauth_redirect_uri,
                 "grant_type": "authorization_code",
                 "code_verifier": "plain",
             },
@@ -289,10 +313,10 @@ class Controller:
         async with self._get_http_client() as client:
             resp = await client.post(
                 self._access_token_url,
-                headers={"authorization": "basic b25lYXBwOm9uZWFwcA=="},
+                headers={"authorization": self._oauth_basic_auth},
                 data={
-                    "client_id": "oneapp",
-                    "redirect_uri": "com.toyota.oneapp:/oauth2Callback",
+                    "client_id": self._oauth_client_id,
+                    "redirect_uri": self._oauth_redirect_uri,
                     "grant_type": "refresh_token",
                     "code_verifier": "plain",
                     "refresh_token": self._refresh_token,
@@ -329,7 +353,7 @@ class Controller:
             response_data["id_token"],
             algorithms=["RS256"],
             options={"verify_signature": False},
-            audience="oneappsdkclient",
+            audience=self._jwt_audience,
         )["uuid"]
 
         # Calculate expiration time
@@ -362,7 +386,6 @@ class Controller:
         Args:
             method: The HTTP method to use ("GET", "POST", "PUT", "DELETE")
             endpoint: The API endpoint to request
-            brand: Brand of the car (T for Toyota, L for Lexus)
             vin: Vehicle Identification Number (optional)
             body: Request body as dictionary (optional)
             params: URL query parameters (optional)
@@ -472,9 +495,9 @@ class Controller:
             "user-agent": "okhttp/4.10.0",
         }
 
-        if brand == "L":
-            headers["x-appbrand"] = "L"
-            headers["brand"] = "L"
+        if brand in ("L", "S"):
+            headers["x-appbrand"] = brand
+            headers["brand"] = brand
 
         # Add VIN if provided
         if vin is not None:

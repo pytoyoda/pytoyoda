@@ -57,6 +57,17 @@ async def test_authenticate(httpx_mock):  # noqa: D103
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("remove_cache")
+async def test_authenticate_subaru(httpx_mock):  # noqa: D103
+    build_routes(httpx_mock, ["authenticate_working_subaru.json"])
+
+    client = MyT(TEST_USER, TEST_PASSWORD, brand="S")
+    # Replays a Subaru authentication sequence using
+    # the alliance-subaru realm and Subaru client credentials
+    await client.login()
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
 async def test_authenticate_invalid_username(httpx_mock: HTTPXMock):  # noqa: D103
     build_routes(httpx_mock, ["authenticate_invalid_username.json"])
 
