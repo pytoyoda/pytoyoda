@@ -73,6 +73,16 @@ def test_censor_value(value, key, to_censor, expected):  # noqa : D103
             {"password"},
             {"username": "user123", "password": None},
         ),
+        pytest.param(
+            {"vehicle_info": {"vin": "SB1ZB3AE50E022886", "latitude": 59.3293}},
+            {"vin", "latitude"},
+            {"vehicle_info": {"vin": "SB***************", "latitude": 59}},
+        ),
+        pytest.param(
+            {"payload": [{"vin": "SB1ZB3AE50E022886"}, {"vin": "JT123456789012345"}]},
+            {"vin"},
+            {"payload": [{"vin": "SB***************"}, {"vin": "JT***************"}]},
+        ),
     ],
 )
 def test_censor_all(dictionary, to_censor, expected):  # noqa : D103
