@@ -454,7 +454,7 @@ class VehicleGuidModel(CustomEndpointBaseModel):
     primary_subscriber: bool | None = Field(alias="primarySubscriber")
     region: str | None
     registration_number: str | None = Field(alias="registrationNumber")
-    remote_display: Any | None = Field(alias="remoteDisplay")
+    remote_display: Any | None = Field(alias="remoteDisplay", default=None)
     remote_service_capabilities: _RemoteServiceCapabilitiesModel | None = Field(
         alias="remoteServiceCapabilities"
     )

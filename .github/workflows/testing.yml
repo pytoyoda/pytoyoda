@@ -22,11 +22,11 @@ jobs:
       PYTHON: "${{ matrix.python-version }}"
     steps:
       - name: "⤵️ Check out code from GitHub"
-        uses: "actions/checkout@v6"
+        uses: "actions/checkout@v7"
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: "🐍 Set up Python ${{ matrix.python-version }}"
-        uses: "actions/setup-python@v6"
+        uses: "actions/setup-python@v7"
         with:
           python-version: "${{ matrix.python-version }}"
       - name: "⚙️ Install Poetry"
@@ -57,7 +57,7 @@ jobs:
       pull-requests: write
     steps:
       - name: "⤵️ Check out code from GitHub"
-        uses: "actions/checkout@v6"
+        uses: "actions/checkout@v7"
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: "⤵️ Download pytest junitxml artifact"
