@@ -15,7 +15,6 @@ class SensitiveDataType(Enum):
 
     STRING = auto()
     FLOAT = auto()
-    NESTED = auto()
 
 
 # Default set of sensitive keys that should be censored
@@ -95,8 +94,6 @@ def get_sensitive_data_type(
             return SensitiveDataType.STRING
         if isinstance(value, float):
             return SensitiveDataType.FLOAT
-        if isinstance(value, (dict, list)):
-            return SensitiveDataType.NESTED
     return None
 
 
@@ -114,20 +111,19 @@ def censor_value(
         The censored value
 
     """
-    data_type = get_sensitive_data_type(value, key, to_censor)
+    # Sensitive fields usually sit under non-sensitive keys (vehicle_info,
+    # payload, ...), so containers are always walked regardless of their key.
+    if isinstance(value, dict):
+        return censor_all(value, to_censor)
+    if isinstance(value, list):
+        return [censor_value(item, key, to_censor) for item in value]
 
-    if data_type is None:
-        return value
+    data_type = get_sensitive_data_type(value, key, to_censor)
 
     if data_type == SensitiveDataType.STRING:
         return censor_string(value)
     if data_type == SensitiveDataType.FLOAT:
         return round(value)
-    if data_type == SensitiveDataType.NESTED:
-        if isinstance(value, dict):
-            return censor_all(value, to_censor)
-        if isinstance(value, list):
-            return [censor_value(item, key, to_censor) for item in value]
 
     return value
 

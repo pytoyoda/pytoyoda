@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar
+
+if TYPE_CHECKING:
+    import ssl
 from urllib import parse
 from uuid import uuid4
 
@@ -77,6 +81,18 @@ class Controller:
         # Authentication state
         self._token_info: TokenInfo | None = None
 
+        # Reused httpx.AsyncClient for data requests. Lazily constructed inside
+        # an async context and kept for the lifetime of the Controller, so that
+        # SSL context + TCP connection pool survive across request_raw calls.
+        self._client: httpx.AsyncClient | None = None
+
+        # Cached SSL context shared by every AsyncClient this Controller builds.
+        # ssl.create_default_context() reads the CA bundle from disk
+        # synchronously, which trips Home Assistant's blocking-call watchdog
+        # when called from the event loop (one warning per AsyncClient
+        # construction). We build it once in an executor and reuse.
+        self._ssl_ctx: ssl.SSLContext | None = None
+
         # Load from cache if available
         if self._username in self._TOKEN_CACHE:
             self._token_info = self._TOKEN_CACHE[self._username]
@@ -132,10 +148,25 @@ class Controller:
 
             await self._authenticate()
 
+    async def _get_ssl_context(self) -> ssl.SSLContext:
+        """Return a cached SSL context, building it off the event loop on first use.
+
+        httpx.create_ssl_context() reads the CA bundle synchronously, which
+        blocks the event loop for ~1-10ms and trips Home Assistant's
+        blocking-call watchdog. By caching the context on the Controller and
+        sharing it across AsyncClient constructions, we pay that cost once
+        per Controller lifetime instead of per HTTP client.
+        """
+        if self._ssl_ctx is None:
+            loop = asyncio.get_running_loop()
+            self._ssl_ctx = await loop.run_in_executor(None, httpx.create_ssl_context)
+        return self._ssl_ctx
+
     @asynccontextmanager
     async def _get_http_client(self) -> AsyncGenerator:
         """Context manager for HTTP client with consistent timeout."""
-        async with AsyncCacheClient(timeout=self._timeout) as client:
+        ssl_ctx = await self._get_ssl_context()
+        async with AsyncCacheClient(timeout=self._timeout, verify=ssl_ctx) as client:
             yield client
 
     async def _authenticate(self) -> None:
@@ -357,9 +388,20 @@ class Controller:
         # Prepare headers
         request_headers = self._prepare_headers(vin, headers)
 
-        # Make the request
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.request(
+        # Make the request using the reused client (TCP/TLS state is pooled
+        # across calls instead of a fresh SSL handshake per request). Retry on
+        # 429 (rate-limited) and 5xx with exponential backoff; 4xx client
+        # errors fail fast. Total worst-case wait when Toyota is unhealthy:
+        # 2 + 4 + 8 = 14s.
+        if self._client is None:
+            ssl_ctx = await self._get_ssl_context()
+            self._client = httpx.AsyncClient(timeout=self._timeout, verify=ssl_ctx)
+
+        backoffs_s = (2, 4, 8)
+        response: httpx.Response | None = None
+
+        for attempt in range(len(backoffs_s) + 1):
+            response = await self._client.request(
                 method,
                 f"{self._api_base_url}{endpoint}",
                 headers=request_headers,
@@ -372,8 +414,32 @@ class Controller:
             if response.status_code in [HTTPStatus.OK, HTTPStatus.ACCEPTED]:
                 return response
 
+            is_transient = (
+                response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+                or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+            if not is_transient or attempt >= len(backoffs_s):
+                break
+
+            wait = backoffs_s[attempt]
+            logger.warning(
+                "Toyota API {} on {}; retrying in {}s (attempt {} of {})",
+                response.status_code,
+                endpoint,
+                wait,
+                attempt + 2,
+                len(backoffs_s) + 1,
+            )
+            await asyncio.sleep(wait)
+
         msg = f"Request Failed. {response.status_code}, {response.text}."
         raise ToyotaApiError(msg)
+
+    async def aclose(self) -> None:
+        """Release the pooled httpx client. Safe to call multiple times."""
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
     def _prepare_headers(
         self,

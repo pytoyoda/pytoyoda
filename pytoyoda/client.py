@@ -93,6 +93,14 @@ class MyT:
             logger.error("Login failed: '{}'.", str(error))
             raise
 
+    async def aclose(self) -> None:
+        """Release the pooled httpx client held by the Controller.
+
+        Safe to call multiple times. After aclose(), the client can still be
+        reused - the next request will lazily construct a fresh httpx client.
+        """
+        await self._api.controller.aclose()
+
     async def get_vehicles(self) -> list[Vehicle | None]:
         """Retrieve all vehicles associated with the account.
 

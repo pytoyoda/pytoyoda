@@ -16,6 +16,7 @@ from pytoyoda.const import (
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT,
+    VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT,
     VEHICLE_GUID_ENDPOINT,
     VEHICLE_HEALTH_STATUS_ENDPOINT,
@@ -27,10 +28,10 @@ from pytoyoda.const import (
 )
 from pytoyoda.controller import Controller
 from pytoyoda.models.endpoints.climate import (
-    ClimateControlModel,
-    ClimateSettingsModel,
     ClimateSettingsResponseModel,
     ClimateStatusResponseModel,
+    RemoteClimateControlResponseModel,
+    V2RemoteClimateControlRequestModel,
 )
 from pytoyoda.models.endpoints.command import CommandType, RemoteCommandModel
 from pytoyoda.models.endpoints.common import StatusModel
@@ -41,6 +42,7 @@ from pytoyoda.models.endpoints.electric import (
 )
 from pytoyoda.models.endpoints.location import LocationResponseModel
 from pytoyoda.models.endpoints.notifications import NotificationResponseModel
+from pytoyoda.models.endpoints.refresh_status import RefreshStatusResponseModel
 from pytoyoda.models.endpoints.service_history import ServiceHistoryResponseModel
 from pytoyoda.models.endpoints.status import RemoteStatusResponseModel
 from pytoyoda.models.endpoints.telemetry import TelemetryResponseModel
@@ -244,6 +246,36 @@ class Api:
             vin=vin,
         )
 
+    async def refresh_vehicle_status(self, vin: str) -> RefreshStatusResponseModel:
+        """Wake the vehicle and request a fresh /status cache populate.
+
+        Calls Toyota's POST /v1/remote/status. The car's cellular modem is
+        woken; on success the gateway populates the cache that GET
+        /v1/vehicle/status reads. Toyota's mobile app issues this before
+        reading status to warm a cold cache.
+
+        The old /v1/global/remote/refresh-status route required a
+        deviceId/deviceType/guid/vin body and is now SigV4-fenced
+        (APIGW-403). The new /v1/remote/* route takes the vin as a header
+        only (no body), matching the migrated climate wake.
+
+        Args:
+            vin: Vehicle Identification Number
+
+        Returns:
+            RefreshStatusResponseModel: Response payload contains
+                return_code; "000000" indicates the gateway accepted
+                the wake request. Any other value indicates the vehicle
+                does not support the endpoint.
+
+        """
+        return await self._request_and_parse(
+            RefreshStatusResponseModel,
+            "POST",
+            VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT,
+            vin=vin,
+        )
+
     async def get_telemetry(self, vin: str) -> TelemetryResponseModel:
         """Get the latest telemetry data for a vehicle.
 
@@ -303,8 +335,9 @@ class Api:
     async def get_climate_status(self, vin: str) -> ClimateStatusResponseModel:
         """Get the current climate control status.
 
-        Note: Only returns data if climate control is on. If off,
-        it returns status == 0 and all other fields are None.
+        Reads the server-cached climate state from /v1/vehicle/climate-status. When
+        climate is off the payload collapses to just ``{"status": "stopped"}``; the
+        temperature/duration/heating/seat fields populate while it is starting/running.
 
         Args:
             vin: Vehicle Identification Number
@@ -351,46 +384,31 @@ class Api:
             vin=vin,
         )
 
-    async def update_climate_settings(
-        self, vin: str, settings: ClimateSettingsModel
-    ) -> StatusModel:
-        """Update the climate control settings for a vehicle.
-
-        Args:
-            vin: Vehicle Identification Number
-            settings: New climate control settings
-
-        Returns:
-            Model containing status of the update request
-
-        """
-        return await self._request_and_parse(
-            StatusModel,
-            "PUT",
-            VEHICLE_CLIMATE_SETTINGS_ENDPOINT,
-            vin=vin,
-            body=settings.model_dump(exclude_unset=True, by_alias=True),
-        )
-
     async def send_climate_control_command(
-        self, vin: str, command: ClimateControlModel
-    ) -> StatusModel:
-        """Send a control command to the climate system.
+        self, vin: str, request: V2RemoteClimateControlRequestModel
+    ) -> RemoteClimateControlResponseModel:
+        """Start or stop remote climate via POST /v2/remote/climate-control.
+
+        The unified V2 endpoint replaces the old settings-PUT + control-POST: a
+        ``start`` request carries the full desired settings (temperature + heating/
+        seat options + ``save_settings``); a ``stop`` is just ``command="stop"``.
+        Command success is ``response.payload.return_code == "000000"``; confirmation
+        of the actual on/off state is via the climate-status read.
 
         Args:
             vin: Vehicle Identification Number
-            command: Climate control command to send
+            request: The V2 climate-control request body.
 
         Returns:
-            Model containing status of the command request
+            Model containing the command acknowledgement (request id + return code).
 
         """
         return await self._request_and_parse(
-            StatusModel,
+            RemoteClimateControlResponseModel,
             "POST",
             VEHICLE_CLIMATE_CONTROL_ENDPOINT,
             vin=vin,
-            body=command.model_dump(exclude_unset=True, by_alias=True),
+            body=request.model_dump(exclude_none=True, by_alias=True),
         )
 
     # Trip Data

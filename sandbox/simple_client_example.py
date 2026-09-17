@@ -86,6 +86,20 @@ async def get_information():
         if car:
             await car.update()
 
+            # If car.lock_status appears stuck-stale, the gateway cache may
+            # need a wake. The Toyota mobile app uses this two-stage pattern:
+            #
+            #     wake = await car.refresh_status()
+            #     if wake.payload and wake.payload.return_code == "000000":
+            #         # Wake accepted; poll until occurrence_date advances.
+            #         for _ in range(3):
+            #             await asyncio.sleep(10)
+            #             await car.update(only=["status"])
+            #             if car.lock_status and car.lock_status.last_updated:
+            #                 break
+            #
+            # See README "Known issues" for context on why this is needed.
+
             # Dashboard Information
             logger.info(
                 f"Dashboard: {car.dashboard.model_dump_json(indent=4) if car.dashboard else None}"  # noqa: E501

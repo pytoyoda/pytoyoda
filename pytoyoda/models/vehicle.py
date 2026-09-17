@@ -1,6 +1,5 @@
 """Vehicle model."""
 
-import asyncio
 import copy
 import json
 from collections.abc import Callable
@@ -21,12 +20,17 @@ from pytoyoda.exceptions import ToyotaApiError
 from pytoyoda.models.climate import ClimateSettings, ClimateStatus
 from pytoyoda.models.dashboard import Dashboard
 from pytoyoda.models.electric_status import ElectricStatus
+from pytoyoda.models.endpoints.climate import (
+    RemoteClimateControlResponseModel,
+    V2RemoteClimateControlRequestModel,
+)
 from pytoyoda.models.endpoints.command import CommandType
 from pytoyoda.models.endpoints.common import StatusModel
 from pytoyoda.models.endpoints.electric import (
     ElectricCommandResponseModel,
     NextChargeSettings,
 )
+from pytoyoda.models.endpoints.refresh_status import RefreshStatusResponseModel
 from pytoyoda.models.endpoints.trips import _SummaryItemModel
 from pytoyoda.models.endpoints.vehicle_guid import VehicleGuidModel
 from pytoyoda.models.location import Location
@@ -86,6 +90,9 @@ class EndpointDefinition:
     name: str
     capable: bool
     function: Callable
+    # If True, failures here are caught + recorded in
+    # Vehicle._endpoint_errors instead of aborting update().
+    optional: bool = False
 
 
 class Vehicle(CustomAPIBaseModel[type[T]]):
@@ -216,6 +223,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     function=partial(
                         self._api.get_climate_settings, vin=self._vehicle_info.vin
                     ),
+                    # Toyota selectively 500s on this endpoint for some
+                    # accounts. See ha_toyota#291.
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="climate_status",
@@ -227,6 +237,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     function=partial(
                         self._api.get_climate_status, vin=self._vehicle_info.vin
                     ),
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="trip_history",
@@ -251,36 +262,84 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 )
             )
         self._endpoint_collect = [
-            (endpoint.name, endpoint.function)
-            for endpoint in self._api_endpoints
-            if endpoint.capable
+            endpoint for endpoint in self._api_endpoints if endpoint.capable
         ]
+        # Failures on optional endpoints from the most recent update().
+        self._endpoint_errors: dict[str, Exception] = {}
 
-    async def update(self) -> None:
+    async def update(
+        self,
+        skip: list[str] | None = None,
+        only: list[str] | None = None,
+    ) -> None:
         """Update the data for the vehicle.
 
-        This method asynchronously updates the data for the vehicle by
-        calling the endpoint functions in parallel.
+        Endpoint functions are awaited sequentially rather than in a single
+        asyncio.gather. Toyota's API gateway appears to rate-limit on bursts
+        of near-simultaneous requests: firing ~10 requests in the same event
+        loop tick reliably trips a 429 with `{"description": "Unauthorized"}`
+        response bodies, while the same requests serialised at poll cadence
+        succeed cleanly. See pytoyoda/ha_toyota#282 for measurement evidence.
+
+        Args:
+            skip: Endpoint names (matching EndpointDefinition.name values
+                like "status", "telemetry", etc.) to skip this cycle.
+                Skipped endpoints retain their previous _endpoint_data
+                entry, so consumers continue to see the last-known value.
+                Used by ha_toyota's smart-refresh strategy to skip
+                /v1/global/remote/status when a separate POST/GET cycle
+                handles it explicitly.
+            only: Inverse of skip - if provided, ONLY these endpoint names
+                will be fetched. Mutually exclusive with skip.
+                Used by ha_toyota's smart-refresh strategy to update just
+                /v1/global/remote/status after a wake POST without
+                re-hitting the other endpoints that are already fresh.
+
+        Endpoints registered with ``optional=True`` do not raise on failure:
+        the exception is recorded in ``_endpoint_errors[name]`` and the
+        endpoint's ``_endpoint_data`` entry is cleared, so downstream getters
+        return None for that cycle instead of stale data (note the asymmetry
+        with ``skip``, which retains the previous data). Error records are
+        kept until the endpoint is attempted again, so partial updates via
+        ``skip``/``only`` leave other endpoints' diagnostics intact.
 
         Returns:
             None
 
+        Raises:
+            ValueError: If both skip and only are provided.
+
         """
-
-        async def parallel_wrapper(
-            name: str, function: partial
-        ) -> tuple[str, dict[str, Any]]:
-            r = await function()
-            return name, r
-
-        responses = asyncio.gather(
-            *[
-                parallel_wrapper(name, function)
-                for name, function in self._endpoint_collect
-            ]
-        )
-        for name, data in await responses:
-            self._endpoint_data[name] = data
+        if skip is not None and only is not None:
+            msg = "update(): pass either skip or only, not both"
+            raise ValueError(msg)
+        skip_set = set(skip or [])
+        only_set = set(only) if only is not None else None
+        for endpoint in self._endpoint_collect:
+            if only_set is not None and endpoint.name not in only_set:
+                continue
+            if endpoint.name in skip_set:
+                continue
+            # Clear only the record of endpoints attempted this cycle, so a
+            # partial update (skip/only) does not erase the diagnostics of
+            # endpoints it never retried.
+            self._endpoint_errors.pop(endpoint.name, None)
+            try:
+                self._endpoint_data[endpoint.name] = await endpoint.function()
+            except Exception as ex:
+                if not endpoint.optional:
+                    raise
+                self._endpoint_errors[endpoint.name] = ex
+                # Clear any stale payload from a previous successful cycle so
+                # downstream getters return None instead of outdated data.
+                self._endpoint_data.pop(endpoint.name, None)
+                logger.warning(
+                    "Optional endpoint '{}' failed and will be cleared this "
+                    "cycle: {}: {}",
+                    endpoint.name,
+                    type(ex).__name__,
+                    ex,
+                )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -383,6 +442,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         """
         return await self._api.refresh_electric_realtime_status(self.vin)
+
+    async def refresh_status(self) -> RefreshStatusResponseModel:
+        """Wake the vehicle and request a fresh /status cache populate.
+
+        Issues POST /v1/remote/status. Use sparingly:
+        each call uses cellular airtime and a small amount of 12V battery.
+        Returns when the gateway has accepted the wake request, NOT when
+        the cache has actually been populated; the caller should poll
+        /status afterwards (and check occurrence_date advancement) to
+        verify the wake succeeded end-to-end.
+
+        Returns:
+            RefreshStatusResponseModel: payload.return_code "000000"
+                = wake accepted, anything else = vehicle does not
+                support refresh-status (caller should disable further
+                attempts for this VIN).
+
+        """
+        return await self._api.refresh_vehicle_status(self.vin)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -682,6 +760,56 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ret = next(iter(resp.payload.trips), None)
         return None if ret is None else Trip(ret, self._metric)
 
+    async def get_recent_trips(
+        self,
+        limit: int = 5,
+        with_route: bool = False,  # noqa: FBT001, FBT002
+        from_date: date | None = None,
+        to_date: date | None = None,
+        offset: int = 0,
+    ) -> list[Trip]:
+        """Fetch a single page of trips, most-recent-first (one HTTP call).
+
+        Args:
+            limit: Page size, 1..50.
+            with_route: Include per-trip route coordinates (larger payload).
+            from_date: Lower bound, inclusive. Defaults to today minus 90 days.
+            to_date: Upper bound, inclusive. Defaults to today.
+            offset: 0-based offset into the most-recent-first result set.
+
+        Returns:
+            List of Trip models, empty if no trips match.
+
+        Raises:
+            ValueError: ``limit`` outside 1..50, or ``offset`` negative.
+
+        """
+        if not 1 <= limit <= 50:  # noqa: PLR2004
+            msg = f"limit must be between 1 and 50, got {limit}"
+            raise ValueError(msg)
+        if offset < 0:
+            msg = f"offset must be >= 0, got {offset}"
+            raise ValueError(msg)
+        if from_date is None:
+            from_date = date.today() - timedelta(days=90)  # noqa: DTZ011
+        if to_date is None:
+            to_date = date.today()  # noqa: DTZ011
+
+        resp = await self._api.get_trips(
+            self.vin,
+            from_date,
+            to_date,
+            summary=False,
+            limit=limit,
+            offset=offset,
+            route=with_route,
+        )
+
+        if resp.payload is None or not resp.payload.trips:
+            return []
+
+        return [Trip(t, self._metric) for t in resp.payload.trips]
+
     async def refresh_climate_status(self) -> StatusModel:
         """Force update of climate status.
 
@@ -690,6 +818,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         """
         return await self._api.refresh_climate_status(self.vin)
+
+    async def set_climate(
+        self, request: V2RemoteClimateControlRequestModel
+    ) -> RemoteClimateControlResponseModel:
+        """Start or stop remote climate control (POST /v2/remote/climate-control).
+
+        A ``start`` request carries the full desired settings (temperature +
+        heating/seat options + ``save_settings``); a ``stop`` is just
+        ``command="stop"``. Acknowledgement is ``response.payload.return_code ==
+        "000000"``; confirm the actual on/off state via the climate-status read.
+
+        Args:
+            request: The V2 climate-control request body.
+
+        Returns:
+            RemoteClimateControlResponseModel: The command acknowledgement.
+
+        """
+        return await self._api.send_climate_control_command(self.vin, request)
 
     async def post_command(self, command: CommandType, beeps: int = 0) -> StatusModel:
         """Send remote command to the vehicle.
@@ -755,6 +902,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         self, summary: list[_SummaryItemModel]
     ) -> list[Summary]:
         summary.sort(key=attrgetter("year", "month"))
+        # Skip histograms with summary=None - a hollow Summary crashes
+        # downstream when sensors read its properties (see #278).
         return [
             Summary(
                 histogram.summary,
@@ -765,6 +914,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             )
             for month in summary
             for histogram in sorted(month.histograms, key=attrgetter("day"))
+            if histogram.summary is not None
         ]
 
     def _generate_weekly_summaries(
@@ -791,14 +941,29 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             )
 
             for histogram in week_histograms[1:]:
-                add_with_none(build_hdc, histogram.hdc)
-                build_summary += histogram.summary
+                # ``add_with_none`` returns the sum, so we must capture it;
+                # without the assignment ``build_hdc`` would stay at the
+                # first histogram's hdc (or ``None`` if that was None).
+                build_hdc = add_with_none(build_hdc, histogram.hdc)
+                # histogram.summary (and the seed build_summary) may be None on
+                # days where the Toyota API returned a partial payload. Seed with
+                # the first non-None summary we see, then accumulate.
+                if histogram.summary is None:
+                    continue
+                if build_summary is None:
+                    build_summary = copy.copy(histogram.summary)
+                else:
+                    build_summary += histogram.summary
 
             end_date = Arrow(
                 week_histograms[-1].year,
                 week_histograms[-1].month,
                 week_histograms[-1].day,
             )
+            # Skip weeks where every histogram.summary was None - a hollow
+            # Summary crashes downstream when sensors read its properties.
+            if build_summary is None:
+                continue
             ret.append(
                 Summary(
                     build_summary,
@@ -818,6 +983,10 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ret: list[Summary] = []
         summary.sort(key=attrgetter("year", "month"))
         for month in summary:
+            # Skip months with summary=None - a hollow Summary crashes
+            # downstream when sensors read its properties (see #278).
+            if month.summary is None:
+                continue
             month_start = Arrow(month.year, month.month, 1).date()
             month_end = (
                 Arrow(month.year, month.month, 1).shift(months=1).shift(days=-1).date()
@@ -847,26 +1016,42 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         start_date = date(day=1, month=summary[0].month, year=summary[0].year)
 
         if len(summary) == 1:
-            ret.append(
-                Summary(build_summary, self._metric, start_date, to_date, build_hdc)
-            )
+            if build_summary is not None:
+                ret.append(
+                    Summary(build_summary, self._metric, start_date, to_date, build_hdc)
+                )
         else:
             for month, next_month in zip(
                 summary[1:], [*summary[2:], None], strict=False
             ):
                 summary_month = date(day=1, month=month.month, year=month.year)
-                add_with_none(build_hdc, month.hdc)
-                build_summary += month.summary
+                # ``add_with_none`` returns the sum; capture it or ``build_hdc``
+                # stays at the year's first month's hdc.
+                build_hdc = add_with_none(build_hdc, month.hdc)
+                # month.summary (and the seed build_summary) may be None when
+                # the Toyota API returned partial data.
+                if month.summary is not None:
+                    if build_summary is None:
+                        build_summary = copy.copy(month.summary)
+                    else:
+                        build_summary += month.summary
 
                 if next_month is None or next_month.year != month.year:
                     end_date = min(
                         to_date, date(day=31, month=12, year=summary_month.year)
                     )
-                    ret.append(
-                        Summary(
-                            build_summary, self._metric, start_date, end_date, build_hdc
+                    # Skip years where every month.summary was None - a hollow
+                    # Summary crashes downstream when sensors read its properties.
+                    if build_summary is not None:
+                        ret.append(
+                            Summary(
+                                build_summary,
+                                self._metric,
+                                start_date,
+                                end_date,
+                                build_hdc,
+                            )
                         )
-                    )
                     if next_month:
                         start_date = date(
                             day=1, month=next_month.month, year=next_month.year
