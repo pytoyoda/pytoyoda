@@ -114,6 +114,15 @@ def censor_value(
         The censored value
 
     """
+    # Containers are always walked, regardless of whether their own key is
+    # sensitive: sensitive fields typically live nested under non-sensitive
+    # keys (e.g. "vehicle_info", endpoint names). Only leaf values are gated
+    # on key sensitivity.
+    if isinstance(value, dict):
+        return censor_all(value, to_censor)
+    if isinstance(value, list):
+        return [censor_value(item, key, to_censor) for item in value]
+
     data_type = get_sensitive_data_type(value, key, to_censor)
 
     if data_type is None:
@@ -123,11 +132,6 @@ def censor_value(
         return censor_string(value)
     if data_type == SensitiveDataType.FLOAT:
         return round(value)
-    if data_type == SensitiveDataType.NESTED:
-        if isinstance(value, dict):
-            return censor_all(value, to_censor)
-        if isinstance(value, list):
-            return [censor_value(item, key, to_censor) for item in value]
 
     return value
 

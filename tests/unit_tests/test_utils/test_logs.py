@@ -39,6 +39,24 @@ from pytoyoda.utils.log_utils import (
         pytest.param({"key": "value"}, "key", set(), {"key": "value"}),
         pytest.param(None, "none", {"none"}, None),
         pytest.param(123, "int", {"int"}, 123),
+        pytest.param(
+            {"vehicle_info": {"vin": "SB1ZB3AE50E022886", "latitude": 59.3293}},
+            "payload",
+            {"vin", "latitude"},
+            {"vehicle_info": {"vin": "SB***************", "latitude": 59}},
+        ),
+        pytest.param(
+            [{"vin": "SB1ZB3AE50E022886"}, {"vin": "AB1ZB3AE50E022887"}],
+            "vehicles",
+            {"vin"},
+            [{"vin": "SB***************"}, {"vin": "AB***************"}],
+        ),
+        pytest.param(
+            {"data": [{"vin": "SB1ZB3AE50E022886", "name": "car"}]},
+            "payload",
+            {"vin"},
+            {"data": [{"vin": "SB***************", "name": "car"}]},
+        ),
     ],
 )
 def test_censor_value(value, key, to_censor, expected):  # noqa : D103
@@ -72,6 +90,38 @@ def test_censor_value(value, key, to_censor, expected):  # noqa : D103
             {"username": "user123", "password": None},
             {"password"},
             {"username": "user123", "password": None},
+        ),
+        pytest.param(
+            {
+                "vehicle_info": {
+                    "vin": "SB1ZB3AE50E022886",
+                    "latitude": 59.3293,
+                },
+                "status": "ok",
+            },
+            {"vin", "latitude"},
+            {
+                "vehicle_info": {
+                    "vin": "SB***************",
+                    "latitude": 59,
+                },
+                "status": "ok",
+            },
+        ),
+        pytest.param(
+            {
+                "endpoint": [
+                    {"vin": "SB1ZB3AE50E022886", "name": "car1"},
+                    {"vin": "AB1ZB3AE50E022887", "name": "car2"},
+                ]
+            },
+            {"vin"},
+            {
+                "endpoint": [
+                    {"vin": "SB***************", "name": "car1"},
+                    {"vin": "AB***************", "name": "car2"},
+                ]
+            },
         ),
     ],
 )
