@@ -21,10 +21,12 @@ class VehicleHealthModel(CustomEndpointBaseModel):
 
     """
 
-    quantity_of_eng_oil_icon: list[Any] | None = Field(alias="quantityOfEngOilIcon")
-    vin: str | None
-    warning: list[Any] | None
-    wng_last_upd_time: datetime | None = Field(alias="wnglastUpdTime")
+    quantity_of_eng_oil_icon: list[Any] | None = Field(
+        alias="quantityOfEngOilIcon", default=None
+    )
+    vin: str | None = None
+    warning: list[Any] | None = None
+    wng_last_upd_time: datetime | None = Field(alias="wnglastUpdTime", default=None)
 
 
 class VehicleHealthResponseModel(StatusModel):
