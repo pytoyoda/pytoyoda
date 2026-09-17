@@ -19,8 +19,13 @@ class CommandType(str, Enum):
     ENGINE_STOP = "engine-stop"
     HAZARD_ON = "hazard-on"
     HAZARD_OFF = "hazard-off"
+    # NOTE: WINDOW_ON, WINDOW_OFF and FIND_VEHICLE are kept for
+    # compatibility with vehicles/regions where they are accepted, but some
+    # backends (e.g. EU, some vehicle classes) reject them with
+    # "CTP-REMOTE-40006". See https://github.com/pytoyoda/pytoyoda/issues/274.
     WINDOW_ON = "power-window-on"
     WINDOW_OFF = "power-window-off"
+    WINDOW_CLOSE = "power-window-close"
     AC_SETTINGS_ON = "ac-settings-on"
     SOUND_HORN = "sound-horn"
     BUZZER_WARNING = "buzzer-warning"
