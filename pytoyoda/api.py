@@ -413,7 +413,7 @@ class Api:
 
     # Trip Data
 
-    async def get_trips(  # noqa: PLR0913
+    async def get_trips(  # noqa: PLR0913, PLR0917
         self,
         vin: str,
         from_date: date,
