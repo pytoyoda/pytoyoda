@@ -372,7 +372,7 @@ class Controller:
         # Update cache
         self._TOKEN_CACHE[self._username] = self._token_info
 
-    async def request_raw(  # noqa: PLR0913
+    async def request_raw(  # noqa: PLR0913, PLR0917
         self,
         method: str,
         endpoint: str,
@@ -509,7 +509,7 @@ class Controller:
 
         return headers
 
-    async def request_json(  # noqa: PLR0913
+    async def request_json(  # noqa: PLR0913, PLR0917
         self,
         method: str,
         endpoint: str,
