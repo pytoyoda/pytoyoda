@@ -28,15 +28,17 @@ class ServiceHistoryModel(CustomEndpointBaseModel):
 
     """
 
-    customer_created_record: bool | None = Field(alias="customerCreatedRecord")
+    customer_created_record: bool | None = Field(
+        alias="customerCreatedRecord", default=None
+    )
     mileage: int | None = None
     notes: Any
     operations_performed: Any = Field(alias="operationsPerformed")
     ro_number: Any = Field(alias="roNumber")
-    service_category: str | None = Field(alias="serviceCategory")
-    service_date: date | None = Field(alias="serviceDate")
-    service_history_id: str | None = Field(alias="serviceHistoryId")
-    service_provider: str | None = Field(alias="serviceProvider")
+    service_category: str | None = Field(alias="serviceCategory", default=None)
+    service_date: date | None = Field(alias="serviceDate", default=None)
+    service_history_id: str | None = Field(alias="serviceHistoryId", default=None)
+    service_provider: str | None = Field(alias="serviceProvider", default=None)
     servicing_dealer: Any = Field(alias="servicingDealer", default=None)
     unit: str | None = None
 
