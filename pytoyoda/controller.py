@@ -67,7 +67,12 @@ class Controller:
     _TOKEN_CACHE: ClassVar[dict[str, TokenInfo]] = {}
 
     def __init__(
-        self, username: str, password: str, brand: str = "T", timeout: int = 60
+        self,
+        username: str,
+        password: str,
+        brand: str = "T",
+        timeout: int = 60,
+        http_client: httpx.AsyncClient | None = None,
     ) -> None:
         """Initialize Controller class.
 
@@ -76,6 +81,17 @@ class Controller:
             password: Toyota account password
             brand: Brand of the car (T for Toyota, L for Lexus, S for Subaru)
             timeout: HTTP request timeout in seconds
+            http_client: Optional pre-configured `httpx.AsyncClient` to use for
+                data requests (e.g. `request_raw`/`request_json`), instead of
+                the one this Controller would otherwise construct lazily.
+                This is useful for sharing a connection pool/SSL context with
+                the rest of an application (for example, Home Assistant's
+                stock client). The caller retains ownership of a client it
+                passes in: this Controller will never close it, so
+                `aclose()` becomes a no-op for an injected client and the
+                caller is responsible for closing it themselves. When
+                omitted (the default), behavior is unchanged: a client is
+                lazily constructed and managed internally.
 
         """
         self._username: str = username
@@ -105,10 +121,13 @@ class Controller:
         # Authentication state
         self._token_info: TokenInfo | None = None
 
-        # Reused httpx.AsyncClient for data requests. Lazily constructed inside
-        # an async context and kept for the lifetime of the Controller, so that
-        # SSL context + TCP connection pool survive across request_raw calls.
-        self._client: httpx.AsyncClient | None = None
+        # Reused httpx.AsyncClient for data requests. Either supplied by the
+        # caller (in which case we never construct or close it ourselves) or
+        # lazily constructed inside an async context and kept for the
+        # lifetime of the Controller, so that SSL context + TCP connection
+        # pool survive across request_raw calls.
+        self._client: httpx.AsyncClient | None = http_client
+        self._owns_client: bool = http_client is None
 
         # Cached SSL context shared by every AsyncClient this Controller builds.
         # ssl.create_default_context() reads the CA bundle from disk
@@ -459,8 +478,14 @@ class Controller:
         raise ToyotaApiError(msg)
 
     async def aclose(self) -> None:
-        """Release the pooled httpx client. Safe to call multiple times."""
-        if self._client is not None:
+        """Release the pooled httpx client. Safe to call multiple times.
+
+        No-op if the client was supplied by the caller (via the
+        `http_client` constructor argument): pytoyoda never closes a client
+        it doesn't own. The caller is responsible for closing an injected
+        client themselves.
+        """
+        if self._client is not None and self._owns_client:
             await self._client.aclose()
             self._client = None
 
