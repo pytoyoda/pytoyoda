@@ -118,6 +118,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         self._endpoint_data: dict[str, Any] = {}
 
         if self._vehicle_info.vin:
+            climate_capable = self._climate_capable()
             self._api_endpoints: list[EndpointDefinition] = [
                 EndpointDefinition(
                     name="location",
@@ -199,11 +200,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 ),
                 EndpointDefinition(
                     name="climate_settings",
-                    capable=getattr(
-                        getattr(self._vehicle_info, "features", False),
-                        "climate_start_engine",
-                        False,
-                    ),
+                    capable=climate_capable,
                     function=partial(
                         self._api.get_climate_settings, vin=self._vehicle_info.vin
                     ),
@@ -213,11 +210,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 ),
                 EndpointDefinition(
                     name="climate_status",
-                    capable=getattr(
-                        getattr(self._vehicle_info, "features", False),
-                        "climate_start_engine",
-                        False,
-                    ),
+                    capable=climate_capable,
                     function=partial(
                         self._api.get_climate_status, vin=self._vehicle_info.vin
                     ),
@@ -250,6 +243,34 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ]
         # Failures on optional endpoints from the most recent update().
         self._endpoint_errors: dict[str, Exception] = {}
+
+    def _climate_capable(self) -> bool:
+        """Determine whether the vehicle supports remote climate control.
+
+        Some vehicles (notably BEVs and certain PHEVs) advertise climate
+        support only through ``extended_capabilities`` rather than through
+        ``features.climate_start_engine``. Checking both keeps compatibility
+        with ICE/HEV vehicles while widening detection for BEV/PHEV accounts.
+        See issue #192.
+        """
+        extended_capabilities = getattr(
+            self._vehicle_info, "extended_capabilities", False
+        )
+        return bool(
+            getattr(
+                getattr(self._vehicle_info, "features", False),
+                "climate_start_engine",
+                False,
+            )
+            or any(
+                getattr(extended_capabilities, attr, False)
+                for attr in (
+                    "climate_capable",
+                    "econnect_climate_capable",
+                    "remote_engine_start_stop",
+                )
+            )
+        )
 
     async def update(
         self,

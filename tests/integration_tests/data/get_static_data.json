@@ -1064,5 +1064,65 @@
         }
       }
     }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "url": "https://ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io/v1/vehicle/climate-status",
+      "headers": [],
+      "content": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": [
+        ["date", "Sat, 13 Jan 2024 16:30:27 GMT"],
+        ["content-type", "application/json"],
+        ["connection", "keep-alive"]
+      ],
+      "content": {
+        "payload": {
+          "status": "stopped"
+        },
+        "status": {
+          "messages": []
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "url": "https://ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io/v1/vehicle/climate-settings",
+      "headers": [],
+      "content": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": [
+        ["date", "Sat, 13 Jan 2024 16:30:27 GMT"],
+        ["content-type", "application/json"],
+        ["connection", "keep-alive"]
+      ],
+      "content": {
+        "payload": {
+          "duration": 20,
+          "temperature": {"value": 18.0, "unit": "C"},
+          "heatingOptions": {
+            "frontDefroster": "off",
+            "rearDefogger": "off",
+            "steeringHeater": "off"
+          },
+          "seatOptions": {
+            "driverSeat": "off",
+            "passengerSeat": "off",
+            "rearDriverSeat": "off",
+            "rearPassengerSeat": "off"
+          }
+        },
+        "status": {
+          "messages": []
+        }
+      }
+    }
   }
 ]
