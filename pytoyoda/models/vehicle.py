@@ -564,6 +564,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         summary_type: SummaryType = SummaryType.MONTHLY,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[Summary]:
         """Return different summarys between the provided dates.
 
@@ -581,11 +584,28 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date to report summaries.
             summary_type (SummaryType, optional): Daily, Monthly or Yearly summary.
                 Monthly by default.
+            limit (int | None, keyword-only): Maximum number of summaries to
+                return. ``None`` (the default) returns every summary in the
+                requested date range, preserving the previous behaviour.
+            offset (int, keyword-only): Number of summaries to skip from the
+                start of the (chronologically ordered) result set before
+                applying ``limit``. Defaults to ``0``.
 
         Returns:
             list[Summary]: A list of summaries or empty list if not supported.
 
+        Raises:
+            ValueError: ``limit`` is not ``None`` and is less than 1, or
+                ``offset`` is negative.
+
         """
+        if limit is not None and limit < 1:
+            msg = f"limit must be >= 1, got {limit}"
+            raise ValueError(msg)
+        if offset < 0:
+            msg = f"offset must be >= 0, got {offset}"
+            raise ValueError(msg)
+
         to_date = min(to_date, date.today())  # noqa : DTZ011
 
         # Summary information is always returned in the first response.
@@ -598,17 +618,24 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         # Convert to response
         if summary_type == SummaryType.DAILY:
-            return self._generate_daily_summaries(resp.payload.summary)
-        if summary_type == SummaryType.WEEKLY:
-            return self._generate_weekly_summaries(resp.payload.summary)
-        if summary_type == SummaryType.MONTHLY:
-            return self._generate_monthly_summaries(
+            summaries = self._generate_daily_summaries(resp.payload.summary)
+        elif summary_type == SummaryType.WEEKLY:
+            summaries = self._generate_weekly_summaries(resp.payload.summary)
+        elif summary_type == SummaryType.MONTHLY:
+            summaries = self._generate_monthly_summaries(
                 resp.payload.summary, from_date, to_date
             )
-        if summary_type == SummaryType.YEARLY:
-            return self._generate_yearly_summaries(resp.payload.summary, to_date)
-        msg = "No such SummaryType"
-        raise AssertionError(msg)
+        elif summary_type == SummaryType.YEARLY:
+            summaries = self._generate_yearly_summaries(resp.payload.summary, to_date)
+        else:
+            msg = "No such SummaryType"
+            raise AssertionError(msg)
+
+        if offset:
+            summaries = summaries[offset:]
+        if limit is not None:
+            summaries = summaries[:limit]
+        return summaries
 
     async def get_current_day_summary(self) -> Summary | None:
         """Return a summary for the current day.
@@ -683,66 +710,106 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         full_route: bool = False,  # noqa : FBT001, FBT002
+        *,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[Trip] | None:
-        """Return information on all trips made between the provided dates.
+        """Return information on trips made between the provided dates.
 
         Args:
             from_date (date, required): The inclusive from date
             to_date (date, required): The inclusive to date
             full_route (bool, optional): Provide the full route
                                          information for each trip.
+            limit (int | None, keyword-only): Maximum total number of trips
+                to return to the caller. ``None`` (the default) returns every
+                trip in the requested date range, preserving the previous
+                behaviour of paginating through all pages. If set, at most
+                ``limit`` trips are returned, fetching only as many pages
+                from the API as necessary.
+            offset (int, keyword-only): Number of trips to skip from the
+                start of the (most-recent-first) result set before applying
+                ``limit``. Defaults to ``0``.
 
         Returns:
-            Optional[list[Trip]]: A list of all trips or None if not supported.
+            Optional[list[Trip]]: A list of trips (bounded by ``limit`` when
+            given) or None if not supported.
+
+        Raises:
+            ValueError: ``limit`` is not ``None`` and is less than 1, or
+                ``offset`` is negative.
 
         """
+        if limit is not None and limit < 1:
+            msg = f"limit must be >= 1, got {limit}"
+            raise ValueError(msg)
+        if offset < 0:
+            msg = f"offset must be >= 0, got {offset}"
+            raise ValueError(msg)
+
+        page_size = 5
         ret: list[Trip] = []
-        offset = 0
+        skipped = 0
+        api_offset = 0
         while True:
+            # Once limit is known we can stop as soon as we've collected
+            # enough trips beyond the requested offset - no need to keep
+            # paginating through the entire remaining result set.
             resp = await self._api.get_trips(
                 self.vin,
                 from_date,
                 to_date,
                 summary=False,
-                limit=5,
-                offset=offset,
+                limit=page_size,
+                offset=api_offset,
                 route=full_route,
             )
             if resp.payload is None:
                 break
 
-            # Convert to response
-            if resp.payload.trips:
-                ret.extend(Trip(t, self._metric) for t in resp.payload.trips)
+            trips = resp.payload.trips or []
+            for t in trips:
+                if skipped < offset:
+                    skipped += 1
+                    continue
+                ret.append(Trip(t, self._metric))
+                if limit is not None and len(ret) >= limit:
+                    return ret
 
-            offset = resp.payload.metadata.pagination.next_offset
-            if offset is None:
+            api_offset = resp.payload.metadata.pagination.next_offset
+            if api_offset is None:
                 break
 
         return ret
 
-    async def get_last_trip(self) -> Trip | None:
-        """Return information on the last trip.
+    async def get_last_trip(self, *, offset: int = 0) -> Trip | None:
+        """Return information on the Nth-most-recent trip.
+
+        Args:
+            offset (int, keyword-only): 0-based position in the
+                most-recent-first trip history. ``0`` (the default) returns
+                the most recent trip, ``1`` returns the second most recent
+                trip, and so on.
 
         Returns:
-            Optional[Trip]: A trip model or None if not supported.
+            Optional[Trip]: A trip model, or None if not supported or if
+            there is no trip at the requested ``offset``.
+
+        Raises:
+            ValueError: ``offset`` is negative.
 
         """
-        resp = await self._api.get_trips(
-            self.vin,
+        trips = await self.get_trips(
             date.today() - timedelta(days=90),  # noqa : DTZ011
             date.today(),  # noqa : DTZ011
-            summary=False,
+            full_route=False,
             limit=1,
-            offset=0,
-            route=False,
+            offset=offset,
         )
 
-        if resp.payload is None:
+        if not trips:
             return None
-
-        ret = next(iter(resp.payload.trips), None)
-        return None if ret is None else Trip(ret, self._metric)
+        return trips[0]
 
     async def get_recent_trips(
         self,
