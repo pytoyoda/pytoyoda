@@ -585,7 +585,6 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         summary_type: SummaryType = SummaryType.MONTHLY,
-        *,
         limit: int | None = None,
         offset: int = 0,
     ) -> list[Summary]:
@@ -605,10 +604,10 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date to report summaries.
             summary_type (SummaryType, optional): Daily, Monthly or Yearly summary.
                 Monthly by default.
-            limit (int | None, keyword-only): Maximum number of summaries to
+            limit (int | None, optional): Maximum number of summaries to
                 return. ``None`` (the default) returns every summary in the
                 requested date range, preserving the previous behaviour.
-            offset (int, keyword-only): Number of summaries to skip from the
+            offset (int, optional): Number of summaries to skip from the
                 start of the (chronologically ordered) result set before
                 applying ``limit``. Defaults to ``0``.
 
@@ -731,7 +730,6 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         from_date: date,
         to_date: date,
         full_route: bool = False,  # noqa : FBT001, FBT002
-        *,
         limit: int | None = None,
         offset: int = 0,
     ) -> list[Trip] | None:
@@ -742,13 +740,13 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             to_date (date, required): The inclusive to date
             full_route (bool, optional): Provide the full route
                                          information for each trip.
-            limit (int | None, keyword-only): Maximum total number of trips
+            limit (int | None, optional): Maximum total number of trips
                 to return to the caller. ``None`` (the default) returns every
                 trip in the requested date range, preserving the previous
                 behaviour of paginating through all pages. If set, at most
                 ``limit`` trips are returned, fetching only as many pages
                 from the API as necessary.
-            offset (int, keyword-only): Number of trips to skip from the
+            offset (int, optional): Number of trips to skip from the
                 start of the (most-recent-first) result set before applying
                 ``limit``. Defaults to ``0``.
 
@@ -803,11 +801,11 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         return ret
 
-    async def get_last_trip(self, *, offset: int = 0) -> Trip | None:
+    async def get_last_trip(self, offset: int = 0) -> Trip | None:
         """Return information on the Nth-most-recent trip.
 
         Args:
-            offset (int, keyword-only): 0-based position in the
+            offset (int, optional): 0-based position in the
                 most-recent-first trip history. ``0`` (the default) returns
                 the most recent trip, ``1`` returns the second most recent
                 trip, and so on.
