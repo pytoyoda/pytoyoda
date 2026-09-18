@@ -17,12 +17,17 @@ Example:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from loguru import logger
 
 from pytoyoda.api import Api
 from pytoyoda.controller import Controller
 from pytoyoda.exceptions import ToyotaInvalidUsernameError, ToyotaLoginError
 from pytoyoda.models.vehicle import Vehicle
+
+if TYPE_CHECKING:
+    import httpx
 
 
 class MyT:
@@ -38,13 +43,14 @@ class MyT:
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         username: str,
         password: str,
         use_metric: bool = True,  # noqa : FBT001, FBT002
         brand: str = "T",
         controller_class: type[Controller] = Controller,
+        http_client: httpx.AsyncClient | None = None,
     ) -> None:
         """Initialize the Toyota Connected Services client.
 
@@ -54,6 +60,15 @@ class MyT:
             use_metric: Whether to use metric units (True) or imperial units (False)
             brand: Brand of the car (T for Toyota, L for Lexus)
             controller_class: Controller class to use for API communication
+            http_client: Optional pre-configured `httpx.AsyncClient` to use for
+                data requests, instead of one constructed internally. Useful
+                for sharing a connection pool/SSL context with the rest of an
+                application (for example, Home Assistant's stock client).
+                The caller retains ownership of a client it passes in:
+                pytoyoda will never close it, so `aclose()` becomes a no-op
+                for it, and the caller is responsible for closing it
+                themselves. When omitted (the default), behavior is
+                unchanged: a client is constructed and managed internally.
 
         Raises:
             ToyotaInvalidUsernameError: If username is invalid or missing @ symbol
@@ -68,6 +83,7 @@ class MyT:
                 username=username,
                 password=password,
                 brand=brand,
+                http_client=http_client,
             ),
         )
         self._use_metric = use_metric
