@@ -86,23 +86,23 @@ class _SummaryBaseModel(CustomEndpointBaseModel):
 
 
 class _SummaryModel(_SummaryBaseModel):
-    start_lat: float | None = Field(alias="startLat")
-    start_lon: float | None = Field(alias="startLon")
-    start_ts: datetime | None = Field(alias="startTs")
-    end_lat: float | None = Field(alias="endLat")
-    end_lon: float | None = Field(alias="endLon")
-    end_ts: datetime | None = Field(alias="endTs")
-    night_trip: bool | None = Field(alias="nightTrip")
+    start_lat: float | None = Field(alias="startLat", default=None)
+    start_lon: float | None = Field(alias="startLon", default=None)
+    start_ts: datetime | None = Field(alias="startTs", default=None)
+    end_lat: float | None = Field(alias="endLat", default=None)
+    end_lon: float | None = Field(alias="endLon", default=None)
+    end_ts: datetime | None = Field(alias="endTs", default=None)
+    night_trip: bool | None = Field(alias="nightTrip", default=None)
 
 
 class _CoachingMsgParamModel(CustomEndpointBaseModel):
-    name: str | None
-    unit: str | None
-    value: int | None
+    name: str | None = None
+    unit: str | None = None
+    value: int | None = None
 
 
 class _BehaviourModel(CustomEndpointBaseModel):
-    ts: datetime | None
+    ts: datetime | None = None
     type: str | None = None
     coaching_msg_params: list[_CoachingMsgParamModel] | None = Field(
         alias="coachingMsgParams", default=None
@@ -151,19 +151,19 @@ class _HDCModel(CustomEndpointBaseModel):
 
 
 class _RouteModel(CustomEndpointBaseModel):
-    lat: float | None = Field(repr=False)
-    lon: float | None
-    overspeed: bool | None
-    highway: bool | None
-    index_in_points: int | None = Field(alias="indexInPoints")
+    lat: float | None = Field(repr=False, default=None)
+    lon: float | None = None
+    overspeed: bool | None = None
+    highway: bool | None = None
+    index_in_points: int | None = Field(alias="indexInPoints", default=None)
     mode: int | None = None
-    is_ev: bool | None = Field(alias="isEv")
+    is_ev: bool | None = Field(alias="isEv", default=None)
 
 
 class _TripModel(CustomEndpointBaseModel):
-    id: UUID | None
-    category: int | None
-    summary: _SummaryModel | None
+    id: UUID | None = None
+    category: int | None = None
+    summary: _SummaryModel | None = None
     scores: _ScoresModel | None = None
     behaviours: list[_BehaviourModel] | None = None
     hdc: _HDCModel | None = None
@@ -171,41 +171,41 @@ class _TripModel(CustomEndpointBaseModel):
 
 
 class _HistogramModel(CustomEndpointBaseModel):
-    year: int | None
-    month: int | None
-    day: int | None
-    summary: _SummaryBaseModel | None
+    year: int | None = None
+    month: int | None = None
+    day: int | None = None
+    summary: _SummaryBaseModel | None = None
     scores: _ScoresModel | None = None
     hdc: _HDCModel | None = None
 
 
 class _SummaryItemModel(CustomEndpointBaseModel):
-    year: int | None
-    month: int | None
-    summary: _SummaryBaseModel | None
+    year: int | None = None
+    month: int | None = None
+    summary: _SummaryBaseModel | None = None
     scores: _ScoresModel | None = None
     hdc: _HDCModel | None = None
     histograms: list[_HistogramModel]
 
 
 class _PaginationModel(CustomEndpointBaseModel):
-    limit: int | None
-    offset: int | None
+    limit: int | None = None
+    offset: int | None = None
     previous_offset: Any | None = Field(alias="previousOffset", default=None)
     next_offset: int | None = Field(alias="nextOffset", default=None)
-    current_page: int | None = Field(alias="currentPage")
-    total_count: int | None = Field(alias="totalCount")
-    page_count: int | None = Field(alias="pageCount")
+    current_page: int | None = Field(alias="currentPage", default=None)
+    total_count: int | None = Field(alias="totalCount", default=None)
+    page_count: int | None = Field(alias="pageCount", default=None)
 
 
 class _SortedByItemModel(CustomEndpointBaseModel):
-    field: str | None
-    order: str | None
+    field: str | None = None
+    order: str | None = None
 
 
 class _MetadataModel(CustomEndpointBaseModel):
-    pagination: _PaginationModel | None
-    sorted_by: list[_SortedByItemModel] | None = Field(alias="sortedBy")
+    pagination: _PaginationModel | None = None
+    sorted_by: list[_SortedByItemModel] | None = Field(alias="sortedBy", default=None)
 
 
 class TripsModel(CustomEndpointBaseModel):
@@ -225,7 +225,7 @@ class TripsModel(CustomEndpointBaseModel):
 
     from_date: date | None = Field(..., alias="from")
     to_date: date | None = Field(..., alias="to")
-    trips: list[_TripModel] | None
+    trips: list[_TripModel] | None = None
     summary: list[_SummaryItemModel] | None = None
     metadata: _MetadataModel | None = Field(..., alias="_metadata")
     route: _RouteModel | None = None

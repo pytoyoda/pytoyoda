@@ -23,15 +23,15 @@ class TelemetryModel(CustomEndpointBaseModel):
 
     """
 
-    fuel_type: str | None = Field(alias="fuelType")
-    odometer: UnitValueModel | None
+    fuel_type: str | None = Field(alias="fuelType", default=None)
+    odometer: UnitValueModel | None = None
     fuel_level: int | None = Field(alias="fuelLevel", default=None)
     battery_level: int | None = Field(alias="batteryLevel", default=None)
     charging_status: str | None = Field(alias="chargingStatus", default=None)
     distance_to_empty: UnitValueModel | None = Field(
         alias="distanceToEmpty", default=None
     )
-    timestamp: datetime | None
+    timestamp: datetime | None = None
 
 
 class TelemetryResponseModel(StatusModel):
