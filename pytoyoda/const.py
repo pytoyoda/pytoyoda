@@ -22,7 +22,7 @@ AUTHORIZE_URL = "HTTPS://b2c-login.toyota-europe.com/oauth2/realms/root/realms/t
 # Subaru OAuth credentials
 SUBARU_CLIENT_ID = "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
 SUBARU_REDIRECT_URI = "com.subaru.oneapp:/oauth2Callback"
-SUBARU_BASIC_AUTH = "basic OGM0OTIxYjBiMDg5MDFmZWYzODljZTFhZjQ5YzRlMTAuc3ViYXJ1LmNvbTpJaGNkcjV4YmhIYlRSMk9aOGdRa3YyNTZicmhTYjc="
+SUBARU_BASIC_AUTH = "basic OGM0OTIxYjBiMDg5MDFmZWYzODljZTFhZjQ5YzRlMTAuc3ViYXJ1LmNvbTpJaGNkcjV4YmhIYlRSMk9aOGdRa3YyNTZicmhTYjc="  # noqa: E501
 SUBARU_JWT_AUDIENCE = "8c4921b0b08901fef389ce1af49c4e10.subaru.com"
 
 # Subaru auth URLs (realm: alliance-subaru)
