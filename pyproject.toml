@@ -22,7 +22,6 @@ repository = "https://github.com/pytoyoda/pytoyoda"
 "Release Notes" = "https://github.com/pytoyoda/pytoyoda/releases"
 
 [tool.poetry]
-version = "4.0.2"
 packages = [
     { include = "pytoyoda" },
 ]
@@ -38,6 +37,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 requires-poetry = '>=2.0,<3.0'
+version = "4.0.2"
 
 [tool.poetry.dependencies]
 arrow = "^1.1"
