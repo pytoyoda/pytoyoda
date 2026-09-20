@@ -119,6 +119,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         if self._vehicle_info.vin:
             climate_capable = self._climate_capable()
+            electric_capable = self._electric_capable()
             self._api_endpoints: list[EndpointDefinition] = [
                 EndpointDefinition(
                     name="location",
@@ -148,15 +149,16 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 ),
                 EndpointDefinition(
                     name="electric_status",
-                    capable=getattr(
-                        getattr(self._vehicle_info, "extended_capabilities", False),
-                        "econnect_vehicle_status_capable",
-                        False,
-                    ),
+                    capable=electric_capable,
                     function=partial(
                         self._api.get_vehicle_electric_status,
                         vin=self._vehicle_info.vin,
                     ),
+                    # Vehicles wrongly reporting econnect_vehicle_status_capable
+                    # (see _electric_capable) can still 4xx/5xx on this
+                    # endpoint depending on account provisioning. See
+                    # ha_toyota#302.
+                    optional=True,
                 ),
                 EndpointDefinition(
                     name="telemetry",
@@ -270,6 +272,28 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     "remote_engine_start_stop",
                 )
             )
+        )
+
+    def _electric_capable(self) -> bool:
+        """Determine whether the vehicle supports electric/EV status data.
+
+        Some vehicles (notably rebadged Suzuki DCM24-backend BEVs, e.g. the
+        Urban Cruiser) report ``econnect_vehicle_status_capable=False`` even
+        though they are genuine electric vehicles - Toyota's vehicle
+        registry can be wrong about EV status for these platforms, the same
+        way it is wrong about climate capability for some accounts (see
+        ``_climate_capable``). Falling back to ``fuel_type == "E"`` and the
+        top-level ``ev_vehicle`` flag widens detection without affecting
+        ICE/HEV vehicles, whose fuel_type is never ``"E"``.
+        See pytoyoda/ha_toyota#302.
+        """
+        extended_capabilities = getattr(
+            self._vehicle_info, "extended_capabilities", False
+        )
+        return bool(
+            getattr(extended_capabilities, "econnect_vehicle_status_capable", False)
+            or getattr(self._vehicle_info, "ev_vehicle", False)
+            or getattr(self._vehicle_info, "fuel_type", None) == "E"
         )
 
     async def update(
