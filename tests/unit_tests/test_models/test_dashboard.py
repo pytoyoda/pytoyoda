@@ -104,3 +104,46 @@ def test_battery_range_falls_back_to_telemetry_when_ev_missing():
     assert br_with_unit is not None
     assert br_with_unit.value == 200.0
     assert br_with_unit.unit == KILOMETERS_UNIT
+
+
+def test_total_range_sums_fuel_and_battery_for_phev():
+    """Regression test for pytoyoda/ha_toyota#109.
+
+    A PHEV with an empty fuel tank and a full battery reported the same
+    (fuel-only) value for both `fuel_range` and `range` (total range),
+    because `range` returned raw telemetry `distance_to_empty` instead of
+    combining `fuel_range` and `battery_range_with_ac` as documented.
+    """
+    telemetry = _make_telemetry_stub(
+        battery_level=100.0,
+        # Some vehicles report distance_to_empty as fuel-only DTE even
+        # though fuel is empty; this should no longer leak into `range`.
+        distance_to_empty=Distance(value=0.0, unit=KILOMETERS_UNIT),
+    )
+    electric = _make_electric_stub(
+        fuel_range=Distance(value=0.0, unit=KILOMETERS_UNIT),
+        ev_range=Distance(value=89.6, unit=KILOMETERS_UNIT),
+        ev_range_with_ac=Distance(value=82.4, unit=KILOMETERS_UNIT),
+    )
+
+    dash = _make_dashboard(telemetry, electric)
+
+    assert dash.fuel_range == 0.0
+    assert dash.battery_range_with_ac == 82.4
+    # Total range must be the sum, not a copy of either component.
+    assert dash.range == 82.4
+    total_with_unit = dash.range_with_unit
+    assert total_with_unit is not None
+    assert total_with_unit.value == 82.4
+    assert total_with_unit.unit == KILOMETERS_UNIT
+
+
+def test_total_range_none_when_no_component_range_available():
+    telemetry = _make_telemetry_stub(distance_to_empty=None)
+    electric = _make_electric_stub(fuel_range=None, ev_range_with_ac=None)
+
+    dash = _make_dashboard(telemetry, electric)
+
+    assert dash.fuel_range is None
+    assert dash.battery_range_with_ac is None
+    assert dash.range is None

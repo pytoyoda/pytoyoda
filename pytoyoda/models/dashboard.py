@@ -276,6 +276,15 @@ class Dashboard(CustomAPIBaseModel[type[T]]):
                 hybrid == fuel_range + battery_range_with_ac
                 None if not supported
         """
+        fuel = self.fuel_range
+        battery = self.battery_range_with_ac
+
+        if fuel is not None or battery is not None:
+            return (fuel or 0) + (battery or 0)
+
+        # Neither component range could be derived (e.g. some telemetry-only
+        # vehicles that don't expose fuel/EV info via `fuel_range`/
+        # `battery_range_with_ac`). Fall back to the raw telemetry value.
         if (
             self._telemetry is not None
             and self._telemetry.distance_to_empty is not None
