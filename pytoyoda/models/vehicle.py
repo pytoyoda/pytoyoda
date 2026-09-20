@@ -1005,6 +1005,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 Arrow(histogram.year, histogram.month, histogram.day).date(),
                 Arrow(histogram.year, histogram.month, histogram.day).date(),
                 histogram.hdc,
+                [histogram.scores.global_]
+                if histogram.scores and histogram.scores.global_ is not None
+                else None,
             )
             for month in summary
             for histogram in sorted(month.histograms, key=attrgetter("day"))
@@ -1028,6 +1031,11 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             week_histograms = list(week_histograms_iter)
             build_hdc = copy.copy(week_histograms[0].hdc)
             build_summary = copy.copy(week_histograms[0].summary)
+            build_scores: list[int] = [
+                h.scores.global_
+                for h in week_histograms
+                if h.scores and h.scores.global_ is not None
+            ]
             start_date = Arrow(
                 week_histograms[0].year,
                 week_histograms[0].month,
@@ -1065,6 +1073,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     start_date.date(),
                     end_date.date(),
                     build_hdc,
+                    build_scores or None,
                 )
             )
 
@@ -1095,6 +1104,9 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                     max(month_start, from_date),
                     min(month_end, to_date),
                     month.hdc,
+                    [month.scores.global_]
+                    if month.scores and month.scores.global_ is not None
+                    else None,
                 )
             )
 
@@ -1107,12 +1119,24 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         ret: list[Summary] = []
         build_hdc = copy.copy(summary[0].hdc)
         build_summary = copy.copy(summary[0].summary)
+        build_scores: list[int] = (
+            [summary[0].scores.global_]
+            if summary[0].scores and summary[0].scores.global_ is not None
+            else []
+        )
         start_date = date(day=1, month=summary[0].month, year=summary[0].year)
 
         if len(summary) == 1:
             if build_summary is not None:
                 ret.append(
-                    Summary(build_summary, self._metric, start_date, to_date, build_hdc)
+                    Summary(
+                        build_summary,
+                        self._metric,
+                        start_date,
+                        to_date,
+                        build_hdc,
+                        build_scores or None,
+                    )
                 )
         else:
             for month, next_month in zip(
@@ -1129,6 +1153,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                         build_summary = copy.copy(month.summary)
                     else:
                         build_summary += month.summary
+                if month.scores and month.scores.global_ is not None:
+                    build_scores.append(month.scores.global_)
 
                 if next_month is None or next_month.year != month.year:
                     end_date = min(
@@ -1144,6 +1170,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                                 start_date,
                                 end_date,
                                 build_hdc,
+                                build_scores or None,
                             )
                         )
                     if next_month:
@@ -1152,5 +1179,11 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                         )
                         build_hdc = copy.copy(next_month.hdc)
                         build_summary = copy.copy(next_month.summary)
+                        build_scores = (
+                            [next_month.scores.global_]
+                            if next_month.scores
+                            and next_month.scores.global_ is not None
+                            else []
+                        )
 
         return ret

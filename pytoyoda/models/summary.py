@@ -34,13 +34,14 @@ class SummaryType(IntEnum):
 class Summary(CustomAPIBaseModel[type[T]]):
     """Base class of Daily, Weekly, Monthly, Yearly summary."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         summary: _SummaryBaseModel,
         metric: bool,  # noqa : FBT001
         from_date: date,
         to_date: date,
         hdc: _HDCModel | None = None,
+        scores: list[int] | None = None,
         **kwargs: dict,
     ) -> None:
         """Initialise Class.
@@ -51,6 +52,9 @@ class Summary(CustomAPIBaseModel[type[T]]):
             from_date (date, required): Start date for this summary
             to_date (date, required): End date for this summary
             hdc: (_HDCModel, optional): Hybrid data if available
+            scores: (list[int], optional): The individual (non-null) overall
+                "global" driving scores reported for every day/trip that makes
+                up this summary period. Used to compute ``hybrid_score``.
             **kwargs: Additional keyword arguments passed to the parent class
 
         """
@@ -68,6 +72,7 @@ class Summary(CustomAPIBaseModel[type[T]]):
         self._from_date: date = from_date
         self._to_date: date = to_date
         self._hdc: _HDCModel | None = hdc
+        self._scores: list[int] | None = scores
         self._distance_unit: str = KILOMETERS_UNIT if metric else MILES_UNIT
 
     @computed_field  # type: ignore[prop-decorator]
@@ -195,6 +200,26 @@ class Summary(CustomAPIBaseModel[type[T]]):
             )
 
         return 0.0
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def hybrid_score(self) -> float | None:
+        """The average overall driving/eco score for this period.
+
+        Aggregates the "global" driving score reported by Toyota (the same
+        figure exposed per-trip as ``Trip.hybrid_score``) across every
+        day/trip that makes up this summary period. Not every vehicle or
+        trip reports a score, so entries without one are excluded from the
+        average.
+
+        Returns:
+            Optional[float]: The average global driving score, or None if
+                no underlying data reported a score.
+
+        """
+        if not self._scores:
+            return None
+        return sum(self._scores) / len(self._scores)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
