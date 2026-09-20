@@ -16,6 +16,14 @@ from pytoyoda.models.endpoints.electric import (
 from pytoyoda.utils.conversions import convert_distance
 from pytoyoda.utils.models import CustomAPIBaseModel, Distance
 
+# Toyota's backend has been observed to return sentinel/placeholder values
+# (e.g. 65535 / 0xFFFF, or close variants like 65335) for `remainingChargeTime`
+# when the vehicle is not actively charging, instead of omitting the field.
+# Anything beyond a full day of charging is not a plausible countdown, so we
+# treat implausibly large values as "not reported" (None) rather than
+# surfacing the raw sentinel to consumers.
+MAX_PLAUSIBLE_REMAINING_CHARGE_TIME_MINUTES = 1440  # 24 hours
+
 T = TypeVar(
     "T",
     bound=ElectricResponseModel | bool,
@@ -83,11 +91,26 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
             int: Remaining time to full charge in minutes.
 
         """
-        return (
-            self._electric_status.remaining_charge_time
-            if self._electric_status
-            else None
-        )
+        if not self._electric_status:
+            return None
+
+        value = self._electric_status.remaining_charge_time
+        if value is None:
+            return None
+
+        if (
+            value > MAX_PLAUSIBLE_REMAINING_CHARGE_TIME_MINUTES
+            and self.charging_status != "charging"
+        ):
+            # Toyota's backend has been observed to send a sentinel value
+            # (e.g. 65535/65335) for this field when the vehicle is not
+            # actively charging. If we're actively charging, trust the raw
+            # value even if it's unusually high (e.g. a very slow/trickle
+            # charge), since we have no other way to disambiguate a real
+            # estimate from a sentinel in that case.
+            return None
+
+        return value
 
     @computed_field  # type: ignore[prop-decorator]
     @property

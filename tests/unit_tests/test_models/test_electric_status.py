@@ -61,3 +61,47 @@ def test_ev_range_none_is_treated_as_missing():
     assert status.ev_range_with_unit is None
     assert status.ev_range_with_ac is None
     assert status.ev_range_with_ac_with_unit is None
+
+
+def test_remaining_charge_time_plausible_value_is_preserved():
+    ev_stub = _make_electric_status_stub(
+        charging_status="charging",
+        remaining_charge_time=120,
+    )
+    status = _make_electric_status(ev_stub)
+
+    assert status.remaining_charge_time == 120
+
+
+def test_remaining_charge_time_sentinel_is_filtered_when_not_charging():
+    for sentinel in (65535, 65335):
+        ev_stub = _make_electric_status_stub(
+            charging_status="none",
+            remaining_charge_time=sentinel,
+        )
+        status = _make_electric_status(ev_stub)
+
+        assert status.remaining_charge_time is None
+
+
+def test_remaining_charge_time_high_value_preserved_while_charging():
+    # If the vehicle really is charging, we have no way to disambiguate a
+    # slow/trickle-charge estimate from a sentinel, so the raw value should
+    # be passed through unchanged.
+    ev_stub = _make_electric_status_stub(
+        charging_status="charging",
+        remaining_charge_time=65535,
+    )
+    status = _make_electric_status(ev_stub)
+
+    assert status.remaining_charge_time == 65535
+
+
+def test_remaining_charge_time_none_is_preserved():
+    ev_stub = _make_electric_status_stub(
+        charging_status="none",
+        remaining_charge_time=None,
+    )
+    status = _make_electric_status(ev_stub)
+
+    assert status.remaining_charge_time is None
