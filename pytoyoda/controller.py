@@ -505,6 +505,13 @@ class Controller:
 
         """
         brand = self._brand
+        # x-user-region mirrors x-region: required on remote-service calls
+        # (e.g. POST /v2/remote/climate-control) for Suzuki-badged DCM24
+        # vehicles (Urban Cruiser BEV), which reject the request with
+        # CTP-GENERIC-40017 "Missing header x-user-region" otherwise. Reads
+        # (vehicle status, odometer, electric status) work fine without it.
+        # See https://github.com/pytoyoda/ha_toyota/issues/355.
+        region = "EU"
         headers = {
             "x-api-key": "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF",
             "API_KEY": "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF",
@@ -515,7 +522,8 @@ class Controller:
             "x-appversion": CLIENT_VERSION,
             "x-channel": "ONEAPP",
             "x-brand": brand,
-            "x-region": "EU",
+            "x-region": region,
+            "x-user-region": region,
             "authorization": f"Bearer {self._token}",
             "user-agent": "okhttp/4.10.0",
         }
