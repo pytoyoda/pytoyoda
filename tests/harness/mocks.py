@@ -115,7 +115,7 @@ def register_all(router: respx.Router) -> None:
     router.get(url__regex=r".*/v1/vehiclehealth/status.*").mock(
         return_value=httpx.Response(200, json=bodies["health"])
     )
-    router.get(url__regex=r".*/v1/global/remote/electric/status.*").mock(
+    router.get(url__regex=r".*/v1/vehicle/electric/status.*").mock(
         return_value=httpx.Response(200, json=bodies["electric"])
     )
     router.get(url__regex=r".*/v1/vehicle/climate-status.*").mock(

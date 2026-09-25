@@ -339,7 +339,7 @@ def _route(
         ("/v2/vehicle/guid", "vehicles"),
         ("/v1/location", "location"),
         ("/v1/vehiclehealth/status", "health"),
-        ("/v1/global/remote/electric/status", "electric"),
+        ("/v1/vehicle/electric/status", "electric"),
         ("/v1/vehicle/climate-status", "climate_status"),
         ("/v1/vehicle/climate-settings", "climate_settings"),
         ("/v3/telemetry", "telemetry"),

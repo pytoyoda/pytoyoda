@@ -46,7 +46,14 @@ VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT = "/v1/vehicle/status"
 # body (vin header only) and returns payload.returnCode "000000" on accept.
 # Const name kept to avoid churn in api.py.
 VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT = "/v1/remote/status"
-VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT = "/v1/global/remote/electric/status"
+# Migrated 2026-09: Toyota retired /v1/global/remote/electric/status (now
+# fenced behind AWS SigV4 -> APIGW-403), mirroring the already-migrated
+# /v1/vehicle/status and /v1/vehicle/climate-* read routes. The MyToyota app
+# reads electric status from /v1/vehicle/electric/status on the plain-******
+# namespace. Only this GET read route is migrated here; the realtime-status
+# wake and command routes are left untouched pending separate evidence they
+# were also retired. Const name kept to avoid churn in api.py.
+VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT = "/v1/vehicle/electric/status"
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT = (
     "/v1/global/remote/electric/realtime-status"
 )
