@@ -11,6 +11,7 @@ def _make_electric_status_stub(**overrides):
     """Create a minimal stub for _electric_status with sensible defaults."""
     base = {
         "battery_level": 30.0,
+        "phev_usable_battery_level": None,
         "charging_status": "none",
         "remaining_charge_time": None,
         "ev_range": None,
@@ -51,6 +52,31 @@ def test_ev_range_zero_is_preserved():
     assert ev_ac_with_unit is not None
     assert ev_ac_with_unit.value == 0.0
     assert ev_ac_with_unit.unit == KILOMETERS_UNIT
+
+
+def test_phev_usable_battery_level_is_exposed_separately_from_battery_level():
+    ev_stub = _make_electric_status_stub(
+        battery_level=93.0,
+        phev_usable_battery_level=87.0,
+    )
+    status = _make_electric_status(ev_stub)
+
+    assert status.battery_level == 93.0
+    assert status.phev_usable_battery_level == 87.0
+
+
+def test_phev_usable_battery_level_defaults_to_none_when_absent():
+    ev_stub = _make_electric_status_stub(battery_level=93.0)
+    status = _make_electric_status(ev_stub)
+
+    assert status.battery_level == 93.0
+    assert status.phev_usable_battery_level is None
+
+
+def test_phev_usable_battery_level_none_when_no_electric_status():
+    status = ElectricStatus(electric_status=None, metric=True)
+
+    assert status.phev_usable_battery_level is None
 
 
 def test_ev_range_none_is_treated_as_missing():

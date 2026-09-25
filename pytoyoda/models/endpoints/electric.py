@@ -29,6 +29,10 @@ class ElectricStatusModel(CustomEndpointBaseModel):
     Attributes:
         battery_level: The battery level of the electric vehicle
             as a percentage (0-100).
+        phev_usable_battery_level: The usable battery level of a plug-in hybrid
+            electric vehicle as a percentage (0-100). This can differ from
+            battery_level as it may reflect the portion of the battery usable
+            for EV driving.
         can_set_next_charging_event: Indicates whether the next charging
             event can be scheduled.
         charging_status: The current charging status of the electric vehicle.
@@ -44,6 +48,10 @@ class ElectricStatusModel(CustomEndpointBaseModel):
 
     battery_level: int | None = Field(
         alias="batteryLevel",
+        default=None,
+    )
+    phev_usable_battery_level: int | None = Field(
+        alias="phevUsableBatteryLevel",
         default=None,
     )
     can_set_next_charging_event: bool | None = Field(

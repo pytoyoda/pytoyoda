@@ -1,6 +1,7 @@
 {
   "payload": {
     "batteryLevel": 79,
+    "phevUsableBatteryLevel": 74,
     "canSetNextChargingEvent": true,
     "chargingStatus": "none",
     "evRange": { "unit": "km", "value": 57.3 },

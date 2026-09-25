@@ -73,6 +73,25 @@ class ElectricStatus(CustomAPIBaseModel[type[T]]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
+    def phev_usable_battery_level(self) -> float | None:
+        """Usable battery level of a plug-in hybrid electric vehicle.
+
+        This is separate from `battery_level` and may reflect only the
+        portion of the battery usable for EV driving.
+
+        Returns:
+            float: Usable PHEV battery level in percentage, or None if not
+                reported by the vehicle.
+
+        """
+        return (
+            self._electric_status.phev_usable_battery_level
+            if self._electric_status
+            else None
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
     def charging_status(self) -> str | None:
         """Charging status of the vehicle.
 
