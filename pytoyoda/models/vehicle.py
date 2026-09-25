@@ -282,10 +282,12 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         though they are genuine electric vehicles - Toyota's vehicle
         registry can be wrong about EV status for these platforms, the same
         way it is wrong about climate capability for some accounts (see
-        ``_climate_capable``). Falling back to ``fuel_type == "E"`` and the
-        top-level ``ev_vehicle`` flag widens detection without affecting
-        ICE/HEV vehicles, whose fuel_type is never ``"E"``.
-        See pytoyoda/ha_toyota#302.
+        ``_climate_capable``). Falling back to ``fuel_type in ("E", "I")``
+        and the top-level ``ev_vehicle`` flag widens detection without
+        affecting ICE/HEV vehicles, whose fuel_type is never ``"E"``/``"I"``.
+        ``"I"`` is Toyota's fuel_type code for plug-in hybrids, which can
+        report the same electric_status data as full EVs.
+        See pytoyoda/ha_toyota#302, pytoyoda#312.
         """
         extended_capabilities = getattr(
             self._vehicle_info, "extended_capabilities", False
@@ -293,7 +295,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
         return bool(
             getattr(extended_capabilities, "econnect_vehicle_status_capable", False)
             or getattr(self._vehicle_info, "ev_vehicle", False)
-            or getattr(self._vehicle_info, "fuel_type", None) == "E"
+            or getattr(self._vehicle_info, "fuel_type", None) in ("E", "I")
         )
 
     async def update(

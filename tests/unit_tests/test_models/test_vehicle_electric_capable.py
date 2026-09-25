@@ -93,6 +93,22 @@ def test_fuel_type_e_is_capable_even_when_flag_is_false() -> None:
     assert _electric_status_endpoint(vehicle).capable is True
 
 
+def test_fuel_type_i_is_capable_even_when_flag_is_false() -> None:
+    """Regression for #312: fuelType == 'I' (plug-in hybrid) should widen detection.
+
+    A Toyota RAV4 PHEV reported econnect_vehicle_status_capable=False and
+    evVehicle=False, yet fuelType correctly says "I" and the electric_status
+    endpoint returns valid battery/charging data once queried. Falling back
+    to fuel_type must pick these up too, mirroring the "E" fallback above.
+    """
+    vehicle = _build_vehicle(
+        _vehicle_guid_payload(
+            econnect_vehicle_status_capable=False, ev_vehicle=False, fuel_type="I"
+        )
+    )
+    assert _electric_status_endpoint(vehicle).capable is True
+
+
 def test_ev_vehicle_flag_true_is_capable_even_when_econnect_flag_is_false() -> None:
     """The evVehicle flag alone should also widen detection."""
     vehicle = _build_vehicle(
