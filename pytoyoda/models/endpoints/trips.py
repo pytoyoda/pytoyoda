@@ -120,12 +120,6 @@ class _ScoresModel(CustomEndpointBaseModel):
 class _HDCModel(CustomEndpointBaseModel):
     ev_time: int | None = Field(alias="evTime", default=None)
     ev_distance: int | None = Field(alias="evDistance", default=None)
-    charge_time: int | None = Field(alias="chargeTime", default=None)
-    charge_dist: int | None = Field(alias="chargeDist", default=None)
-    eco_time: int | None = Field(alias="ecoTime", default=None)
-    eco_dist: int | None = Field(alias="ecoDist", default=None)
-    power_time: int | None = Field(alias="powerTime", default=None)
-    power_dist: int | None = Field(alias="powerDist", default=None)
 
     def __add__(self, other: _HDCModel) -> _HDCModel:
         """Add together two HDCModel's.
@@ -141,12 +135,6 @@ class _HDCModel(CustomEndpointBaseModel):
             return result
         result.ev_time = add_with_none(result.ev_time, other.ev_time)
         result.ev_distance = add_with_none(result.ev_distance, other.ev_distance)
-        result.charge_time = add_with_none(result.charge_time, other.charge_time)
-        result.charge_dist = add_with_none(result.charge_dist, other.charge_dist)
-        result.eco_time = add_with_none(result.eco_time, other.eco_time)
-        result.eco_dist = add_with_none(result.eco_dist, other.eco_dist)
-        result.power_time = add_with_none(result.power_time, other.power_time)
-        result.power_dist = add_with_none(result.power_dist, other.power_dist)
         return result
 
 
@@ -243,3 +231,15 @@ class TripsResponseModel(StatusModel):
     """
 
     payload: TripsModel | None = None
+
+
+class TripDetailResponseModel(StatusModel):
+    r"""Model representing a single-trip response including the GPS route.
+
+    Attributes:
+        payload (Optional[_TripModel], optional): The trip with its route.
+            Defaults to None.
+
+    """
+
+    payload: _TripModel | None = None

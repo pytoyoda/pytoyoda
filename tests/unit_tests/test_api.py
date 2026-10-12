@@ -111,7 +111,6 @@ YESTERDAY = TODAY - timedelta(days=1)
             VEHICLE_TRIPS_ENDPOINT.format(
                 from_date=YESTERDAY,
                 to_date=TODAY,
-                route=False,
                 summary=False,
                 limit=5,
                 offset=0,
