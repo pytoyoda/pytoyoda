@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timezone
 from typing import Any, TypeVar
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from loguru import logger
 
@@ -24,6 +24,7 @@ from pytoyoda.const import (
     VEHICLE_NOTIFICATION_HISTORY_ENDPOINT,
     VEHICLE_SERVICE_HISTORY_ENDPONT,
     VEHICLE_TELEMETRY_ENDPOINT,
+    VEHICLE_TRIP_DETAIL_ENDPOINT,
     VEHICLE_TRIPS_ENDPOINT,
 )
 from pytoyoda.controller import Controller
@@ -46,7 +47,10 @@ from pytoyoda.models.endpoints.refresh_status import RefreshStatusResponseModel
 from pytoyoda.models.endpoints.service_history import ServiceHistoryResponseModel
 from pytoyoda.models.endpoints.status import RemoteStatusResponseModel
 from pytoyoda.models.endpoints.telemetry import TelemetryResponseModel
-from pytoyoda.models.endpoints.trips import TripsResponseModel
+from pytoyoda.models.endpoints.trips import (
+    TripDetailResponseModel,
+    TripsResponseModel,
+)
 from pytoyoda.models.endpoints.vehicle_guid import VehiclesResponseModel
 from pytoyoda.models.endpoints.vehicle_health import VehicleHealthResponseModel
 
@@ -62,6 +66,7 @@ T = TypeVar(
     | RemoteStatusResponseModel
     | TelemetryResponseModel
     | TripsResponseModel
+    | TripDetailResponseModel
     | VehiclesResponseModel
     | VehicleHealthResponseModel,
 )
@@ -418,7 +423,6 @@ class Api:
         vin: str,
         from_date: date,
         to_date: date,
-        route: bool = False,  # noqa : FBT001, FBT002
         summary: bool = True,  # noqa : FBT001, FBT002
         limit: int = 5,
         offset: int = 0,
@@ -429,7 +433,6 @@ class Api:
             vin: Vehicle Identification Number
             from_date: Start date for trip data (inclusive, cannot be in future)
             to_date: End date for trip data (inclusive, cannot be in future)
-            route: If True, returns route coordinates for each trip
             summary: If True, returns monthly and daily trip summaries
             limit: Maximum number of trips to return (max 50)
             offset: Starting offset for pagination
@@ -441,13 +444,34 @@ class Api:
         endpoint = VEHICLE_TRIPS_ENDPOINT.format(
             from_date=from_date,
             to_date=to_date,
-            route=route,
             summary=summary,
             limit=limit,
             offset=offset,
         )
         return await self._request_and_parse(
             TripsResponseModel, "GET", endpoint, vin=vin
+        )
+
+    async def get_trip_details(
+        self, vin: str, trip_id: UUID | str
+    ) -> TripDetailResponseModel:
+        """Get a single trip including its GPS route.
+
+        The list endpoint no longer returns routes; this is the only source.
+
+        Args:
+            vin: Vehicle Identification Number
+            trip_id: Id of the trip as returned by the trip list
+
+        Returns:
+            Model containing the trip with its route points
+
+        """
+        return await self._request_and_parse(
+            TripDetailResponseModel,
+            "GET",
+            VEHICLE_TRIP_DETAIL_ENDPOINT.format(trip_id=trip_id),
+            vin=vin,
         )
 
     # Remote Commands

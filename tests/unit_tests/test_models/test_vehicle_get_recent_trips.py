@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -36,7 +37,8 @@ def _make_trip_dict(trip_id: str = "abc-123") -> dict:
 def _make_vehicle_with_mock_api(trips_payload_factory) -> Vehicle:
     """Build a Vehicle with a stub Api.get_trips that returns the payload built
     by trips_payload_factory(call_args). The factory receives the same kwargs
-    that get_trips() was called with, so each test can assert on them."""
+    that get_trips() was called with, so each test can assert on them.
+    """
     captured: dict = {}
 
     async def fake_get_trips(vin, from_date, to_date, **kwargs):
@@ -48,6 +50,7 @@ def _make_vehicle_with_mock_api(trips_payload_factory) -> Vehicle:
 
     api = MagicMock()
     api.get_trips = AsyncMock(side_effect=fake_get_trips)
+    api.get_trip_details = AsyncMock()
 
     vehicle_info = SimpleNamespace(
         vin="VIN1234567890",
@@ -88,12 +91,11 @@ async def test_returns_list_of_trips():
 
 
 @pytest.mark.asyncio
-async def test_passes_limit_and_route_through():
+async def test_passes_limit_through():
     v = _make_vehicle_with_mock_api(_payload_with_trips(5))
-    await v.get_recent_trips(limit=5, with_route=True)
+    await v.get_recent_trips(limit=5)
     captured = v._fake_captured  # type: ignore[attr-defined]
     assert captured["limit"] == 5
-    assert captured["route"] is True
     assert captured["summary"] is False
     assert captured["offset"] == 0
 
@@ -125,6 +127,7 @@ async def test_empty_payload_returns_empty_list():
 
     api = MagicMock()
     api.get_trips = AsyncMock(side_effect=fake_get_trips)
+    api.get_trip_details = AsyncMock()
 
     v = Vehicle.__new__(Vehicle)
     v._api = api
@@ -140,12 +143,14 @@ async def test_empty_payload_returns_empty_list():
 async def test_payload_with_none_trips_returns_empty_list():
     """Toyota has been observed returning payloads where trips is None
     (separate from payload itself being None). Defensive check ensures
-    we don't crash trying to iterate None."""
+    we don't crash trying to iterate None.
+    """
     async def fake_get_trips(*_a, **_kw):
         return SimpleNamespace(payload=SimpleNamespace(trips=None))
 
     api = MagicMock()
     api.get_trips = AsyncMock(side_effect=fake_get_trips)
+    api.get_trip_details = AsyncMock()
 
     v = Vehicle.__new__(Vehicle)
     v._api = api
@@ -179,11 +184,10 @@ async def test_limit_above_fifty_raises():
 
 
 @pytest.mark.asyncio
-async def test_with_route_false_by_default():
+async def test_no_route_fetch_by_default():
     v = _make_vehicle_with_mock_api(_payload_with_trips(2))
     await v.get_recent_trips(limit=2)
-    captured = v._fake_captured  # type: ignore[attr-defined]
-    assert captured["route"] is False
+    v._api.get_trip_details.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -202,3 +206,32 @@ async def test_offset_negative_raises():
     v = _make_vehicle_with_mock_api(_payload_with_trips(1))
     with pytest.raises(ValueError, match="offset must be >= 0"):
         await v.get_recent_trips(limit=5, offset=-1)
+
+
+@pytest.mark.asyncio
+async def test_with_route_loads_routes_from_trip_detail_endpoint():
+    """The list carries no routes; with_route fetches them per trip."""
+    trip_ids = [str(uuid4()) for _ in range(2)]
+
+    def factory(_call_args):
+        return SimpleNamespace(
+            trips=[_TripModel(**_make_trip_dict(trip_id=i)) for i in trip_ids]
+        )
+
+    v = _make_vehicle_with_mock_api(factory)
+
+    async def fake_details(vin, trip_id):
+        route = [{"lat": 1.0, "lon": 2.0}, {"lat": 3.0, "lon": 4.0}]
+        return SimpleNamespace(payload=_TripModel(id=str(trip_id), route=route))
+
+    v._api.get_trip_details = AsyncMock(side_effect=fake_details)
+
+    result = await v.get_recent_trips(limit=2, with_route=True)
+
+    assert v._api.get_trip_details.await_count == 2
+    assert [c.args[1] for c in v._api.get_trip_details.await_args_list] == [
+        UUID(i) for i in trip_ids
+    ]
+    for trip in result:
+        assert trip.route is not None
+        assert [(p.lat, p.lon) for p in trip.route] == [(1.0, 2.0), (3.0, 4.0)]

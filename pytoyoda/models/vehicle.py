@@ -1,5 +1,6 @@
 """Vehicle model."""
 
+import asyncio
 import copy
 import json
 from collections.abc import Callable
@@ -31,7 +32,7 @@ from pytoyoda.models.endpoints.electric import (
     NextChargeSettings,
 )
 from pytoyoda.models.endpoints.refresh_status import RefreshStatusResponseModel
-from pytoyoda.models.endpoints.trips import _SummaryItemModel
+from pytoyoda.models.endpoints.trips import _SummaryItemModel, _TripModel
 from pytoyoda.models.endpoints.vehicle_guid import VehicleGuidModel
 from pytoyoda.models.location import Location
 from pytoyoda.models.lock_status import LockStatus
@@ -47,6 +48,9 @@ T = TypeVar(
     "T",
     bound=Api | VehicleGuidModel | bool,
 )
+
+# Max parallel trip-detail requests when loading routes.
+_ROUTE_FETCH_CONCURRENCY = 5
 
 
 class VehicleType(Enum):
@@ -765,7 +769,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             from_date (date, required): The inclusive from date
             to_date (date, required): The inclusive to date
             full_route (bool, optional): Provide the full route
-                                         information for each trip.
+                information for each trip. Costs one extra API call per
+                trip, as routes are only served by the trip detail endpoint.
             limit (int | None, optional): Maximum total number of trips
                 to return to the caller. ``None`` (the default) returns every
                 trip in the requested date range, preserving the previous
@@ -793,7 +798,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             raise ValueError(msg)
 
         page_size = 5
-        ret: list[Trip] = []
+        collected: list[_TripModel] = []
         skipped = 0
         api_offset = 0
         while True:
@@ -807,25 +812,25 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                 summary=False,
                 limit=page_size,
                 offset=api_offset,
-                route=full_route,
             )
             if resp.payload is None:
                 break
 
-            trips = resp.payload.trips or []
-            for t in trips:
+            for t in resp.payload.trips or []:
                 if skipped < offset:
                     skipped += 1
                     continue
-                ret.append(Trip(t, self._metric))
-                if limit is not None and len(ret) >= limit:
-                    return ret
+                collected.append(t)
+                if limit is not None and len(collected) >= limit:
+                    break
 
             api_offset = resp.payload.metadata.pagination.next_offset
-            if api_offset is None:
+            if api_offset is None or (limit is not None and len(collected) >= limit):
                 break
 
-        return ret
+        if full_route:
+            await self._load_routes(collected)
+        return [Trip(t, self._metric) for t in collected]
 
     async def get_last_trip(self, offset: int = 0) -> Trip | None:
         """Return information on the Nth-most-recent trip.
@@ -868,7 +873,8 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         Args:
             limit: Page size, 1..50.
-            with_route: Include per-trip route coordinates (larger payload).
+            with_route: Include per-trip route coordinates (one extra API call
+                per trip).
             from_date: Lower bound, inclusive. Defaults to today minus 90 days.
             to_date: Upper bound, inclusive. Defaults to today.
             offset: 0-based offset into the most-recent-first result set.
@@ -898,13 +904,32 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
             summary=False,
             limit=limit,
             offset=offset,
-            route=with_route,
         )
 
         if resp.payload is None or not resp.payload.trips:
             return []
 
+        if with_route:
+            await self._load_routes(resp.payload.trips)
         return [Trip(t, self._metric) for t in resp.payload.trips]
+
+    async def _load_routes(self, trips: list[_TripModel]) -> None:
+        """Fill in the route of each trip from the trip detail endpoint.
+
+        The trip list endpoint does not return routes; they are only available
+        per trip, so this costs one HTTP call per trip.
+        """
+        semaphore = asyncio.Semaphore(_ROUTE_FETCH_CONCURRENCY)
+
+        async def load(trip: _TripModel) -> None:
+            if trip.id is None:
+                return
+            async with semaphore:
+                resp = await self._api.get_trip_details(self.vin, trip.id)
+            if resp.payload is not None:
+                trip.route = resp.payload.route
+
+        await asyncio.gather(*(load(t) for t in trips))
 
     async def refresh_climate_status(self) -> StatusModel:
         """Force update of climate status.
