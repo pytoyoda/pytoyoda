@@ -11,7 +11,11 @@ from pytest_httpx import HTTPXMock
 
 from pytoyoda import MyT
 from pytoyoda.controller import Controller, TokenInfo
-from pytoyoda.exceptions import ToyotaInvalidUsernameError, ToyotaLoginError
+from pytoyoda.exceptions import (
+    ToyotaInvalidUsernameError,
+    ToyotaLoginError,
+    ToyotaLoginServerError,
+)
 
 _TOKEN_CACHE = Controller._TOKEN_CACHE  # pylint: disable=W0212
 
@@ -86,8 +90,139 @@ async def test_authenticate_invalid_password(httpx_mock: HTTPXMock):  # noqa: D1
     client = MyT(TEST_USER, TEST_PASSWORD)
     # Nothing validates this is correct,
     # just replays an invalid username authentication sequence
-    with pytest.raises(ToyotaLoginError):
+    with pytest.raises(ToyotaLoginError) as exc_info:
         await client.login()
+    # A rejected password is a real credential failure, not a server outage.
+    assert not isinstance(exc_info.value, ToyotaLoginServerError)
+
+
+def _load_routes(filename: str) -> list[dict]:
+    path = Path(__file__).parent / "data" / filename
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _add_route(httpx_mock: HTTPXMock, route: dict, status: int | None = None) -> None:
+    content = route["response"]["content"]
+    httpx_mock.add_response(
+        method=route["request"]["method"],
+        url=route["request"]["url"],
+        status_code=status or route["response"]["status"],
+        content=content if isinstance(content, str) else json.dumps(content),
+        headers=route["response"]["headers"],
+    )
+
+
+def _add_gateway_error(httpx_mock: HTTPXMock, route: dict, status: int) -> None:
+    httpx_mock.add_response(
+        method=route["request"]["method"],
+        url=route["request"]["url"],
+        status_code=status,
+        text="<html><body><h1>502 Bad Gateway</h1></body></html>",
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
+@pytest.mark.parametrize("status", [429, 500, 502, 503, 504])
+async def test_authenticate_server_error(httpx_mock: HTTPXMock, status: int) -> None:
+    """A login gateway outage is reported as a transient server error."""
+    first_post = _load_routes("authenticate_working.json")[0]
+    _add_gateway_error(httpx_mock, first_post, status)
+
+    client = MyT(TEST_USER, TEST_PASSWORD)
+    with pytest.raises(ToyotaLoginServerError) as exc_info:
+        await client.login()
+
+    assert exc_info.value.status_code == status
+    # Callers catching the old exception keep working.
+    assert isinstance(exc_info.value, ToyotaLoginError)
+    assert str(exc_info.value).startswith(f"Authentication Failed. {status},")
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
+async def test_authorize_server_error(httpx_mock: HTTPXMock) -> None:
+    """A 5xx from the authorize step is a server error, not a bad login."""
+    routes = _load_routes("authenticate_working.json")
+    for route in routes[:4]:
+        _add_route(httpx_mock, route)
+    _add_gateway_error(httpx_mock, routes[4], 503)
+
+    client = MyT(TEST_USER, TEST_PASSWORD)
+    with pytest.raises(ToyotaLoginServerError) as exc_info:
+        await client.login()
+    assert exc_info.value.status_code == 503
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
+async def test_token_retrieval_server_error(httpx_mock: HTTPXMock) -> None:
+    """A 5xx from the access-token step is a server error, not a bad login."""
+    routes = _load_routes("authenticate_working.json")
+    for route in routes[:5]:
+        _add_route(httpx_mock, route)
+    _add_gateway_error(httpx_mock, routes[5], 504)
+
+    client = MyT(TEST_USER, TEST_PASSWORD)
+    with pytest.raises(ToyotaLoginServerError) as exc_info:
+        await client.login()
+    assert exc_info.value.status_code == 504
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
+async def test_token_retrieval_client_error_stays_login_error(
+    httpx_mock: HTTPXMock,
+) -> None:
+    """A 4xx from the access-token step remains a plain login error."""
+    routes = _load_routes("authenticate_working.json")
+    for route in routes[:5]:
+        _add_route(httpx_mock, route)
+    _add_route(httpx_mock, routes[5], status=400)
+
+    client = MyT(TEST_USER, TEST_PASSWORD)
+    with pytest.raises(ToyotaLoginError) as exc_info:
+        await client.login()
+    assert not isinstance(exc_info.value, ToyotaLoginServerError)
+
+
+def _cache_expired_token() -> None:
+    _TOKEN_CACHE[TEST_USER] = TokenInfo(
+        access_token=TEST_TOKEN,
+        refresh_token=TEST_TOKEN,
+        uuid=TEST_UUID,
+        expiration=datetime(2024, 1, 1, 16, 20, 20, 316881, tzinfo=timezone.utc),
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
+async def test_refresh_and_authenticate_server_error(httpx_mock: HTTPXMock) -> None:
+    """Refresh and the fallback full login both hitting 502 is a server error."""
+    _cache_expired_token()
+    refresh = _load_routes("authenticate_refresh_token.json")[0]
+    _add_gateway_error(httpx_mock, refresh, 502)
+    _add_gateway_error(httpx_mock, _load_routes("authenticate_working.json")[0], 502)
+
+    client = MyT(TEST_USER, TEST_PASSWORD)
+    with pytest.raises(ToyotaLoginServerError) as exc_info:
+        await client.login()
+    assert exc_info.value.status_code == 502
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("remove_cache")
+async def test_refresh_server_error_falls_back_to_login(httpx_mock: HTTPXMock) -> None:
+    """A 5xx on token refresh still falls back to a full login."""
+    _cache_expired_token()
+    refresh = _load_routes("authenticate_refresh_token.json")[0]
+    _add_gateway_error(httpx_mock, refresh, 502)
+    for route in _load_routes("authenticate_working.json"):
+        _add_route(httpx_mock, route)
+
+    client = MyT(TEST_USER, TEST_PASSWORD)
+    await client.login()
 
 
 @pytest.mark.asyncio
