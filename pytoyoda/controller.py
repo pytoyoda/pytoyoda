@@ -42,12 +42,34 @@ from pytoyoda.exceptions import (
     ToyotaInternalError,
     ToyotaInvalidUsernameError,
     ToyotaLoginError,
+    ToyotaLoginServerError,
 )
 from pytoyoda.utils.helpers import generate_hmac_sha256
 from pytoyoda.utils.log_utils import format_httpx_response
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
+
+
+def _is_transient_status(status_code: int) -> bool:
+    """Return True for HTTP answers that mean "try again later" (429 and 5xx)."""
+    return (
+        status_code == HTTPStatus.TOO_MANY_REQUESTS
+        or status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+    )
+
+
+def _login_failure(prefix: str, resp: httpx.Response) -> ToyotaLoginError:
+    """Build the exception for an unexpected answer during the login flow.
+
+    Server-side failures (429, 5xx) become ToyotaLoginServerError so callers
+    can tell an outage of Toyota's login service apart from rejected
+    credentials; every other status stays a plain ToyotaLoginError.
+    """
+    msg = f"{prefix} {resp.status_code}, {resp.text}."
+    if _is_transient_status(resp.status_code):
+        return ToyotaLoginServerError(msg, status_code=resp.status_code)
+    return ToyotaLoginError(msg)
 
 
 @dataclass
@@ -254,8 +276,8 @@ class Controller:
             logger.debug(format_httpx_response(resp))
 
             if resp.status_code != HTTPStatus.OK:
-                msg = f"Authentication Failed. {resp.status_code}, {resp.text}."
-                raise ToyotaLoginError(msg)
+                msg = "Authentication Failed."
+                raise _login_failure(msg, resp)
 
             data = resp.json()
 
@@ -286,8 +308,8 @@ class Controller:
         logger.debug(format_httpx_response(resp))
 
         if resp.status_code != HTTPStatus.FOUND:
-            msg = f"Authorization failed. {resp.status_code}, {resp.text}."
-            raise ToyotaLoginError(msg)
+            msg = "Authorization failed."
+            raise _login_failure(msg, resp)
 
         return parse.parse_qs(httpx.URL(resp.headers.get("location")).query.decode())[
             "code"
@@ -320,8 +342,8 @@ class Controller:
         logger.debug(format_httpx_response(resp))
 
         if resp.status_code != HTTPStatus.OK:
-            msg = f"Token retrieval failed. {resp.status_code}, {resp.text}."
-            raise ToyotaLoginError(msg)
+            msg = "Token retrieval failed."
+            raise _login_failure(msg, resp)
 
         return resp.json()
 
@@ -344,8 +366,8 @@ class Controller:
             logger.debug(format_httpx_response(resp))
 
             if resp.status_code != HTTPStatus.OK:
-                msg = f"Token refresh failed. {resp.status_code}, {resp.text}."
-                raise ToyotaLoginError(msg)
+                msg = "Token refresh failed."
+                raise _login_failure(msg, resp)
 
             self._update_tokens(resp.json())
 
@@ -456,10 +478,7 @@ class Controller:
             if response.status_code in [HTTPStatus.OK, HTTPStatus.ACCEPTED]:
                 return response
 
-            is_transient = (
-                response.status_code == HTTPStatus.TOO_MANY_REQUESTS
-                or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
-            )
+            is_transient = _is_transient_status(response.status_code)
             if not is_transient or attempt >= len(backoffs_s):
                 break
 
