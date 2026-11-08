@@ -311,30 +311,30 @@ files = [
 
 [[package]]
 name = "hishel"
-version = "1.4.0"
+version = "2.0.0"
 description = "Elegant HTTP Caching for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "hishel-1.4.0-py3-none-any.whl", hash = "sha256:38cb62d7d38fb437dc086f789c26d0cab41310d12497ec3f56dcead4b08571f0"},
-    {file = "hishel-1.4.0.tar.gz", hash = "sha256:e406b052c658ce28629fc31423b9914b637d47d7c923f5fe9e288ec47e4823d1"},
+    {file = "hishel-2.0.0-py3-none-any.whl", hash = "sha256:3e96613d05a13d08d4ee22621dff3aebcdffbe41472efc2b5d4d01d6bd254983"},
+    {file = "hishel-2.0.0.tar.gz", hash = "sha256:f043c88acf9b476fdbf203986253cd4e27e2468a3319b43c3946a641e1cb7696"},
 ]
 
 [package.dependencies]
-anyio = {version = ">=4.9.0", optional = true, markers = "extra == \"httpx\""}
+anyio = {version = ">=4.14.2", optional = true, markers = "extra == \"httpx\""}
 anysqlite = {version = ">=0.0.5", optional = true, markers = "extra == \"httpx\""}
 httpx = {version = ">=0.28.1", optional = true, markers = "extra == \"httpx\""}
-msgpack = ">=1.1.2"
-typing-extensions = ">=4.14.1"
+msgpack = ">=1.2.2"
+typing-extensions = ">=4.16.0"
 
 [package.extras]
-async = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)"]
-fastapi = ["fastapi (>=0.119.1)"]
-httpx = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)", "httpx (>=0.28.1)"]
+async = ["anyio (>=4.14.2)", "anysqlite (>=0.0.5)"]
+fastapi = ["anyio (>=4.14.2)", "anysqlite (>=0.0.5)", "fastapi (>=0.141.1)"]
+httpx = ["anyio (>=4.14.2)", "anysqlite (>=0.0.5)", "httpx (>=0.28.1)"]
 httpx2 = ["anyio (>=4.9.0)", "anysqlite (>=0.0.5)", "httpx2 (>=2.9.1)"]
-redis = ["redis (>=7.0.0)"]
-requests = ["requests (>=2.32.5)"]
+redis = ["redis (>=8.1.0)"]
+requests = ["requests (>=2.34.2)"]
 
 [[package]]
 name = "httpcore"
@@ -1498,4 +1498,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "47732650cb9bf2feace691af1e74b3621b16bd135893912b6a62b1ee3d2d14eb"
+content-hash = "5f8f8a4c6f610d5eb1ef4d96e806ef704fd3d5d9ee5aef9227facf2370c1758b"
