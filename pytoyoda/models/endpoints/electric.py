@@ -5,7 +5,7 @@ from datetime import datetime, time, timedelta, timezone
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from pytoyoda.models.endpoints.common import StatusModel, UnitValueModel
 from pytoyoda.utils.models import CustomEndpointBaseModel
@@ -308,16 +308,25 @@ class ChargeTime(CustomEndpointBaseModel):
     minute: int = Field(alias="minute")
 
 
+class ReservationChargeType(str, Enum):
+    """Command values for setting the next charging start or end event."""
+
+    SET_CHARGING_START_TIME = "SET_CHARGING_START_TIME"
+    SET_CHARGING_END_TIME = "SET_CHARGING_END_TIME"
+
+
 class ReservationCharge(CustomEndpointBaseModel):
-    """Model representing a charging reservation configuration.
+    """Model representing a next charging event.
 
     Attributes:
-        chargeType: Type of charging schedule (startOnly, startEnd).
-        day: Day of the week when charging starts/ends, e.g., THURSDAY
-        startTime: Optional start time for the charging window
-        endTime: Optional end time for the charging window
+        chargetype: Start or end event command.
+        day: Weekday of the event, e.g., ``THURSDAY``.
+        starttime: Time for a start event.
+        endtime: Time for an end event.
 
     """
+
+    model_config = ConfigDict(populate_by_name=True)
 
     chargetype: str = Field(alias="chargeType")
     day: str = Field(alias="day")
@@ -341,15 +350,18 @@ class NextChargeSettings(CustomEndpointBaseModel):
 
     Attributes:
         command: The command to control the next charge cycle.
-        reservationCharge: Optional details for scheduled charging
-        (e.g., charge type, time). Must be a ReservationCharge model.
+        reservationcharge: Next start or end event for ``RESERVE_CHARGE``.
+        charging_time: Time for ``SET_CHARGING_TIME``.
 
     """
+
+    model_config = ConfigDict(populate_by_name=True)
 
     command: ChargeCommandType = Field(alias="command")
     reservationcharge: ReservationCharge | None = Field(
         alias="reservationCharge", default=None
     )
+    charging_time: ChargeTime | None = Field(alias="chargingTime", default=None)
 
 
 # Resolve forward references for Pydantic models that reference each other

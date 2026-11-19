@@ -975,7 +975,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
     async def send_next_charging_command(
         self, command: NextChargeSettings
     ) -> ElectricCommandResponseModel:
-        """Send the next command to the vehicle.
+        """Send a charging command to the vehicle.
 
         Args:
             command: NextChargeSettings command to send

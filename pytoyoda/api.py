@@ -502,7 +502,7 @@ class Api:
     async def send_next_charging_command(
         self, vin: str, command: NextChargeSettings
     ) -> ElectricCommandResponseModel:
-        """Send the next charging start/end time to the vehicle.
+        """Send a charging command to the vehicle.
 
         Args:
             vin: Vehicle Identification Number
