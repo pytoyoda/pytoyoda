@@ -28,6 +28,7 @@ from pytoyoda.models.endpoints.climate import (
 from pytoyoda.models.endpoints.command import CommandType
 from pytoyoda.models.endpoints.common import StatusModel
 from pytoyoda.models.endpoints.electric import (
+    ChargingScheduleRequest,
     ElectricCommandResponseModel,
     NextChargeSettings,
 )
@@ -975,7 +976,7 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
     async def send_next_charging_command(
         self, command: NextChargeSettings
     ) -> ElectricCommandResponseModel:
-        """Send the next command to the vehicle.
+        """Send a charging command to the vehicle.
 
         Args:
             command: NextChargeSettings command to send
@@ -985,6 +986,24 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
 
         """
         return await self._api.send_next_charging_command(self.vin, command=command)
+
+    async def create_charging_schedule(
+        self, schedule: ChargingScheduleRequest
+    ) -> ElectricCommandResponseModel:
+        """Create a charging schedule."""
+        return await self._api.create_charging_schedule(self.vin, schedule)
+
+    async def update_charging_schedule(
+        self, schedule_id: int, schedule: ChargingScheduleRequest
+    ) -> ElectricCommandResponseModel:
+        """Update a charging schedule."""
+        return await self._api.update_charging_schedule(self.vin, schedule_id, schedule)
+
+    async def delete_charging_schedule(
+        self, schedule_id: int
+    ) -> ElectricCommandResponseModel:
+        """Delete a charging schedule."""
+        return await self._api.delete_charging_schedule(self.vin, schedule_id)
 
     #
     # More get functionality depending on what we find

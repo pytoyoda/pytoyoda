@@ -58,6 +58,9 @@ VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT = (
     "/v1/global/remote/electric/realtime-status"
 )
 VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT = "/v1/global/remote/electric/command"
+VEHICLE_GLOBAL_REMOTE_ELECTRIC_SCHEDULE_ENDPOINT = (
+    "/v1/global/remote/electric/charging-schedule"
+)
 VEHICLE_TELEMETRY_ENDPOINT = "/v3/telemetry"
 VEHICLE_NOTIFICATION_HISTORY_ENDPOINT = "/v2/notification/history"
 # Since 2026-09-30 the list endpoint no longer returns per-trip routes (the

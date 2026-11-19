@@ -15,6 +15,7 @@ from pytoyoda.const import (
     VEHICLE_COMMAND_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_CONTROL_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_REALTIME_STATUS_ENDPOINT,
+    VEHICLE_GLOBAL_REMOTE_ELECTRIC_SCHEDULE_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_ELECTRIC_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_REFRESH_STATUS_ENDPOINT,
     VEHICLE_GLOBAL_REMOTE_STATUS_ENDPOINT,
@@ -37,6 +38,7 @@ from pytoyoda.models.endpoints.climate import (
 from pytoyoda.models.endpoints.command import CommandType, RemoteCommandModel
 from pytoyoda.models.endpoints.common import StatusModel
 from pytoyoda.models.endpoints.electric import (
+    ChargingScheduleRequest,
     ElectricCommandResponseModel,
     ElectricResponseModel,
     NextChargeSettings,
@@ -502,7 +504,7 @@ class Api:
     async def send_next_charging_command(
         self, vin: str, command: NextChargeSettings
     ) -> ElectricCommandResponseModel:
-        """Send the next charging start/end time to the vehicle.
+        """Send a charging command to the vehicle.
 
         Args:
             vin: Vehicle Identification Number
@@ -519,3 +521,59 @@ class Api:
             vin=vin,
             body=command.model_dump(exclude_none=True, by_alias=True),
         )
+
+    async def create_charging_schedule(
+        self, vin: str, schedule: ChargingScheduleRequest
+    ) -> ElectricCommandResponseModel:
+        """Create a charging schedule."""
+        body = ChargingScheduleRequest.model_validate(
+            schedule.model_dump(by_alias=True)
+        ).model_dump(by_alias=True, exclude_none=True)
+        return await self._request_and_parse(
+            ElectricCommandResponseModel,
+            "POST",
+            VEHICLE_GLOBAL_REMOTE_ELECTRIC_SCHEDULE_ENDPOINT,
+            vin=vin,
+            body=body,
+            retry_transient=False,
+        )
+
+    async def update_charging_schedule(
+        self, vin: str, schedule_id: int, schedule: ChargingScheduleRequest
+    ) -> ElectricCommandResponseModel:
+        """Update a charging schedule."""
+        endpoint = self._charging_schedule_endpoint(schedule_id)
+        body = ChargingScheduleRequest.model_validate(
+            schedule.model_dump(by_alias=True)
+        ).model_dump(by_alias=True, exclude_none=True)
+        body["id"] = schedule_id
+        return await self._request_and_parse(
+            ElectricCommandResponseModel,
+            "PUT",
+            endpoint,
+            vin=vin,
+            body=body,
+            retry_transient=False,
+        )
+
+    async def delete_charging_schedule(
+        self, vin: str, schedule_id: int
+    ) -> ElectricCommandResponseModel:
+        """Delete a charging schedule."""
+        return await self._request_and_parse(
+            ElectricCommandResponseModel,
+            "DELETE",
+            self._charging_schedule_endpoint(schedule_id),
+            vin=vin,
+            retry_transient=False,
+        )
+
+    @staticmethod
+    def _charging_schedule_endpoint(schedule_id: int) -> str:
+        if isinstance(schedule_id, bool) or not isinstance(schedule_id, int):
+            msg = "Schedule ID must be a non-negative integer"
+            raise TypeError(msg)
+        if schedule_id < 0:
+            msg = "Schedule ID must be a non-negative integer"
+            raise ValueError(msg)
+        return f"{VEHICLE_GLOBAL_REMOTE_ELECTRIC_SCHEDULE_ENDPOINT}/{schedule_id}"

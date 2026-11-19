@@ -399,6 +399,8 @@ class Controller:
         body: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, Any] | None = None,
+        *,
+        retry_transient: bool = True,
     ) -> httpx.Response:
         """Send a raw HTTP request to the Toyota API.
 
@@ -409,6 +411,7 @@ class Controller:
             body: Request body as dictionary (optional)
             params: URL query parameters (optional)
             headers: Additional HTTP headers (optional)
+            retry_transient: Retry rate limits and server errors.
 
         Returns:
             The raw HTTP response
@@ -460,7 +463,7 @@ class Controller:
                 response.status_code == HTTPStatus.TOO_MANY_REQUESTS
                 or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
             )
-            if not is_transient or attempt >= len(backoffs_s):
+            if not retry_transient or not is_transient or attempt >= len(backoffs_s):
                 break
 
             wait = backoffs_s[attempt]
@@ -550,6 +553,8 @@ class Controller:
         body: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, Any] | None = None,
+        *,
+        retry_transient: bool = True,
     ) -> dict[str, Any]:
         """Send a request to the Toyota API and return JSON response.
 
@@ -560,6 +565,7 @@ class Controller:
             body: Request body as dictionary (optional)
             params: URL query parameters (optional)
             headers: Additional HTTP headers (optional)
+            retry_transient: Retry rate limits and server errors.
 
         Returns:
             The JSON response as a dictionary
@@ -568,5 +574,12 @@ class Controller:
             response = await controller.request_json("GET", "/cars", vin="1234567890")
 
         """
-        response = await self.request_raw(method, endpoint, vin, body, params, headers)
+        if retry_transient:
+            response = await self.request_raw(
+                method, endpoint, vin, body, params, headers
+            )
+        else:
+            response = await self.request_raw(
+                method, endpoint, vin, body, params, headers, retry_transient=False
+            )
         return response.json() if response.content else {}
