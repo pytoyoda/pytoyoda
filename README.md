@@ -55,6 +55,116 @@ python simple_client_example.py
 Please note that the `simple_client_example.py` file is only to be regarded as a playground and is intended to provide an initial insight into the possibilities. It is not an officially supported interface of the pytoyoda API!
 For an overview of the current official interfaces, please take a look at our [documentation](https://pytoyoda.github.io/pytoyoda/pytoyoda/models/vehicle.html).
 
+### Charging commands
+
+For vehicles that support these commands, `Vehicle.send_next_charging_command`
+can request a temporary next charging event or set a daily charging time. The
+following examples are alternatives; choose the command you intend to send.
+
+Set the next charging start event to Sunday at 12:00:
+
+```python
+from pytoyoda.models.endpoints.electric import (
+    ChargeCommandType,
+    ChargeTime,
+    NextChargeSettings,
+    ReservationCharge,
+    ReservationChargeType,
+)
+
+request = NextChargeSettings(
+    command=ChargeCommandType.RESERVE_CHARGE,
+    reservationcharge=ReservationCharge(
+        chargetype=ReservationChargeType.SET_CHARGING_START_TIME,
+        day="SUNDAY",
+        starttime=ChargeTime(hour=12, minute=0),
+    ),
+)
+response = await car.send_next_charging_command(request)
+```
+
+Alternatively, set the next departure/end event to Sunday at 12:00:
+
+```python
+request = NextChargeSettings(
+    command=ChargeCommandType.RESERVE_CHARGE,
+    reservationcharge=ReservationCharge(
+        chargetype=ReservationChargeType.SET_CHARGING_END_TIME,
+        day="SUNDAY",
+        endtime=ChargeTime(hour=12, minute=0),
+    ),
+)
+response = await car.send_next_charging_command(request)
+```
+
+Alternatively, set a daily charging start time of 12:00:
+
+```python
+request = NextChargeSettings(
+    command=ChargeCommandType.SET_CHARGING_TIME,
+    charging_time=ChargeTime(hour=12, minute=0),
+)
+response = await car.send_next_charging_command(request)
+```
+
+These commands are separate from the recurring schedule endpoints. A next
+charging event temporarily affects the schedule; a daily charging time sets a
+recurring start time. An end/departure event may indicate a desired completion
+time rather than an immediate stop, but its precise behavior is unverified.
+Support and behavior can vary by vehicle.
+
+Relevant vehicle capability flags include:
+
+| Feature | Vehicle capability |
+|---|---|
+| Next charging event (`RESERVE_CHARGE`) | `nextCharge` |
+| Daily charging time (`SET_CHARGING_TIME`) | `dailyCharge` |
+| Weekly charging schedules | `weeklyCharge` |
+
+The electric-status field `canSetNextChargingEvent` may also indicate whether a
+next event can be set. Capability flags do not guarantee that Toyota will accept
+a request or that the vehicle will apply it. The library does not gate these
+methods on the flags.
+
+### Charging schedules
+
+Read schedules with `await car.update(only=["electric_status"])` followed by
+`car.electric_status.charging_schedules`. The list can be unavailable (`None`).
+For supported vehicles, create a weekly schedule using the same API version as
+the charging commands:
+
+```python
+from pytoyoda.models.endpoints.electric import (
+    ChargeTime,
+    ChargingScheduleRequest,
+    Days,
+)
+
+schedule = ChargingScheduleRequest(
+    enabled=True,
+    type="startEnd",
+    start_time=ChargeTime(hour=12, minute=0),
+    end_time=ChargeTime(hour=13, minute=0),
+    days=Days(sun=1),
+)
+response = await car.create_charging_schedule(schedule)
+```
+
+For a start-only schedule, use `type="startOnly"` and omit `end_time`. To
+update an existing schedule, pass its ID and a complete request to
+`await car.update_charging_schedule(schedule_id, schedule)`. To delete it, use
+`await car.delete_charging_schedule(schedule_id)`. To base an update on a
+schedule obtained from the status, use
+`ChargingScheduleRequest.model_validate(existing_schedule, from_attributes=True)`.
+
+Toyota may normalize schedule times to five-minute steps; the rounding rule is
+unconfirmed.
+
+Schedule changes are asynchronous; an acknowledgement does not guarantee that
+the vehicle applied the change, and status or notifications can be delayed.
+Schedule writes are not automatically retried; check the current status and
+notifications before retrying a failed or uncertain request.
+
 ## Known issues
 
 - Statistical endpoint will return `None` if no trip have been performed in the requested timeframe. This problem will often happen at the start of each week, month or year. Also daily stats will of course also be unavailable if no trip have been performed.

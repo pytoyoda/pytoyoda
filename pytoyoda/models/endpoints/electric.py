@@ -3,9 +3,17 @@
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from pytoyoda.models.endpoints.common import StatusModel, UnitValueModel
 from pytoyoda.utils.models import CustomEndpointBaseModel
@@ -278,8 +286,16 @@ class ElectricResponseModel(StatusModel):
 
 
 class _ElectricCommandResponsePayload(CustomEndpointBaseModel):
-    app_request_no: str | None = Field(alias="appRequestNo", default=None)
-    return_code: str | None = Field(alias="returnCode", default=None)
+    app_request_no: str | None = Field(
+        alias="appRequestNo",
+        validation_alias=AliasChoices("appRequestNo", "AppRequestNo"),
+        default=None,
+    )
+    return_code: str | None = Field(
+        alias="returnCode",
+        validation_alias=AliasChoices("returnCode", "ReturnCode"),
+        default=None,
+    )
 
 
 class ElectricCommandResponseModel(StatusModel):
@@ -306,6 +322,60 @@ class ChargeTime(CustomEndpointBaseModel):
 
     hour: int = Field(alias="hour")
     minute: int = Field(alias="minute")
+
+
+class ChargingScheduleRequest(BaseModel):
+    """Charging schedule to create or update.
+
+    Times may be normalized to five-minute steps server side.
+
+    Attributes:
+        enabled: Whether the schedule is enabled.
+        type: ``startOnly`` or ``startEnd``.
+        start_time: Charging start time.
+        end_time: End time, required for ``startEnd``.
+        days: Enabled weekdays.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    enabled: bool
+    type: Literal["startOnly", "startEnd"]
+    start_time: ChargeTime = Field(alias="startTime")
+    end_time: ChargeTime | None = Field(alias="endTime", default=None)
+    days: Days
+
+    @field_validator("start_time", "end_time")
+    @classmethod
+    def validate_time(cls, value: ChargeTime | None) -> ChargeTime | None:
+        """Validate time fields from the permissive response model."""
+        if value is not None and not (
+            isinstance(value.hour, int)
+            and isinstance(value.minute, int)
+            and 0 <= value.hour < 24  # noqa: PLR2004
+            and 0 <= value.minute < 60  # noqa: PLR2004
+        ):
+            msg = "Charging times must have a valid hour and minute"
+            raise ValueError(msg)
+        return value
+
+    @field_validator("days")
+    @classmethod
+    def validate_days(cls, value: Days) -> Days:
+        """Require at least one weekday and only 0/1 day values."""
+        days = value.model_dump().values()
+        if any(day not in (0, 1) for day in days) or not any(days):
+            msg = "Days must contain at least one enabled weekday and only 0/1 values"
+            raise ValueError(msg)
+        return value
+
+    @model_validator(mode="after")
+    def validate_end_time(self) -> "ChargingScheduleRequest":
+        """Match the end time to the schedule type."""
+        if (self.type == "startEnd") != (self.end_time is not None):
+            msg = "An end time is required for startEnd and omitted for startOnly"
+            raise ValueError(msg)
+        return self
 
 
 class ReservationChargeType(str, Enum):
