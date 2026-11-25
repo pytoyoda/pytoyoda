@@ -9,9 +9,11 @@ though they are genuine electric vehicles, leaving every EV sensor stuck on
 
 from __future__ import annotations
 
+from inspect import signature
 from types import SimpleNamespace
 from typing import Any
 
+from pytoyoda.api import Api
 from pytoyoda.models.endpoints.vehicle_guid import VehicleGuidModel
 from pytoyoda.models.vehicle import Vehicle
 
@@ -67,6 +69,13 @@ def _build_vehicle(payload: dict[str, Any]) -> Vehicle:
 
 def _electric_status_endpoint(vehicle: Vehicle):
     return next(e for e in vehicle._api_endpoints if e.name == "electric_status")  # noqa: SLF001
+
+
+def test_trip_history_endpoint_matches_api_signature() -> None:
+    """The periodic trip-history request uses arguments accepted by the API."""
+    vehicle = _build_vehicle(_vehicle_guid_payload())
+    endpoint = next(e for e in vehicle._api_endpoints if e.name == "trip_history")
+    signature(Api.get_trips).bind(None, *endpoint.function.args, **endpoint.function.keywords)
 
 
 def test_econnect_flag_true_is_still_capable() -> None:

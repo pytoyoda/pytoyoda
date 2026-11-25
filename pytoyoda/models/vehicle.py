@@ -233,7 +233,6 @@ class Vehicle(CustomAPIBaseModel[type[T]]):
                         summary=True,
                         limit=1,
                         offset=0,
-                        route=False,
                     ),
                 ),
             ]
